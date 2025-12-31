@@ -270,3 +270,10 @@
 - [x] 实现 Webhook 自动配置功能
 - [x] 添加测试消息发送功能
 - [x] 测试 Bot 配置流程
+
+## Telegram API 配置
+- [x] 在数据库中创建 Telegram API 配置记录
+- [x] 完善 API 配置页面的 Telegram 配置显示和编辑
+- [x] 实现自动 Webhook 设置功能
+- [x] 实现测试连接功能
+- [x] 测试 Telegram API 配置流程

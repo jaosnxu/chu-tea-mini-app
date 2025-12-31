@@ -279,6 +279,7 @@ interface ApiConfigFormProps {
 
 function ApiConfigForm({ config, onSubmit, isLoading, onCancel }: ApiConfigFormProps) {
   const { t } = useTranslation();
+  const utils = trpc.useUtils();
   const [formData, setFormData] = useState({
     apiKey: "",
     apiSecret: "",
@@ -286,45 +287,114 @@ function ApiConfigForm({ config, onSubmit, isLoading, onCancel }: ApiConfigFormP
     isEnabled: config.isActive,
     settings: JSON.stringify(config.config || {}, null, 2),
   });
+  const [botToken, setBotToken] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState(config.config?.webhookUrl || "");
+  
+  const isTelegramConfig = config.provider === 'telegram';
+
+  const setWebhookMutation = trpc.adminApiConfig.setWebhook.useMutation({
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(t("admin.telegram.webhookSet", "Webhook установлен успешно"));
+      } else {
+        toast.error(result.message);
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      isEnabled: formData.isEnabled,
-    });
+    
+    if (isTelegramConfig && botToken) {
+      // Telegram 配置：保存 Bot Token 并自动设置 Webhook
+      const currentUrl = window.location.origin;
+      const webhookUrl = `${currentUrl}/api/telegram/webhook`;
+      
+      onSubmit({
+        apiKey: botToken,
+        endpoint: webhookUrl,
+        isEnabled: formData.isEnabled,
+        settings: JSON.stringify({ webhookUrl }, null, 2),
+      });
+      
+      // 自动设置 Webhook
+      if (formData.isEnabled) {
+        setWebhookMutation.mutate({ webhookUrl });
+      }
+    } else {
+      onSubmit({
+        ...formData,
+        isEnabled: formData.isEnabled,
+      });
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>API Key</Label>
-        <Input
-          type="password"
-          value={formData.apiKey}
-          onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-          placeholder="输入新的 API Key（留空则不更新）"
-        />
-      </div>
+      {isTelegramConfig ? (
+        // Telegram 特殊配置表单
+        <>
+          <div className="space-y-2">
+            <Label>{t("admin.telegram.botToken", "Bot Token")}</Label>
+            <Input
+              type="password"
+              value={botToken}
+              onChange={(e) => setBotToken(e.target.value)}
+              placeholder={t("admin.telegram.botTokenPlaceholder", "从 @BotFather 获取的 Bot Token")}
+            />
+            <p className="text-sm text-muted-foreground">
+              {t("admin.telegram.botTokenHint", "格式：123456789:ABCdefGHIjklMNOpqrsTUVwxyz")}
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>{t("admin.telegram.webhookUrl", "Webhook URL")}</Label>
+            <Input
+              value={`${window.location.origin}/api/telegram/webhook`}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-sm text-muted-foreground">
+              {t("admin.telegram.webhookHint", "保存后将自动配置此 Webhook")}
+            </p>
+          </div>
+        </>
+      ) : (
+        // 通用 API 配置表单
+        <>
+          <div className="space-y-2">
+            <Label>API Key</Label>
+            <Input
+              type="password"
+              value={formData.apiKey}
+              onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+              placeholder="输入新的 API Key（留空则不更新）"
+            />
+          </div>
 
-      <div className="space-y-2">
-        <Label>API Secret</Label>
-        <Input
-          type="password"
-          value={formData.apiSecret}
-          onChange={(e) => setFormData({ ...formData, apiSecret: e.target.value })}
-          placeholder="输入新的 API Secret（留空则不更新）"
-        />
-      </div>
+          <div className="space-y-2">
+            <Label>API Secret</Label>
+            <Input
+              type="password"
+              value={formData.apiSecret}
+              onChange={(e) => setFormData({ ...formData, apiSecret: e.target.value })}
+              placeholder="输入新的 API Secret（留空则不更新）"
+            />
+          </div>
 
-      <div className="space-y-2">
-        <Label>API Endpoint</Label>
-        <Input
-          value={formData.endpoint}
-          onChange={(e) => setFormData({ ...formData, endpoint: e.target.value })}
-          placeholder="https://api.example.com"
-        />
-      </div>
+          <div className="space-y-2">
+            <Label>API Endpoint</Label>
+            <Input
+              value={formData.endpoint}
+              onChange={(e) => setFormData({ ...formData, endpoint: e.target.value })}
+              placeholder="https://api.example.com"
+            />
+          </div>
+        </>
+      )}
 
       <div className="flex items-center gap-2">
         <Switch

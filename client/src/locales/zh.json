@@ -613,6 +613,15 @@
       "open": "营业中",
       "closed": "已打烊"
     },
+    "telegram": {
+      "botToken": "Bot Token",
+      "botTokenPlaceholder": "从 @BotFather 获取的 Bot Token",
+      "botTokenHint": "格式：123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+      "webhookUrl": "Webhook URL",
+      "webhookHint": "保存后将自动配置此 Webhook",
+      "webhookSet": "Webhook 设置成功",
+      "testMessageSent": "测试消息已发送"
+    },
     "common": {
       "add": "添加",
       "edit": "编辑",
