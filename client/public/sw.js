@@ -1,24 +1,14 @@
 // Service Worker for CHU TEA PWA
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.0.0';
 const CACHE_NAME = `chu-tea-${CACHE_VERSION}`;
-const RUNTIME_CACHE = `chu-tea-runtime-${CACHE_VERSION}`;
-const IMAGE_CACHE = `chu-tea-images-${CACHE_VERSION}`;
 
-// 缓存过期时间（毫秒）
-const CACHE_EXPIRATION = {
-  images: 7 * 24 * 60 * 60 * 1000, // 7天
-  api: 5 * 60 * 1000, // 5分钟
-  static: 30 * 24 * 60 * 60 * 1000, // 30天
-};
-
-// 需要预缓存的静态资源（首屏关键资源）
+// 需要预缓存的静态资源
 const PRECACHE_URLS = [
   '/',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   '/offline.html',
-  // 首屏 JS/CSS 会由 Vite 自动注入版本号，这里不需要预缓存
 ];
 
 // 缓存策略：网络优先，失败时使用缓存
@@ -97,13 +87,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 图片资源：缓存优先 + 过期检查
-  if (url.pathname.match(/\.(webp|png|jpg|jpeg|svg|gif)$/i)) {
-    event.respondWith(cacheFirstWithExpiration(request, IMAGE_CACHE, CACHE_EXPIRATION.images));
-    return;
-  }
-
-  // 静态资源：缓存优先
+  // 缓存优先策略（静态资源）
   if (CACHE_FIRST_URLS.some(pattern => url.pathname.includes(pattern) || url.pathname.endsWith(pattern))) {
     event.respondWith(cacheFirst(request));
     return;
@@ -163,47 +147,6 @@ async function cacheFirst(request) {
     return response;
   } catch (error) {
     console.log('[SW] Cache and network both failed:', request.url);
-    throw error;
-  }
-}
-
-// 缓存优先策略 + 过期检查
-async function cacheFirstWithExpiration(request, cacheName, maxAge) {
-  const cache = await caches.open(cacheName);
-  const cachedResponse = await cache.match(request);
-  
-  if (cachedResponse) {
-    const cachedTime = cachedResponse.headers.get('sw-cached-time');
-    if (cachedTime) {
-      const age = Date.now() - parseInt(cachedTime);
-      if (age < maxAge) {
-        return cachedResponse;
-      }
-    }
-  }
-  
-  try {
-    const response = await fetch(request);
-    
-    if (response.ok) {
-      const clonedResponse = response.clone();
-      const headers = new Headers(clonedResponse.headers);
-      headers.set('sw-cached-time', Date.now().toString());
-      
-      const modifiedResponse = new Response(clonedResponse.body, {
-        status: clonedResponse.status,
-        statusText: clonedResponse.statusText,
-        headers,
-      });
-      
-      cache.put(request, modifiedResponse);
-    }
-    
-    return response;
-  } catch (error) {
-    if (cachedResponse) {
-      return cachedResponse;
-    }
     throw error;
   }
 }
