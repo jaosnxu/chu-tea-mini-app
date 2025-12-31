@@ -1,0 +1,85 @@
+{
+  "query": "SELECT id, nameEn, image FROM products LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute SELECT id, nameEn, image FROM products LIMIT 15;",
+  "rows": [
+    {
+      "id": "1",
+      "nameEn": "Classic Pearl Milk Tea",
+      "image": "/images/products/pearl-milk-tea.png"
+    },
+    {
+      "id": "2",
+      "nameEn": "Brown Sugar Boba Milk Tea",
+      "image": "/images/products/milk-tea-cup.png"
+    },
+    {
+      "id": "3",
+      "nameEn": "Taro Boba Milk Tea",
+      "image": "/images/products/milk-tea-cup.png"
+    },
+    {
+      "id": "4",
+      "nameEn": "Oolong Tea with Cheese Foam",
+      "image": "/images/products/milk-tea-cup.png"
+    },
+    {
+      "id": "5",
+      "nameEn": "Jasmine Green Milk Tea",
+      "image": "/images/products/milk-tea-cup.png"
+    },
+    {
+      "id": "6",
+      "nameEn": "Full Cup Passion Fruit",
+      "image": "/images/products/fruit-tea-cup.png"
+    },
+    {
+      "id": "7",
+      "nameEn": "Mango Pomelo Sago",
+      "image": "/images/products/fruit-tea-cup.png"
+    },
+    {
+      "id": "8",
+      "nameEn": "Orange Blast",
+      "image": "/images/products/fruit-tea-cup.png"
+    },
+    {
+      "id": "9",
+      "nameEn": "Grape Delight",
+      "image": "/images/products/fruit-tea-cup.png"
+    },
+    {
+      "id": "10",
+      "nameEn": "Lemon Green Tea",
+      "image": "/images/products/fruit-tea-cup.png"
+    },
+    {
+      "id": "11",
+      "nameEn": "Jasmine Tea",
+      "image": "/images/products/fruit-tea-cup.png"
+    },
+    {
+      "id": "12",
+      "nameEn": "Tieguanyin Oolong",
+      "image": "/images/products/fruit-tea-cup.png"
+    },
+    {
+      "id": "13",
+      "nameEn": "Da Hong Pao",
+      "image": "/images/products/fruit-tea-cup.png"
+    },
+    {
+      "id": "14",
+      "nameEn": "Cheese Jasmine Green",
+      "image": "NULL"
+    },
+    {
+      "id": "15",
+      "nameEn": "Cheese Four Seasons",
+      "image": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnameEn\timage\n1\tClassic Pearl Milk Tea\t/images/products/pearl-milk-tea.png\n2\tBrown Sugar Boba Milk Tea\t/images/products/milk-tea-cup.png\n3\tTaro Boba Milk Tea\t/images/products/milk-tea-cup.png\n4\tOolong Tea with Cheese Foam\t/images/products/milk-tea-cup.png\n5\tJasmine Green Milk Tea\t/images/products/milk-tea-cup.png\n6\tFull Cup Passion Fruit\t/images/products/fruit-tea-cup.png\n7\tMango Pomelo Sago\t/images/products/fruit-tea-cup.png\n8\tOrange Blast\t/images/products/fruit-tea-cup.png\n9\tGrape Delight\t/images/products/fruit-tea-cup.png\n10\tLemon Green Tea\t/images/products/fruit-tea-cup.png\n11\tJasmine Tea\t/images/products/fruit-tea-cup.png\n12\tTieguanyin Oolong\t/images/products/fruit-tea-cup.png\n13\tDa Hong Pao\t/images/products/fruit-tea-cup.png\n14\tCheese Jasmine Green\tNULL\n15\tCheese Four Seasons\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1550
+}

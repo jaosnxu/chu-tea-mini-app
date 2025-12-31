@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE products SET image = '/images/products/milk-tea-cup.png' WHERE id IN (1, 2, 3, 4, 5);\nUPDATE products SET image = '/images/products/pearl-milk-tea.png' WHERE id = 1;\nUPDATE products SET image = '/images/products/fruit-tea-cup.png' WHERE id IN (6, 7, 8, 9, 10, 11, 12, 13);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute UPDATE products SET image = '/images/products/milk-tea-cup.png' WHERE id IN (1, 2, 3, 4, 5);\nUPDATE products SET image = '/images/products/pearl-milk-tea.png' WHERE id = 1;\nUPDATE products SET image = '/images/products/fruit-tea-cup.png' WHERE id IN (6, 7, 8, 9, 10, 11, 12, 13);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2071
+}
