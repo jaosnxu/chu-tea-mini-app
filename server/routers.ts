@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { iikoRouter } from "./routers/iiko.js";
 import { paymentRouter } from "./routers/payment.js";
 import { analyticsRouter } from "./routers/analytics.js";
+import { reviewRouter } from "./routers/review.js";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
@@ -13,6 +14,7 @@ export const appRouter = router({
   iiko: iikoRouter,
   payment: paymentRouter,
   analytics: analyticsRouter,
+  review: reviewRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -381,13 +383,28 @@ export const appRouter = router({
         if (payment && payment.status === 'succeeded' && payment.gatewayPaymentId) {
           try {
             // 自动发起退款
-            const yookassa = await import('./yookassa');
-            await yookassa.createRefund({
+            const { createRefund } = await import('./payment/yookassa.js');
+            const refund = await createRefund({
               paymentId: payment.gatewayPaymentId,
-              amount: payment.amount,
-              currency: payment.currency,
-              description: `Auto refund for cancelled order ${input.id}`,
+              amount: parseFloat(payment.amount),
+              reason: `Auto refund for cancelled order ${input.id}`,
             });
+            
+            // 保存退款记录
+            await db.createRefund({
+              paymentId: payment.id,
+              refundNo: refund.id,
+              gatewayRefundId: refund.id,
+              amount: payment.amount,
+              currency: 'RUB',
+              reason: input.reason || 'Order cancelled',
+              status: refund.status === 'succeeded' ? 'succeeded' : 'pending',
+            });
+            
+            // 更新支付状态
+            if (refund.status === 'succeeded') {
+              await db.updatePaymentStatus(payment.id, 'refunded');
+            }
           } catch (error) {
             console.error('[Auto Refund Error]', error);
             // 退款失败不影响订单取消

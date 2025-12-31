@@ -1,1 +1,0 @@
-ALTER TABLE `orders` ADD `pickupCode` varchar(4);

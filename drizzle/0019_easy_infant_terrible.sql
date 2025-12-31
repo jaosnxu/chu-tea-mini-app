@@ -1,1 +1,0 @@
-ALTER TABLE `userCoupons` ADD `campaignId` varchar(64);

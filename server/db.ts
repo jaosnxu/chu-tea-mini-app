@@ -10,7 +10,7 @@ import {
   notifications, notificationTemplates, notificationRules,
   telegramBotConfigs, adminTelegramBindings, yookassaConfig,
   productConfig, productOptionConfig, userNotificationPreferences,
-  marketingTriggers, triggerExecutions,
+  marketingTriggers, triggerExecutions, orderReviews, reviewLikes,
   InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -3594,5 +3594,312 @@ export async function getTriggerExecutionStats(triggerId: number) {
     successRate: Math.round(successRate * 100) / 100,
     recentExecutions: recentExecutions.length,
     lastExecutedAt: executions.length > 0 ? executions[0].executedAt : null,
+  };
+}
+
+
+// ==================== 订单评价系统 ====================
+
+/**
+ * 创建订单评价
+ */
+export async function createOrderReview(data: {
+  orderId: number;
+  userId: number;
+  storeId: number;
+  overallRating: number;
+  tasteRating?: number;
+  serviceRating?: number;
+  speedRating?: number;
+  packagingRating?: number;
+  content?: string;
+  images?: string[];
+  tags?: string[];
+  isAnonymous?: boolean;
+}) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  await database.insert(orderReviews).values({
+    orderId: data.orderId,
+    userId: data.userId,
+    storeId: data.storeId,
+    overallRating: data.overallRating,
+    tasteRating: data.tasteRating,
+    serviceRating: data.serviceRating,
+    speedRating: data.speedRating,
+    packagingRating: data.packagingRating,
+    content: data.content,
+    images: data.images as any,
+    tags: data.tags as any,
+    isAnonymous: data.isAnonymous || false,
+    isVisible: true,
+    status: 'approved',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  return { success: true };
+}
+
+/**
+ * 获取订单的评价
+ */
+export async function getOrderReview(orderId: number) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  const reviews = await database
+    .select()
+    .from(orderReviews)
+    .where(eq(orderReviews.orderId, orderId))
+    .limit(1);
+
+  return reviews[0] || null;
+}
+
+/**
+ * 获取商品的所有评价
+ */
+export async function getProductReviews(productId: number, options?: {
+  limit?: number;
+  offset?: number;
+  minRating?: number;
+}) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  // 通过订单项关联获取商品评价
+  const conditions = [
+    eq(orderReviews.isVisible, true),
+    eq(orderReviews.status, 'approved'),
+  ];
+
+  if (options?.minRating) {
+    conditions.push(gte(orderReviews.overallRating, options.minRating));
+  }
+
+  const reviews = await database
+    .select({
+      review: orderReviews,
+      user: users,
+      order: orders,
+    })
+    .from(orderReviews)
+    .leftJoin(users, eq(orderReviews.userId, users.id))
+    .leftJoin(orders, eq(orderReviews.orderId, orders.id))
+    .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+    .where(and(
+      eq(orderItems.productId, productId),
+      ...conditions
+    ))
+    .orderBy(desc(orderReviews.createdAt))
+    .limit(options?.limit || 20)
+    .offset(options?.offset || 0);
+
+  return reviews;
+}
+
+/**
+ * 获取门店的所有评价
+ */
+export async function getStoreReviews(storeId: number, options?: {
+  limit?: number;
+  offset?: number;
+  minRating?: number;
+}) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  const conditions = [
+    eq(orderReviews.storeId, storeId),
+    eq(orderReviews.isVisible, true),
+    eq(orderReviews.status, 'approved'),
+  ];
+
+  if (options?.minRating) {
+    conditions.push(gte(orderReviews.overallRating, options.minRating));
+  }
+
+  const reviews = await database
+    .select({
+      review: orderReviews,
+      user: users,
+    })
+    .from(orderReviews)
+    .leftJoin(users, eq(orderReviews.userId, users.id))
+    .where(and(...conditions))
+    .orderBy(desc(orderReviews.createdAt))
+    .limit(options?.limit || 20)
+    .offset(options?.offset || 0);
+
+  return reviews;
+}
+
+/**
+ * 获取用户的所有评价
+ */
+export async function getUserReviews(userId: number, options?: {
+  limit?: number;
+  offset?: number;
+}) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  const reviews = await database
+    .select({
+      review: orderReviews,
+      order: orders,
+      store: stores,
+    })
+    .from(orderReviews)
+    .leftJoin(orders, eq(orderReviews.orderId, orders.id))
+    .leftJoin(stores, eq(orderReviews.storeId, stores.id))
+    .where(eq(orderReviews.userId, userId))
+    .orderBy(desc(orderReviews.createdAt))
+    .limit(options?.limit || 20)
+    .offset(options?.offset || 0);
+
+  return reviews;
+}
+
+/**
+ * 商家回复评价
+ */
+export async function replyToReview(reviewId: number, reply: string, repliedBy: number) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  await database
+    .update(orderReviews)
+    .set({
+      reply,
+      repliedBy,
+      repliedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(orderReviews.id, reviewId));
+
+  return { success: true };
+}
+
+/**
+ * 点赞/点踩评价
+ */
+export async function likeReview(reviewId: number, userId: number, type: 'like' | 'dislike') {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  // 检查是否已经点赞/点踩
+  const existing = await database
+    .select()
+    .from(reviewLikes)
+    .where(and(
+      eq(reviewLikes.reviewId, reviewId),
+      eq(reviewLikes.userId, userId)
+    ))
+    .limit(1);
+
+  if (existing.length > 0) {
+    // 更新类型
+    await database
+      .update(reviewLikes)
+      .set({ type })
+      .where(eq(reviewLikes.id, existing[0].id));
+  } else {
+    // 新增
+    await database.insert(reviewLikes).values({
+      reviewId,
+      userId,
+      type,
+      createdAt: new Date(),
+    });
+  }
+
+  return { success: true };
+}
+
+/**
+ * 取消点赞/点踩
+ */
+export async function unlikeReview(reviewId: number, userId: number) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  await database
+    .delete(reviewLikes)
+    .where(and(
+      eq(reviewLikes.reviewId, reviewId),
+      eq(reviewLikes.userId, userId)
+    ));
+
+  return { success: true };
+}
+
+/**
+ * 获取评价统计
+ */
+export async function getReviewStatistics(storeId?: number, productId?: number) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  const conditions = [
+    eq(orderReviews.isVisible, true),
+    eq(orderReviews.status, 'approved'),
+  ];
+
+  if (storeId) {
+    conditions.push(eq(orderReviews.storeId, storeId));
+  }
+
+  let query = database
+    .select()
+    .from(orderReviews)
+    .where(and(...conditions));
+
+  // 如果是商品评价，需要通过订单项关联
+  if (productId) {
+    const reviews = await database
+      .select({ review: orderReviews })
+      .from(orderReviews)
+      .leftJoin(orders, eq(orderReviews.orderId, orders.id))
+      .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+      .where(and(
+        eq(orderItems.productId, productId),
+        ...conditions
+      ));
+
+    const allReviews = reviews.map(r => r.review);
+
+    return calculateReviewStats(allReviews);
+  }
+
+  const allReviews = await query;
+  return calculateReviewStats(allReviews);
+}
+
+function calculateReviewStats(reviews: any[]) {
+  const total = reviews.length;
+  
+  if (total === 0) {
+    return {
+      total: 0,
+      averageRating: 0,
+      ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    };
+  }
+
+  const sum = reviews.reduce((acc, r) => acc + r.overallRating, 0);
+  const averageRating = sum / total;
+
+  const ratingDistribution = reviews.reduce((acc, r) => {
+    acc[r.overallRating] = (acc[r.overallRating] || 0) + 1;
+    return acc;
+  }, { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
+
+  return {
+    total,
+    averageRating: Math.round(averageRating * 10) / 10,
+    ratingDistribution,
   };
 }

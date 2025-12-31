@@ -1313,3 +1313,53 @@ export const triggerExecutions = mysqlTable("triggerExecutions", {
 
 export type TriggerExecution = typeof triggerExecutions.$inferSelect;
 export type InsertTriggerExecution = typeof triggerExecutions.$inferInsert;
+
+
+// ==================== 订单评价系统 ====================
+
+export const orderReviews = mysqlTable("orderReviews", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),
+  userId: int("userId").notNull(),
+  storeId: int("storeId").notNull(),
+  
+  // 评分（1-5星）
+  overallRating: int("overallRating").notNull(), // 总体评分
+  tasteRating: int("tasteRating"), // 口味评分
+  serviceRating: int("serviceRating"), // 服务评分
+  speedRating: int("speedRating"), // 速度评分
+  packagingRating: int("packagingRating"), // 包装评分
+  
+  // 评价内容
+  content: text("content"), // 评价文字
+  images: json("images").$type<string[]>(), // 评价图片 URLs
+  tags: json("tags").$type<string[]>(), // 评价标签（好评/差评标签）
+  
+  // 商家回复
+  reply: text("reply"), // 商家回复内容
+  repliedAt: timestamp("repliedAt"), // 回复时间
+  repliedBy: int("repliedBy"), // 回复人ID
+  
+  // 状态
+  isAnonymous: boolean("isAnonymous").default(false).notNull(), // 是否匿名
+  isVisible: boolean("isVisible").default(true).notNull(), // 是否显示
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("approved").notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type OrderReview = typeof orderReviews.$inferSelect;
+export type InsertOrderReview = typeof orderReviews.$inferInsert;
+
+// 评价点赞/点踩
+export const reviewLikes = mysqlTable("reviewLikes", {
+  id: int("id").autoincrement().primaryKey(),
+  reviewId: int("reviewId").notNull(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["like", "dislike"]).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ReviewLike = typeof reviewLikes.$inferSelect;
+export type InsertReviewLike = typeof reviewLikes.$inferInsert;
