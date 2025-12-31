@@ -2,6 +2,7 @@ import { z } from "zod";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, router } from "./trpc";
 import { getDeliverySettings, updateDeliverySettings } from "../db/deliverySettings";
+import { getPointsRules, updatePointsRules } from "../db/pointsRules";
 
 export const systemRouter = router({
   health: publicProcedure
@@ -42,6 +43,33 @@ export const systemRouter = router({
     )
     .mutation(async ({ input }) => {
       await updateDeliverySettings(input);
+      return { success: true };
+    }),
+
+  // 积分规则设置
+  getPointsRules: publicProcedure.query(async () => {
+    return await getPointsRules();
+  }),
+
+  updatePointsRules: adminProcedure
+    .input(
+      z.object({
+        spendPerPoint: z.number().min(1),
+        levelBonus: z.object({
+          normal: z.number().min(0).max(100),
+          silver: z.number().min(0).max(100),
+          gold: z.number().min(0).max(100),
+          diamond: z.number().min(0).max(100),
+        }),
+        upgradeThreshold: z.object({
+          silver: z.number().min(0),
+          gold: z.number().min(0),
+          diamond: z.number().min(0),
+        }),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await updatePointsRules(input);
       return { success: true };
     }),
 });

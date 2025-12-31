@@ -9,7 +9,7 @@ import { trpc } from '@/lib/trpc';
 
 export default function PointsRules() {
   const { t } = useTranslation();
-  const [rublePerPoint, setRublePerPoint] = useState(30);
+  const [spendPerPoint, setSpendPerPoint] = useState(30);
   const [levelBonus, setLevelBonus] = useState({ normal: 15, silver: 17, gold: 20, diamond: 25 });
   const [upgradeThreshold, setUpgradeThreshold] = useState({ silver: 5000, gold: 20000, diamond: 50000 });
   const [isSaving, setIsSaving] = useState(false);
@@ -19,21 +19,21 @@ export default function PointsRules() {
 
   useEffect(() => {
     if (rules) {
-      setRublePerPoint(rules.rublePerPoint);
+      setSpendPerPoint(rules.spendPerPoint);
       setLevelBonus(rules.levelBonus);
       setUpgradeThreshold(rules.upgradeThreshold);
     }
   }, [rules]);
 
   const handleSave = async () => {
-    if (rublePerPoint < 1) {
+    if (spendPerPoint < 1) {
       toast.error('兑换比例必须大于0');
       return;
     }
 
     setIsSaving(true);
     try {
-      await updateMutation.mutateAsync({ rublePerPoint, levelBonus, upgradeThreshold });
+      await updateMutation.mutateAsync({ spendPerPoint, levelBonus, upgradeThreshold });
       toast.success('积分规则已保存');
     } catch (error) {
       toast.error('保存失败');
@@ -54,7 +54,7 @@ export default function PointsRules() {
           <Label className="text-base font-medium">消费积分兑换比例</Label>
           <p className="text-sm text-gray-500 mb-2">设置多少卢布可以兑换1积分</p>
           <div className="flex items-center gap-2">
-            <Input type="number" min="1" value={rublePerPoint} onChange={(e) => setRublePerPoint(Number(e.target.value))} className="w-32" />
+            <Input type="number" min="1" value={spendPerPoint} onChange={(e) => setSpendPerPoint(Number(e.target.value))} className="w-32" />
             <span className="text-sm">卢布 = 1 积分</span>
           </div>
         </div>
@@ -95,11 +95,11 @@ export default function PointsRules() {
         <div className="border-t pt-6 bg-gray-50 p-4 rounded-lg">
           <h3 className="text-sm font-medium mb-3">积分计算示例（订单金额 300₽）</h3>
           <div className="space-y-1 text-sm">
-            <div className="flex justify-between"><span>基础积分:</span><span className="font-medium">{Math.floor(300 / rublePerPoint)} 积分</span></div>
+            <div className="flex justify-between"><span>基础积分:</span><span className="font-medium">{Math.floor(300 / spendPerPoint)} 积分</span></div>
             {(['normal', 'silver', 'gold', 'diamond'] as const).map((level) => (
               <div key={level} className="flex justify-between text-xs">
                 <span>{level === 'normal' ? '普通' : level === 'silver' ? '白银' : level === 'gold' ? '黄金' : '钻石'} (+{levelBonus[level]}%):</span>
-                <span className="font-medium">{Math.floor(300 / rublePerPoint) + Math.floor((300 / rublePerPoint) * levelBonus[level] / 100)} 积分</span>
+                <span className="font-medium">{Math.floor(300 / spendPerPoint) + Math.floor((300 / spendPerPoint) * levelBonus[level] / 100)} 积分</span>
               </div>
             ))}
           </div>

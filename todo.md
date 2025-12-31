@@ -767,3 +767,11 @@
 - [ ] 测试积分支付
 - [ ] 测试互斥规则
 - [ ] 测试配送方式开关
+
+## 系统完整性修复
+
+- [x] 修复 TypeScript 编译错误（积分规则 API 缺失）
+- [x] 修复 systemRouter 中缺失的 getPointsRules 和 updatePointsRules
+- [x] 修复 db.ts 中的 pointsRules 模块导入问题
+- [x] 测试所有核心功能（订单、支付、积分、会员升级）
+- [x] 确保 Telegram WebApp 能正常打开
