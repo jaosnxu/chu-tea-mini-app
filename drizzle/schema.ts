@@ -1083,3 +1083,15 @@ export const iikoMenuSync = mysqlTable("iiko_menu_sync", {
 
 export type IikoMenuSync = typeof iikoMenuSync.$inferSelect;
 export type InsertIikoMenuSync = typeof iikoMenuSync.$inferInsert;
+
+// ==================== IIKO 分类映射表 ====================
+
+export const iikoCategoryMapping = mysqlTable("iiko_category_mapping", {
+  id: int("id").primaryKey().autoincrement(),
+  iikoGroupId: varchar("iiko_group_id", { length: 255 }).notNull(), // IIKO 商品分组 ID
+  iikoGroupName: varchar("iiko_group_name", { length: 255 }).notNull(), // IIKO 商品分组名称
+  localCategoryId: int("local_category_id").notNull(), // 本地分类 ID
+  storeId: int("store_id"), // 门店 ID（可选，用于多门店场景）
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});

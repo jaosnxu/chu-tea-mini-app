@@ -204,4 +204,76 @@ export const iikoRouter = router({
 
     return getSchedulerStatus();
   }),
+
+  // ==================== 分类映射管理 ====================
+
+  /**
+   * 获取所有分类映射
+   */
+  getCategoryMappings: protectedProcedure
+    .input(z.object({ storeId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can access category mappings" });
+      }
+
+      const { getAllCategoryMappings } = await import("../iiko-category-mapping-db.js");
+      return await getAllCategoryMappings(input?.storeId);
+    }),
+
+  /**
+   * 创建分类映射
+   */
+  createCategoryMapping: protectedProcedure
+    .input(
+      z.object({
+        iikoGroupId: z.string(),
+        iikoGroupName: z.string(),
+        localCategoryId: z.number(),
+        storeId: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can create category mappings" });
+      }
+
+      const { createCategoryMapping } = await import("../iiko-category-mapping-db.js");
+      return await createCategoryMapping(input);
+    }),
+
+  /**
+   * 更新分类映射
+   */
+  updateCategoryMapping: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        localCategoryId: z.number().optional(),
+        iikoGroupName: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can update category mappings" });
+      }
+
+      const { id, ...data } = input;
+      const { updateCategoryMapping } = await import("../iiko-category-mapping-db.js");
+      return await updateCategoryMapping(id, data);
+    }),
+
+  /**
+   * 删除分类映射
+   */
+  deleteCategoryMapping: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can delete category mappings" });
+      }
+
+      const { deleteCategoryMapping } = await import("../iiko-category-mapping-db.js");
+      return await deleteCategoryMapping(input.id);
+    }),
 });
