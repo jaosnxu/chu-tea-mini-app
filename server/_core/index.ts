@@ -40,7 +40,9 @@ async function startServer() {
   // Telegram Webhook
   app.post("/api/telegram/webhook", async (req, res) => {
     try {
+      console.log('[Telegram Webhook] Received:', JSON.stringify(req.body, null, 2));
       const result = await handleTelegramWebhook(req.body);
+      console.log('[Telegram Webhook] Result:', result);
       res.json(result);
     } catch (error) {
       console.error('[Telegram Webhook] Error:', error);

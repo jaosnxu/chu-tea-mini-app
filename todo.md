@@ -277,3 +277,10 @@
 - [x] 实现自动 Webhook 设置功能
 - [x] 实现测试连接功能
 - [x] 测试 Telegram API 配置流程
+
+## Telegram Bot 实际配置和测试
+- [x] 在数据库中更新 Telegram Bot Token
+- [x] 设置 Telegram Webhook
+- [x] 测试 Bot 连接和消息发送
+- [x] 验证管理员绑定流程
+- [x] 测试新订单通知推送
