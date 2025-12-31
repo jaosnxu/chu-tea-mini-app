@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE userCoupons ADD COLUMN campaignId VARCHAR(64) NULL COMMENT '营销活动ID，用于追踪发放来源'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute ALTER TABLE userCoupons ADD COLUMN campaignId VARCHAR(64) NULL COMMENT '营销活动ID，用于追踪发放来源'",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1861
+}

@@ -1397,6 +1397,85 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getTriggerExecutionStats(input.triggerId);
       }),
+    
+    // 获取模板列表
+    getTemplates: adminProcedure
+      .input(z.object({
+        category: z.enum(['user_lifecycle', 'engagement', 'retention', 'promotion']).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { triggerTemplates, getTemplatesByCategory } = await import('./config/triggerTemplates');
+        if (input?.category) {
+          return getTemplatesByCategory(input.category);
+        }
+        return triggerTemplates;
+      }),
+    
+    // 获取模板分类
+    getTemplateCategories: adminProcedure
+      .query(async () => {
+        const { getTemplateCategories } = await import('./config/triggerTemplates');
+        return getTemplateCategories();
+      }),
+    
+    // 从模板创建触发器
+    createFromTemplate: adminProcedure
+      .input(z.object({
+        templateId: z.string(),
+        name: z.string().optional(), // 可选：覆盖模板名称
+        actionConfig: z.any().optional(), // 可选：覆盖动作配置（如选择优惠券模板ID）
+      }))
+      .mutation(async ({ input }) => {
+        const { getTemplateById } = await import('./config/triggerTemplates');
+        const template = getTemplateById(input.templateId);
+        
+        if (!template) {
+          throw new Error('模板不存在');
+        }
+        
+        // 合并配置
+        const triggerData = {
+          name: input.name || template.name,
+          triggerType: template.triggerType,
+          conditions: template.conditions,
+          action: template.action,
+          actionConfig: input.actionConfig || template.actionConfig,
+          isActive: template.isActive,
+        };
+        
+        return await db.createMarketingTrigger(triggerData);
+      }),
+    
+    // 获取触发器效果统计
+    getPerformance: adminProcedure
+      .input(z.object({
+        triggerId: z.number(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        const { getTriggerPerformance } = await import('./db/marketingAnalytics');
+        return await getTriggerPerformance(input.triggerId, {
+          startDate: input.startDate ? new Date(input.startDate) : undefined,
+          endDate: input.endDate ? new Date(input.endDate) : undefined,
+        });
+      }),
+    
+    // 获取所有触发器效果排名
+    getPerformanceRanking: adminProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        limit: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { getTriggerPerformanceRanking } = await import('./db/marketingAnalytics');
+        return await getTriggerPerformanceRanking({
+          startDate: input?.startDate ? new Date(input.startDate) : undefined,
+          endDate: input?.endDate ? new Date(input.endDate) : undefined,
+          limit: input?.limit,
+        });
+      }),
   }),
 });
 

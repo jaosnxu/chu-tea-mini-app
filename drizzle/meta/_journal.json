@@ -127,6 +127,20 @@
       "when": 1767206064304,
       "tag": "0017_light_vivisector",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1767207221586,
+      "tag": "0018_black_hex",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1767207544430,
+      "tag": "0019_easy_infant_terrible",
+      "breakpoints": true
     }
   ]
 }

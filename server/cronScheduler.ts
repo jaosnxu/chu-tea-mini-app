@@ -66,9 +66,44 @@ export class CronScheduler {
 
         console.log(`[CronScheduler] Found ${churnTriggers.length} churn triggers`);
 
-        // TODO: 实现流失用户查询和触发逻辑
-        // 这里需要查询数据库找出N天未购买的用户
-        // 然后为每个用户调用 triggerEngine.handleUserChurn()
+        // 对每个流失触发器执行检查
+        for (const trigger of churnTriggers) {
+          try {
+            const inactiveDays = (trigger.conditions as any)?.inactiveDays || 7;
+            
+            // 查询流失用户（N天未下单）
+            const { getDb } = await import('./db');
+            const db = await getDb();
+            if (!db) continue;
+            
+            const { users, orders } = await import('../drizzle/schema');
+            const { sql, and, lt, isNull } = await import('drizzle-orm');
+            
+            // 计算截止日期
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - inactiveDays);
+            
+            // 查找流失用户：最后一次订单时间早于截止日期
+            const inactiveUsers = await db
+              .select({
+                userId: users.id,
+                lastOrderDate: sql<Date>`MAX(${orders.createdAt})`,
+              })
+              .from(users)
+              .leftJoin(orders, sql`${users.id} = ${orders.userId}`)
+              .groupBy(users.id)
+              .having(sql`MAX(${orders.createdAt}) < ${cutoffDate.toISOString()} OR MAX(${orders.createdAt}) IS NULL`);
+            
+            console.log(`[CronScheduler] Found ${inactiveUsers.length} inactive users for trigger ${trigger.id}`);
+            
+            // 为每个流失用户触发营销动作
+            for (const user of inactiveUsers) {
+              await this.triggerEngine.handleUserChurn(user.userId, inactiveDays);
+            }
+          } catch (error) {
+            console.error(`[CronScheduler] Error processing churn trigger ${trigger.id}:`, error);
+          }
+        }
         
       } catch (error) {
         console.error('[CronScheduler] Error checking churned users:', error);
@@ -96,9 +131,43 @@ export class CronScheduler {
 
         console.log(`[CronScheduler] Found ${birthdayTriggers.length} birthday triggers`);
 
-        // TODO: 实现生日用户查询和触发逻辑
-        // 这里需要查询数据库找出今天生日的用户
-        // 然后为每个用户调用 triggerEngine.handleUserBirthday()
+        if (birthdayTriggers.length === 0) return;
+
+        // 注意：users 表没有 birthday 字段，这里使用注册纪念日作为替代
+        // 查询今天是注册纪念日的用户
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) return;
+        
+        const { users } = await import('../drizzle/schema');
+        const { sql } = await import('drizzle-orm');
+        
+        // 获取今天的月份和日期
+        const today = new Date();
+        const month = today.getMonth() + 1; // 0-11 -> 1-12
+        const day = today.getDate();
+        
+        // 查找今天是注册纪念日的用户（使用 createdAt 字段）
+        const anniversaryUsers = await db
+          .select({
+            userId: users.id,
+            createdAt: users.createdAt,
+          })
+          .from(users)
+          .where(
+            sql`MONTH(${users.createdAt}) = ${month} AND DAY(${users.createdAt}) = ${day}`
+          );
+        
+        console.log(`[CronScheduler] Found ${anniversaryUsers.length} anniversary users today (registration anniversary)`);
+        
+        // 为每个纪念日用户触发营销动作
+        for (const user of anniversaryUsers) {
+          try {
+            await this.triggerEngine.handleUserBirthday(user.userId);
+          } catch (error) {
+            console.error(`[CronScheduler] Error processing anniversary for user ${user.userId}:`, error);
+          }
+        }
         
       } catch (error) {
         console.error('[CronScheduler] Error checking birthday users:', error);

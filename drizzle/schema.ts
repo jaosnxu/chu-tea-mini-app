@@ -249,6 +249,7 @@ export const orders = mysqlTable("orders", {
   completedAt: timestamp("completedAt"),
   pointsEarned: int("pointsEarned").default(0),
   referrerId: int("referrerId"),
+  campaignId: varchar("campaignId", { length: 64 }), // 营销活动ID，用于追踪触发器效果
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -340,6 +341,7 @@ export const userCoupons = mysqlTable("userCoupons", {
   usedOrderId: int("usedOrderId"),
   usedAt: timestamp("usedAt"),
   expireAt: timestamp("expireAt"),
+  campaignId: varchar("campaignId", { length: 64 }), // 营销活动ID，用于追踪发放来源
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

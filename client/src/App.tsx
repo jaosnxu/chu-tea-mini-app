@@ -59,6 +59,7 @@ const AdminPaymentHistory = lazy(() => import("./pages/admin/PaymentHistory"));
 const AdminProductConfig = lazy(() => import("./pages/admin/ProductConfig"));
 const AdminMarketingTriggers = lazy(() => import("./pages/admin/MarketingTriggers"));
 const AdminTriggerExecutionHistory = lazy(() => import("./pages/admin/TriggerExecutionHistory"));
+const AdminTriggerTemplates = lazy(() => import("./pages/admin/TriggerTemplates"));
 
 function Router() {
   return (
@@ -121,6 +122,7 @@ function Router() {
       <Route path="/admin/product-config" component={() => <AdminLayout><AdminProductConfig /></AdminLayout>} />
       <Route path="/admin/marketing-triggers" component={() => <AdminLayout><AdminMarketingTriggers /></AdminLayout>} />
       <Route path="/admin/trigger-executions/:id" component={() => <AdminLayout><AdminTriggerExecutionHistory /></AdminLayout>} />
+      <Route path="/admin/trigger-templates" component={() => <AdminLayout><AdminTriggerTemplates /></AdminLayout>} />
       
       {/* 404 */}
       <Route component={NotFound} />

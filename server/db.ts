@@ -468,6 +468,7 @@ export async function createOrder(userId: number, data: {
   couponId?: number;
   pointsUsed?: number;
   remark?: string;
+  campaignId?: string; // 营销活动ID
   items: Array<{
     productId: number;
     skuId?: number;
@@ -563,6 +564,7 @@ export async function createOrder(userId: number, data: {
     remarkZh: data.remark,
     remarkRu: data.remark,
     remarkEn: data.remark,
+    campaignId: data.campaignId, // 记录营销活动ID
   });
   
   const orderId = Number(result[0].insertId);
@@ -922,7 +924,7 @@ export async function getAvailableCoupons(userId: number, params: {
   }));
 }
 
-export async function claimCoupon(userId: number, templateId: number) {
+export async function claimCoupon(userId: number, templateId: number, campaignId?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
@@ -965,6 +967,7 @@ export async function claimCoupon(userId: number, templateId: number) {
     userId,
     templateId,
     expireAt,
+    campaignId, // 记录营销活动ID
   });
   
   const couponId = Number(result[0].insertId);

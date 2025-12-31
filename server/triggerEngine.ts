@@ -119,13 +119,16 @@ export class TriggerEngine {
   /**
    * 执行触发器动作
    */
-  private static async executeAction(trigger: any, userId: number): Promise<void> {
+  private static async executeAction(trigger: any, userId: number, campaignId?: string): Promise<void> {
     try {
-      let result: any = {};
+      // 执行动作
+      let result: any;
+      // 生成 campaignId（如果没有提供）
+      const finalCampaignId = campaignId || `trigger_${trigger.id}_${Date.now()}`;
       
       switch (trigger.action) {
         case 'send_coupon':
-          result = await this.sendCoupon(userId, trigger.actionConfig);
+          result = await this.sendCoupon(userId, trigger.actionConfig, finalCampaignId);
           break;
         case 'send_notification':
           result = await this.sendNotification(userId, trigger.actionConfig);
@@ -165,13 +168,13 @@ export class TriggerEngine {
   /**
    * 发放优惠券
    */
-  private static async sendCoupon(userId: number, config: any): Promise<any> {
+  private static async sendCoupon(userId: number, config: any, campaignId: string): Promise<any> {
     const couponTemplateId = config.couponTemplateId;
     if (!couponTemplateId) {
       throw new Error('Missing couponTemplateId in actionConfig');
     }
     
-    const result = await db.claimCoupon(userId, couponTemplateId);
+    const result = await db.claimCoupon(userId, couponTemplateId, campaignId);
     return { couponId: result.couponId };
   }
   

@@ -224,9 +224,14 @@ export default function MarketingTriggers() {
 
   return (
     <div className="container py-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">营销触发器</h1>
-        <Button onClick={() => setShowForm(true)}>创建触发器</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setLocation('/admin/trigger-templates')}>
+            模板库
+          </Button>
+          <Button onClick={() => setShowForm(true)}>创建触发器</Button>
+        </div>
       </div>
 
       <div className="space-y-4">
