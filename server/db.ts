@@ -1983,7 +1983,11 @@ export async function sendNewOrderNotification(orderId: number, orderNumber: str
   // 获取需要接收新订单通知的管理员
   const admins = await getAdminsForNotification('newOrder');
   
+  // 导入 Telegram 服务
+  const { sendTelegramNotification } = await import('./telegram');
+  
   for (const admin of admins) {
+    // 创建系统通知
     await createNotification({
       recipientType: 'admin',
       recipientId: admin.adminUserId,
@@ -1999,6 +2003,14 @@ export async function sendNewOrderNotification(orderId: number, orderNumber: str
       relatedId: orderId,
       status: 'sent',
     });
+    
+    // 发送 Telegram 通知
+    if (admin.isVerified && admin.telegramChatId) {
+      await sendTelegramNotification(
+        admin.telegramChatId,
+        `📦 *Новый заказ*\n\nЗаказ: #${orderNumber}\nСумма: ₽${totalAmount}\nМагазин: ${storeName}`
+      );
+    }
   }
 }
 
@@ -2008,6 +2020,7 @@ export async function sendLowStockNotification(productId: number, productName: s
   if (!db) return;
   
   const admins = await getAdminsForNotification('lowStock');
+  const { sendTelegramNotification } = await import('./telegram');
   
   for (const admin of admins) {
     await createNotification({
@@ -2025,6 +2038,14 @@ export async function sendLowStockNotification(productId: number, productName: s
       relatedId: productId,
       status: 'sent',
     });
+    
+    // 发送 Telegram 通知
+    if (admin.isVerified && admin.telegramChatId) {
+      await sendTelegramNotification(
+        admin.telegramChatId,
+        `⚠️ *Предупреждение о запасах*\n\nТовар: ${productName}\nОстаток: ${currentStock}`
+      );
+    }
   }
 }
 
@@ -2034,6 +2055,7 @@ export async function sendPaymentFailedNotification(orderId: number, orderNumber
   if (!db) return;
   
   const admins = await getAdminsForNotification('paymentFailed');
+  const { sendTelegramNotification } = await import('./telegram');
   
   for (const admin of admins) {
     await createNotification({
@@ -2051,6 +2073,14 @@ export async function sendPaymentFailedNotification(orderId: number, orderNumber
       relatedId: orderId,
       status: 'sent',
     });
+    
+    // 发送 Telegram 通知
+    if (admin.isVerified && admin.telegramChatId) {
+      await sendTelegramNotification(
+        admin.telegramChatId,
+        `❌ *Ошибка оплаты*\n\nЗаказ: #${orderNumber}\nОшибка: ${errorMessage}`
+      );
+    }
   }
 }
 
@@ -2060,6 +2090,7 @@ export async function sendSystemAlertNotification(title: string, content: string
   if (!db) return;
   
   const admins = await getAdminsForNotification('systemAlert');
+  const { sendTelegramNotification } = await import('./telegram');
   
   for (const admin of admins) {
     await createNotification({
@@ -2075,5 +2106,14 @@ export async function sendSystemAlertNotification(title: string, content: string
       priority,
       status: 'sent',
     });
+    
+    // 发送 Telegram 通知
+    if (admin.isVerified && admin.telegramChatId) {
+      const emoji = priority === 'urgent' ? '🚨' : priority === 'high' ? '⚠️' : 'ℹ️';
+      await sendTelegramNotification(
+        admin.telegramChatId,
+        `${emoji} *${title}*\n\n${content}`
+      );
+    }
   }
 }

@@ -27,7 +27,8 @@
     "send": "发送",
     "sending": "发送中...",
     "all": "全部",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "optional": "可选"
   },
   "nav": {
     "home": "首页",
@@ -409,7 +410,16 @@
       "step1": "在 Telegram 中搜索并打开 CHU TEA Bot",
       "step2": "发送下方的验证码给 Bot",
       "step3": "等待验证完成",
-      "verificationCode": "验证码"
+      "verificationCode": "验证码",
+      "rebind": "重新绑定",
+      "chatIdPlaceholder": "输入您的 Telegram Chat ID",
+      "chatIdHint": "发送 /start 给 @CHUTeaBot 获取您的 Chat ID",
+      "startBinding": "开始绑定",
+      "sendCodeToBot": "请将此验证码发送给 @CHUTeaBot",
+      "enterCode": "输入验证码",
+      "verify": "验证",
+      "botInfo": "Bot 信息",
+      "botInfoDesc": "配置 Telegram Bot Token 后，系统将自动发送通知"
     },
     "search": {
       "placeholder": "搜索..."

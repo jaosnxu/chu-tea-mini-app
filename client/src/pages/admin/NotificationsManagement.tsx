@@ -61,6 +61,9 @@ export default function NotificationsManagement() {
   const [testTitle, setTestTitle] = useState('');
   const [testContent, setTestContent] = useState('');
   const [testChannel, setTestChannel] = useState<'system' | 'telegram'>('system');
+  const [telegramChatId, setTelegramChatId] = useState('');
+  const [telegramUsername, setTelegramUsername] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
 
   // 获取通知历史
   const { data: notifications = [], isLoading, refetch } = trpc.adminNotifications.list.useQuery({
@@ -84,6 +87,36 @@ export default function NotificationsManagement() {
 
   // 更新通知设置
   const updateSettingsMutation = trpc.adminNotifications.updateSettings.useMutation();
+
+  // 绑定 Telegram
+  const bindTelegramMutation = trpc.adminNotifications.bindTelegram.useMutation({
+    onSuccess: () => {
+      refetchTelegramBinding();
+    },
+  });
+
+  // 验证 Telegram
+  const verifyTelegramMutation = trpc.adminNotifications.verifyTelegram.useMutation({
+    onSuccess: () => {
+      setVerificationCode('');
+      refetchTelegramBinding();
+    },
+  });
+
+  const { refetch: refetchTelegramBinding } = trpc.adminNotifications.getTelegramBinding.useQuery();
+
+  const handleBindTelegram = () => {
+    if (!telegramChatId) return;
+    bindTelegramMutation.mutate({
+      telegramChatId,
+      telegramUsername: telegramUsername || undefined,
+    });
+  };
+
+  const handleVerifyTelegram = () => {
+    if (!verificationCode) return;
+    verifyTelegramMutation.mutate({ code: verificationCode });
+  };
 
   const handleSendTest = () => {
     if (!testTitle || !testContent) return;
@@ -381,28 +414,100 @@ export default function NotificationsManagement() {
                       )}
                       <p><strong>{t('admin.notifications.verifiedAt')}:</strong> {formatDate(telegramBinding.verifiedAt!)}</p>
                     </div>
+                    <Button variant="outline" onClick={() => {
+                      setTelegramChatId('');
+                      setTelegramUsername('');
+                    }}>
+                      {t('admin.notifications.rebind')}
+                    </Button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                       <p className="text-yellow-800">{t('admin.notifications.telegramNotConnected')}</p>
                     </div>
+                    
+                    {/* 绑定步骤 */}
                     <div className="space-y-2">
                       <p className="font-medium">{t('admin.notifications.howToConnect')}</p>
-                      <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
+                      <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
                         <li>{t('admin.notifications.step1')}</li>
                         <li>{t('admin.notifications.step2')}</li>
                         <li>{t('admin.notifications.step3')}</li>
                       </ol>
                     </div>
-                    {telegramBinding?.verificationCode && (
-                      <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                        <p className="text-sm text-blue-800 mb-2">{t('admin.notifications.verificationCode')}:</p>
-                        <p className="font-mono text-2xl font-bold text-blue-600">{telegramBinding.verificationCode}</p>
+
+                    {/* 绑定表单 */}
+                    <div className="border rounded-lg p-4 space-y-4">
+                      <div className="space-y-2">
+                        <Label>Chat ID *</Label>
+                        <Input
+                          value={telegramChatId}
+                          onChange={(e) => setTelegramChatId(e.target.value)}
+                          placeholder={t('admin.notifications.chatIdPlaceholder')}
+                        />
+                        <p className="text-xs text-gray-500">{t('admin.notifications.chatIdHint')}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Username ({t('common.optional')})</Label>
+                        <Input
+                          value={telegramUsername}
+                          onChange={(e) => setTelegramUsername(e.target.value)}
+                          placeholder="@username"
+                        />
+                      </div>
+                      <Button 
+                        onClick={handleBindTelegram}
+                        disabled={!telegramChatId || bindTelegramMutation.isPending}
+                      >
+                        {bindTelegramMutation.isPending ? t('common.loading') : t('admin.notifications.startBinding')}
+                      </Button>
+                    </div>
+
+                    {/* 验证码 */}
+                    {telegramBinding?.verificationCode && !telegramBinding.isVerified && (
+                      <div className="border rounded-lg p-4 space-y-4">
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                          <p className="text-sm text-blue-800 mb-2">{t('admin.notifications.verificationCode')}:</p>
+                          <p className="font-mono text-2xl font-bold text-blue-600">{telegramBinding.verificationCode}</p>
+                          <p className="text-xs text-blue-600 mt-2">{t('admin.notifications.sendCodeToBot')}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{t('admin.notifications.enterCode')}</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={verificationCode}
+                              onChange={(e) => setVerificationCode(e.target.value.toUpperCase())}
+                              placeholder="ABC123"
+                              maxLength={6}
+                              className="font-mono"
+                            />
+                            <Button 
+                              onClick={handleVerifyTelegram}
+                              disabled={!verificationCode || verifyTelegramMutation.isPending}
+                            >
+                              {verifyTelegramMutation.isPending ? t('common.loading') : t('admin.notifications.verify')}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Bot 信息 */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('admin.notifications.botInfo')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm">
+                  <p><strong>Bot:</strong> @CHUTeaBot</p>
+                  <p><strong>Webhook URL:</strong> <code className="bg-gray-100 px-2 py-1 rounded">/api/telegram/webhook</code></p>
+                  <p className="text-gray-500">{t('admin.notifications.botInfoDesc')}</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

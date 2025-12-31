@@ -256,3 +256,10 @@
 
 ## 移动端优化
 - [x] 底部导航栏固定在屏幕底部（滚动时始终可见）
+
+## Telegram Bot 配置
+- [x] 创建 Telegram Bot 服务和消息发送功能
+- [x] 实现 Webhook 处理和验证码验证
+- [x] 完善管理员绑定流程和 UI
+- [x] 集成通知推送到 Telegram
+- [x] 测试 Telegram 消息推送

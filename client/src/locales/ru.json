@@ -27,7 +27,8 @@
     "send": "Отправить",
     "sending": "Отправка...",
     "all": "Все",
-    "refresh": "Обновить"
+    "refresh": "Обновить",
+    "optional": "Необязательно"
   },
   "nav": {
     "home": "Главная",
@@ -403,7 +404,16 @@
       "step1": "Найдите CHU TEA Bot в Telegram",
       "step2": "Отправьте код подтверждения боту",
       "step3": "Дождитесь подтверждения",
-      "verificationCode": "Код подтверждения"
+      "verificationCode": "Код подтверждения",
+      "rebind": "Перепривязать",
+      "chatIdPlaceholder": "Введите ваш Telegram Chat ID",
+      "chatIdHint": "Отправьте /start боту @CHUTeaBot чтобы получить Chat ID",
+      "startBinding": "Начать привязку",
+      "sendCodeToBot": "Отправьте этот код боту @CHUTeaBot",
+      "enterCode": "Введите код",
+      "verify": "Подтвердить",
+      "botInfo": "Информация о боте",
+      "botInfoDesc": "После настройки Telegram Bot Token система будет автоматически отправлять уведомления"
     },
     "search": {
       "placeholder": "Поиск..."
