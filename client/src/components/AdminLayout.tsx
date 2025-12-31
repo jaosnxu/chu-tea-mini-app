@@ -35,6 +35,7 @@ import {
   AlertTriangle,
   BarChart3,
   Plug,
+  Cpu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NotificationBell from "@/components/NotificationBell";
@@ -63,6 +64,7 @@ const navItems: NavItem[] = [
   { icon: Users, labelKey: "admin.nav.users", path: "/admin/users" },
   { icon: Bell, labelKey: "admin.nav.notifications", path: "/admin/notifications" },
   { icon: Plug, labelKey: "admin.nav.api", path: "/admin/api" },
+  { icon: Cpu, labelKey: "admin.nav.iiko", path: "/admin/iiko" },
   { icon: FileText, labelKey: "admin.nav.logs", path: "/admin/logs" },
 ];
 

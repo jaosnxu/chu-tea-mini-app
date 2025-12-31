@@ -342,6 +342,7 @@
       "stores": "门店管理",
       "reports": "数据报表",
       "api": "API配置",
+      "iiko": "IIKO配置",
       "alerts": "异常监控",
       "logs": "操作日志",
       "permissions": "权限管理",
