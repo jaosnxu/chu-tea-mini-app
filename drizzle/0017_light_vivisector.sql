@@ -1,0 +1,1 @@
+ALTER TABLE `marketingTriggers` MODIFY COLUMN `triggerType` enum('user_register','first_order','order_amount','user_inactive','user_churn','user_birthday','birthday','time_based','scheduled_time') NOT NULL;

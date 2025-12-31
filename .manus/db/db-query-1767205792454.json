@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE marketingTriggers \nMODIFY COLUMN triggerType ENUM(\n  'user_register',\n  'first_order', \n  'order_amount',\n  'user_inactive',\n  'user_churn',\n  'user_birthday',\n  'birthday',\n  'time_based',\n  'scheduled_time'\n) NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute ALTER TABLE marketingTriggers \nMODIFY COLUMN triggerType ENUM(\n  'user_register',\n  'first_order', \n  'order_amount',\n  'user_inactive',\n  'user_churn',\n  'user_birthday',\n  'birthday',\n  'time_based',\n  'scheduled_time'\n) NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2029
+}

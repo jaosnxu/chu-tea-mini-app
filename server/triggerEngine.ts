@@ -70,8 +70,19 @@ class StrategyFactory {
 
 // 触发器执行引擎
 export class TriggerEngine {
+  private static instance: TriggerEngine;
   private static executionCache: Map<string, number> = new Map();
   private static CACHE_TTL = 60 * 60 * 1000; // 1小时防重复
+  
+  /**
+   * 获取单例实例
+   */
+  public static getInstance(): TriggerEngine {
+    if (!TriggerEngine.instance) {
+      TriggerEngine.instance = new TriggerEngine();
+    }
+    return TriggerEngine.instance;
+  }
   
   /**
    * 处理事件并执行匹配的触发器
@@ -227,6 +238,63 @@ export class TriggerEngine {
     });
     
     keysToDelete.forEach(key => this.executionCache.delete(key));
+  }
+  
+  /**
+   * 处理用户流失事件
+   */
+  public async handleUserChurn(userId: number, daysInactive: number): Promise<void> {
+    try {
+      const triggers = await db.getMarketingTriggers({ isActive: true });
+      
+      for (const trigger of triggers) {
+        if (trigger.triggerType !== 'user_churn') continue;
+        
+        const triggerDays = (trigger.conditions as any)?.daysInactive || 30;
+        if (daysInactive < triggerDays) continue;
+        
+        if (TriggerEngine.isRecentlyExecuted(trigger.id, userId)) continue;
+        
+        await TriggerEngine.executeAction(trigger, userId);
+      }
+    } catch (error) {
+      console.error('[TriggerEngine] Error handling user churn:', error);
+    }
+  }
+  
+  /**
+   * 处理用户生日事件
+   */
+  public async handleUserBirthday(userId: number): Promise<void> {
+    try {
+      const triggers = await db.getMarketingTriggers({ isActive: true });
+      
+      for (const trigger of triggers) {
+        if (trigger.triggerType !== 'user_birthday') continue;
+        
+        if (TriggerEngine.isRecentlyExecuted(trigger.id, userId)) continue;
+        
+        await TriggerEngine.executeAction(trigger, userId);
+      }
+    } catch (error) {
+      console.error('[TriggerEngine] Error handling user birthday:', error);
+    }
+  }
+  
+  /**
+   * 执行触发器（通用方法）
+   */
+  public async executeTrigger(trigger: any, userId: number, context: any): Promise<void> {
+    try {
+      if (TriggerEngine.isRecentlyExecuted(trigger.id, userId)) {
+        console.log(`[TriggerEngine] Trigger ${trigger.id} recently executed for user ${userId}, skipping`);
+        return;
+      }
+      
+      await TriggerEngine.executeAction(trigger, userId);
+    } catch (error) {
+      console.error('[TriggerEngine] Error executing trigger:', error);
+    }
   }
 }
 

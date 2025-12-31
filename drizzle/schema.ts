@@ -1271,8 +1271,11 @@ export const marketingTriggers = mysqlTable("marketingTriggers", {
     "first_order",        // 首单完成
     "order_amount",       // 消费金额达标
     "user_inactive",      // 用户流失（N天未购买）
-    "birthday",           // 用户生日
-    "time_based",         // 基于时间（特定时段）
+    "user_churn",         // 用户流失（别名）
+    "user_birthday",      // 用户生日
+    "birthday",           // 用户生日（别名）
+    "time_based",         // 基于时间的触发
+    "scheduled_time",     // 定时触发
   ]).notNull(),
   conditions: json("conditions").notNull(), // 触发条件（JSON格式）
   // 示例：{ "minAmount": 100, "daysInactive": 30, "timeRange": "09:00-12:00", "userSegment": "new" }

@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, code, nameZh, type, value, isActive FROM couponTemplates WHERE isActive = 1 ORDER BY id LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute SELECT id, code, nameZh, type, value, isActive FROM couponTemplates WHERE isActive = 1 ORDER BY id LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "code": "WELCOME10",
+      "nameZh": "新用户9折券",
+      "type": "percent",
+      "value": "10.00",
+      "isActive": "1"
+    },
+    {
+      "id": "2",
+      "code": "NEWYEAR50",
+      "nameZh": "新年满减券",
+      "type": "fixed",
+      "value": "50.00",
+      "isActive": "1"
+    },
+    {
+      "id": "3",
+      "code": "FREETEA",
+      "nameZh": "免费茶饮券",
+      "type": "gift",
+      "value": "0.00",
+      "isActive": "1"
+    },
+    {
+      "id": "4",
+      "code": "VIP20",
+      "nameZh": "VIP专属8折",
+      "type": "percent",
+      "value": "20.00",
+      "isActive": "1"
+    },
+    {
+      "id": "30001",
+      "code": "TEST-ORDER-1767204130359",
+      "nameZh": "满40减10",
+      "type": "fixed",
+      "value": "10.00",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcode\tnameZh\ttype\tvalue\tisActive\n1\tWELCOME10\t新用户9折券\tpercent\t10.00\t1\n2\tNEWYEAR50\t新年满减券\tfixed\t50.00\t1\n3\tFREETEA\t免费茶饮券\tgift\t0.00\t1\n4\tVIP20\tVIP专属8折\tpercent\t20.00\t1\n30001\tTEST-ORDER-1767204130359\t满40减10\tfixed\t10.00\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1600
+}

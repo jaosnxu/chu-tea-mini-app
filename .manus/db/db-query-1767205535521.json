@@ -1,0 +1,60 @@
+{
+  "query": "SELECT \n  uc.id, \n  uc.userId, \n  ct.nameZh, \n  ct.type, \n  ct.value, \n  uc.status, \n  uc.expireAt,\n  uc.createdAt\nFROM userCoupons uc\nJOIN couponTemplates ct ON uc.templateId = ct.id\nWHERE uc.userId = 2\nORDER BY uc.createdAt DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute SELECT \n  uc.id, \n  uc.userId, \n  ct.nameZh, \n  ct.type, \n  ct.value, \n  uc.status, \n  uc.expireAt,\n  uc.createdAt\nFROM userCoupons uc\nJOIN couponTemplates ct ON uc.templateId = ct.id\nWHERE uc.userId = 2\nORDER BY uc.createdAt DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "15",
+      "userId": "2",
+      "nameZh": "免费茶饮券",
+      "type": "gift",
+      "value": "0.00",
+      "status": "available",
+      "expireAt": "2026-01-07 18:25:21",
+      "createdAt": "2025-12-31 18:25:21"
+    },
+    {
+      "id": "13",
+      "userId": "2",
+      "nameZh": "新用户9折券",
+      "type": "percent",
+      "value": "10.00",
+      "status": "available",
+      "expireAt": "2026-01-30 18:25:21",
+      "createdAt": "2025-12-31 18:25:21"
+    },
+    {
+      "id": "14",
+      "userId": "2",
+      "nameZh": "新年满减券",
+      "type": "fixed",
+      "value": "50.00",
+      "status": "available",
+      "expireAt": "2026-01-15 18:25:21",
+      "createdAt": "2025-12-31 18:25:21"
+    },
+    {
+      "id": "10",
+      "userId": "2",
+      "nameZh": "触发器测试优惠券",
+      "type": "fixed",
+      "value": "10.00",
+      "status": "available",
+      "expireAt": "2026-01-30 18:19:11",
+      "createdAt": "2025-12-31 18:19:11"
+    },
+    {
+      "id": "9",
+      "userId": "2",
+      "nameZh": "触发器测试优惠券",
+      "type": "fixed",
+      "value": "10.00",
+      "status": "available",
+      "expireAt": "2026-01-30 18:19:10",
+      "createdAt": "2025-12-31 18:19:10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tnameZh\ttype\tvalue\tstatus\texpireAt\tcreatedAt\n15\t2\t免费茶饮券\tgift\t0.00\tavailable\t2026-01-07 18:25:21\t2025-12-31 18:25:21\n13\t2\t新用户9折券\tpercent\t10.00\tavailable\t2026-01-30 18:25:21\t2025-12-31 18:25:21\n14\t2\t新年满减券\tfixed\t50.00\tavailable\t2026-01-15 18:25:21\t2025-12-31 18:25:21\n10\t2\t触发器测试优惠券\tfixed\t10.00\tavailable\t2026-01-30 18:19:11\t2025-12-31 18:19:11\n9\t2\t触发器测试优惠券\tfixed\t10.00\tavailable\t2026-01-30 18:19:10\t2025-12-31 18:19:10\n",
+  "stderr": "",
+  "execution_time_ms": 1536
+}

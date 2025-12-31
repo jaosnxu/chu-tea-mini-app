@@ -120,6 +120,13 @@
       "when": 1767204514533,
       "tag": "0016_motionless_smiling_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1767206064304,
+      "tag": "0017_light_vivisector",
+      "breakpoints": true
     }
   ]
 }

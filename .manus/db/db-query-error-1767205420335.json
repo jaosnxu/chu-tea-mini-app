@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, username, openId, telegramChatId FROM user WHERE username LIKE '%Jason%' OR username LIKE '%jason%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute SELECT id, username, openId, telegramChatId FROM user WHERE username LIKE '%Jason%' OR username LIKE '%jason%' LIMIT 5;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table '2kndvhpxenuzulbv32izk7.user' doesn't exist"
+  ]
+}

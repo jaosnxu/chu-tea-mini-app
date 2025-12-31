@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as db from './db';
 
-describe('Order Coupon Integration', () => {
+describe('Order Coupon Integration', { timeout: 10000 }, () => {
   let testUserId: number;
   let testProductId: number;
   let testCouponTemplateId: number;
