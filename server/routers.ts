@@ -103,6 +103,72 @@ export const appRouter = router({
       }),
   }),
 
+  // 商品管理路由（管理员）
+  products: router({
+    list: adminProcedure.query(async () => {
+      return await db.getAllProducts();
+    }),
+    create: adminProcedure
+      .input(z.object({
+        categoryId: z.number(),
+        type: z.enum(['tea', 'mall']),
+        code: z.string(),
+        nameZh: z.string(),
+        nameRu: z.string(),
+        nameEn: z.string(),
+        descriptionZh: z.string().optional(),
+        descriptionRu: z.string().optional(),
+        descriptionEn: z.string().optional(),
+        image: z.string().optional(),
+        basePrice: z.number(),
+        originalPrice: z.number().optional(),
+        pointsEarn: z.number().optional(),
+        pointsRedeem: z.number().optional(),
+        stock: z.number().optional(),
+        iikoId: z.string().optional(),
+        isActive: z.boolean(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createProduct(input);
+      }),
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        categoryId: z.number().optional(),
+        type: z.enum(['tea', 'mall']).optional(),
+        code: z.string().optional(),
+        nameZh: z.string().optional(),
+        nameRu: z.string().optional(),
+        nameEn: z.string().optional(),
+        descriptionZh: z.string().optional(),
+        descriptionRu: z.string().optional(),
+        descriptionEn: z.string().optional(),
+        image: z.string().optional(),
+        basePrice: z.number().optional(),
+        originalPrice: z.number().optional(),
+        pointsEarn: z.number().optional(),
+        pointsRedeem: z.number().optional(),
+        stock: z.number().optional(),
+        iikoId: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.updateProduct(input);
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteProduct(input.id);
+      }),
+  }),
+
+  // 分类管理路由（管理员）
+  categories: router({
+    list: publicProcedure.query(async () => {
+      return await db.getAllCategories();
+    }),
+  }),
+
   // 购物车路由
   cart: router({
     list: protectedProcedure
@@ -903,7 +969,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
-        return await db.createProduct(input, ctx.user.id);
+        return await db.createProduct(input);
       }),
     update: protectedProcedure
       .input(z.object({
@@ -927,13 +993,13 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
-        return await db.updateProduct(input, ctx.user.id);
+        return await db.updateProduct(input);
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
-        return await db.deleteProduct(input.id, ctx.user.id);
+        return await db.deleteProduct(input.id);
       }),
   }),
 

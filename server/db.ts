@@ -1914,39 +1914,47 @@ export async function getAdminProducts(params?: {
     .orderBy(products.sortOrder);
 }
 
-export async function createProduct(data: any, operatorId: number) {
+// 获取所有商品（管理员用）
+export async function getAllProducts() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(products).orderBy(products.sortOrder);
+}
+
+export async function createProduct(data: any) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(products).values(data);
   
-  await logOperation(operatorId, 'products', 'create', result[0].insertId.toString(), data);
-  
   return { success: true, id: Number(result[0].insertId) };
 }
 
-export async function updateProduct(data: { id: number; [key: string]: any }, operatorId: number) {
+export async function updateProduct(data: { id: number; [key: string]: any }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   const { id, ...updateData } = data;
   await db.update(products).set(updateData).where(eq(products.id, id));
   
-  await logOperation(operatorId, 'products', 'update', id.toString(), updateData);
-  
   return { success: true };
 }
 
-export async function deleteProduct(id: number, operatorId: number) {
+export async function deleteProduct(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // 软删除
   await db.update(products).set({ isActive: false }).where(eq(products.id, id));
   
-  await logOperation(operatorId, 'products', 'delete', id.toString(), {});
-  
   return { success: true };
+}
+
+// 获取所有分类（管理员用）
+export async function getAllCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(categories).orderBy(categories.sortOrder);
 }
 
 // ==================== 后台管理 - 订单管理 ====================
