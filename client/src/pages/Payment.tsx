@@ -19,7 +19,7 @@ export default function Payment() {
   
   const { data: order, isLoading: isLoadingOrder } = trpc.order.getById.useQuery({ id: orderId }, { enabled: orderId > 0 });
   const { data: payment } = trpc.payment.getByOrderId.useQuery({ orderId }, { enabled: orderId > 0 });
-  const createPaymentMutation = trpc.payment.create.useMutation();
+  const createPaymentMutation = trpc.payment.createPayment.useMutation();
   
   useEffect(() => {
     if (payment) {
@@ -35,9 +35,6 @@ export default function Payment() {
       const returnUrl = `${window.location.origin}/payment/callback/${orderId}`;
       const result = await createPaymentMutation.mutateAsync({
         orderId: order.id,
-        amount: order.totalAmount,
-        currency: 'RUB',
-        description: `CHU TEA Order #${order.orderNo}`,
         returnUrl,
       });
       

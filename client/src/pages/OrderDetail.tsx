@@ -96,10 +96,9 @@ export default function OrderDetail() {
     
     try {
       await refundMutation.mutateAsync({
-        paymentId: payment.gatewayPaymentId,
-        amount: amount.toFixed(2),
-        currency: 'RUB',
-        description: `Refund ${amount === maxAmount ? 'full' : 'partial'} for order ${order.orderNo}`,
+        paymentId: payment.id,
+        amount: amount,
+        reason: `Refund ${amount === maxAmount ? 'full' : 'partial'} for order ${order.orderNo}`,
       });
       toast.success(t('order.refund.success'));
       setIsRefundDialogOpen(false);

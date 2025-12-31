@@ -56,7 +56,7 @@ export default function PaymentHistory() {
       t('payment.createdAt'),
     ];
 
-    const rows = payments.map(payment => [
+    const rows = payments.map((payment: any) => [
       payment.paymentNo,
       payment.orderId.toString(),
       payment.amount,
@@ -69,7 +69,7 @@ export default function PaymentHistory() {
 
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+      ...rows.map((row: any) => row.map((cell: any) => `"${cell}"`).join(',')),
     ].join('\n');
 
     // 下载 CSV 文件
@@ -131,7 +131,7 @@ export default function PaymentHistory() {
       {/* 支付记录列表 */}
       <div className="space-y-4">
         {payments && payments.length > 0 ? (
-          payments.map((payment) => (
+          payments.map((payment: any) => (
             <Card key={payment.id} className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">

@@ -2729,6 +2729,37 @@ export async function getPaymentByOrderId(orderId: number) {
 }
 
 /**
+ * 根据 ID 获取支付记录
+ */
+export async function getPaymentById(paymentId: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  const paymentRecords = await db
+    .select()
+    .from(payments)
+    .where(eq(payments.id, paymentId))
+    .limit(1);
+  
+  return paymentRecords[0] || null;
+}
+
+/**
+ * 更新支付状态
+ */
+export async function updatePaymentStatus(paymentId: number, status: 'pending' | 'processing' | 'succeeded' | 'failed' | 'refunded') {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  await db
+    .update(payments)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(payments.id, paymentId));
+  
+  return { success: true };
+}
+
+/**
  * 获取所有 YooKassa 配置
  */
 export async function getAllYooKassaConfigs() {

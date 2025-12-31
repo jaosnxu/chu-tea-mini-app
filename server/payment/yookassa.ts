@@ -111,6 +111,46 @@ export async function getPaymentStatus(paymentId: string): Promise<{
 }
 
 /**
+ * 创建退款
+ */
+export async function createRefund(params: {
+  paymentId: string;
+  amount: number;
+  reason?: string;
+}): Promise<{
+  id: string;
+  status: string;
+  amount: number;
+}> {
+  const client = getYooKassaClient();
+
+  try {
+    const idempotenceKey = `refund-${params.paymentId}-${Date.now()}`;
+    
+    const refund = await client.createRefund(
+      {
+        payment_id: params.paymentId,
+        amount: {
+          value: params.amount.toFixed(2),
+          currency: 'RUB',
+        },
+        description: params.reason || 'Refund',
+      },
+      idempotenceKey
+    );
+
+    return {
+      id: refund.id,
+      status: refund.status,
+      amount: parseFloat(refund.amount.value),
+    };
+  } catch (error: any) {
+    console.error('[YooKassa] Create refund error:', error);
+    throw new Error(`Failed to create refund: ${error.message}`);
+  }
+}
+
+/**
  * 取消支付
  */
 export async function cancelPayment(paymentId: string, reason?: string): Promise<boolean> {
