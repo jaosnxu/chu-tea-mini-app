@@ -143,6 +143,14 @@
       "refunded": "已退款"
     },
     "cancelOrder": "取消订单",
+    "refund": {
+      "button": "退款",
+      "confirmTitle": "确认退款",
+      "confirmDesc": "确定要退款 {{amount}} 吗？此操作不可撤销。",
+      "success": "退款成功",
+      "failed": "退款失败",
+      "noPayment": "未找到支付记录"
+    },
     "cancelReason": "取消原因",
     "confirmCancel": "确认取消",
     "orderHistory": "历史订单",

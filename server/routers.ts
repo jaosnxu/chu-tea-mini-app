@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { iikoRouter } from "./routers/iiko.js";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 
@@ -464,6 +464,28 @@ export const appRouter = router({
       .input(z.object({ orderId: z.number() }))
       .query(async ({ input }) => {
         return await db.getPaymentByOrderId(input.orderId);
+      }),
+    createRefund: adminProcedure
+      .input(z.object({
+        paymentId: z.string(),
+        amount: z.string(),
+        currency: z.string().optional().default('RUB'),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const yookassa = await import('./yookassa');
+        return await yookassa.createRefund({
+          paymentId: input.paymentId,
+          amount: input.amount,
+          currency: input.currency,
+          description: input.description,
+        });
+      }),
+    getRefundStatus: adminProcedure
+      .input(z.object({ refundId: z.string() }))
+      .query(async ({ input }) => {
+        const yookassa = await import('./yookassa');
+        return await yookassa.getRefundStatus(input.refundId);
       }),
   }),
 

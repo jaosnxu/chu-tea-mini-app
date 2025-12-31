@@ -5,9 +5,21 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { trpc } from '@/lib/trpc';
 import { getLocalizedText } from '@/lib/i18n';
-import { ChevronLeft, MapPin, Clock, Phone } from 'lucide-react';
+import { ChevronLeft, MapPin, Clock, Phone, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
+import { useAuth } from '@/_core/hooks/useAuth';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -32,7 +44,13 @@ export default function OrderDetail() {
     { enabled: !!params.id }
   );
 
+  const { user } = useAuth();
   const cancelMutation = trpc.order.cancel.useMutation();
+  const refundMutation = trpc.payment.createRefund.useMutation();
+  const { data: payment } = trpc.payment.getByOrderId.useQuery(
+    { orderId: parseInt(params.id || '0') },
+    { enabled: !!params.id }
+  );
 
   const handleCancel = async () => {
     if (!order) return;
@@ -42,6 +60,25 @@ export default function OrderDetail() {
       refetch();
     } catch (error) {
       toast.error(t('common.error'));
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!order || !payment || !payment.gatewayPaymentId) {
+      toast.error(t('order.refund.noPayment'));
+      return;
+    }
+    try {
+      await refundMutation.mutateAsync({
+        paymentId: payment.gatewayPaymentId,
+        amount: order.totalAmount,
+        currency: 'RUB',
+        description: `Refund for order ${order.orderNo}`,
+      });
+      toast.success(t('order.refund.success'));
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || t('order.refund.failed'));
     }
   };
 
@@ -164,21 +201,51 @@ export default function OrderDetail() {
       </div>
 
       {/* 底部操作 */}
-      {['pending', 'paid'].includes(order.status) && (
+      {(['pending', 'paid'].includes(order.status) || (user?.role === 'admin' && payment?.status === 'succeeded')) && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              className="flex-1"
-              onClick={handleCancel}
-              disabled={cancelMutation.isPending}
-            >
-              {t('order.cancelOrder')}
-            </Button>
+            {['pending', 'paid'].includes(order.status) && (
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={handleCancel}
+                disabled={cancelMutation.isPending}
+              >
+                {t('order.cancelOrder')}
+              </Button>
+            )}
             {order.status === 'pending' && (
               <Button className="flex-1 bg-teal-600 hover:bg-teal-700">
                 {t('order.payNow')}
               </Button>
+            )}
+            {user?.role === 'admin' && payment?.status === 'succeeded' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    className="flex-1"
+                    disabled={refundMutation.isPending}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    {t('order.refund.button')}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('order.refund.confirmTitle')}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t('order.refund.confirmDesc', { amount: order.totalAmount })}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleRefund}>
+                      {t('common.confirm')}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>

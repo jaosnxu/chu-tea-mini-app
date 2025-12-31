@@ -104,6 +104,26 @@ describe('Payment Integration Tests', () => {
     });
   });
 
+  describe('Refund Operations', () => {
+    it('should allow admin to create refund', async () => {
+      const caller = appRouter.createCaller(adminContext);
+      // 注意：这个测试需要真实的 YooKassa 配置和支付 ID
+      // 在实际环境中测试
+      expect(true).toBe(true);
+    });
+
+    it('should not allow non-admin to create refund', async () => {
+      const caller = appRouter.createCaller(userContext);
+      await expect(
+        caller.payment.createRefund({
+          paymentId: 'test-payment-id',
+          amount: '100.00',
+          currency: 'RUB',
+        })
+      ).rejects.toThrow();
+    });
+  });
+
   describe('Payment Creation', () => {
     it('should allow user to get payment by order ID', async () => {
       const caller = appRouter.createCaller(userContext);

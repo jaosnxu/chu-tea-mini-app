@@ -175,3 +175,71 @@ export async function handleWebhookNotification(notification: any) {
     orderId: paymentRecord.orderId,
   };
 }
+
+/**
+ * 创建退款
+ */
+export async function createRefund(params: {
+  paymentId: string;
+  amount: string;
+  currency?: string;
+  description?: string;
+}) {
+  const client = await createYooKassaClient();
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  try {
+    // 创建退款
+    const refund = await client.createRefund({
+      payment_id: params.paymentId,
+      amount: {
+        value: params.amount,
+        currency: params.currency || 'RUB',
+      },
+      description: params.description,
+    });
+
+    // 更新支付记录状态
+    await db
+      .update(payments)
+      .set({
+        status: 'refunded',
+        updatedAt: new Date(),
+      })
+      .where(eq(payments.gatewayPaymentId, params.paymentId));
+
+    return {
+      success: true,
+      refundId: refund.id,
+      status: refund.status,
+      amount: refund.amount.value,
+      currency: refund.amount.currency,
+    };
+  } catch (error: any) {
+    console.error('[YooKassa Refund Error]', error);
+    throw new Error(`Failed to create refund: ${error.message}`);
+  }
+}
+
+/**
+ * 查询退款状态
+ */
+export async function getRefundStatus(refundId: string) {
+  const client = await createYooKassaClient();
+
+  try {
+    const refund = await client.getRefund(refundId);
+    return {
+      id: refund.id,
+      status: refund.status,
+      amount: refund.amount.value,
+      currency: refund.amount.currency,
+      paymentId: refund.payment_id,
+      createdAt: refund.created_at,
+    };
+  } catch (error: any) {
+    console.error('[YooKassa Get Refund Error]', error);
+    throw new Error(`Failed to get refund status: ${error.message}`);
+  }
+}
