@@ -1,0 +1,94 @@
+/* 关键路径 CSS - 首屏渲染必需的样式 */
+
+/* Tailwind 基础重置 */
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: currentColor;
+}
+
+html {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  line-height: inherit;
+}
+
+/* 主题变量 */
+:root {
+  --radius: 0.65rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.235 0.015 65);
+  --primary: oklch(0.4 0.177 257.417);
+  --primary-foreground: oklch(0.985 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0.007 285.885);
+  --foreground: oklch(0.985 0 0);
+}
+
+/* 基础布局 */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* 骨架屏动画 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 隐藏元素 */
+.hidden {
+  display: none;
+}
+
+/* Flexbox */
+.flex {
+  display: flex;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* 背景色 */
+.bg-background {
+  background-color: var(--background);
+}
+
+.bg-gray-200 {
+  background-color: rgb(229 231 235);
+}
+
+.bg-gray-800 {
+  background-color: rgb(31 41 55);
+}
+
+/* 深色模式 */
+.dark .bg-gray-800 {
+  background-color: rgb(31 41 55);
+}
+
+.dark .bg-gray-200 {
+  background-color: rgb(55 65 81);
+}

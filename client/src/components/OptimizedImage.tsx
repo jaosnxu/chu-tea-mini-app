@@ -21,6 +21,10 @@ export default function OptimizedImage({
   const [isInView, setIsInView] = useState(priority); // 优先加载的图片直接设为可见
   const imgRef = useRef<HTMLImageElement>(null);
 
+  // 自动转换为 WebP 格式（如果存在）
+  const webpSrc = src.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  const imageSrc = webpSrc;
+
   useEffect(() => {
     if (priority) return; // 优先加载的图片不需要 IntersectionObserver
 
@@ -59,10 +63,12 @@ export default function OptimizedImage({
 
       {/* 实际图片 */}
       {isInView && (
-        <img
-          ref={imgRef}
-          src={src}
-          alt={alt}
+        <picture>
+          <source srcSet={webpSrc} type="image/webp" />
+          <img
+            ref={imgRef}
+            src={src}
+            alt={alt}
           className={`w-full h-full object-cover transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
@@ -71,6 +77,7 @@ export default function OptimizedImage({
           width={width}
           height={height}
         />
+        </picture>
       )}
     </div>
   );
