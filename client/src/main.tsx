@@ -15,7 +15,40 @@ initTelegramSDK();
 // 应用 Telegram 主题颜色
 applyTelegramTheme();
 
-const queryClient = new QueryClient();
+// 注册 Service Worker
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        console.log('[SW] Registered:', registration);
+      })
+      .catch((error) => {
+        console.error('[SW] Registration failed:', error);
+      });
+  });
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // 默认缓存时间：5 分钟
+      staleTime: 5 * 60 * 1000,
+      // 缓存保留时间：10 分钟
+      gcTime: 10 * 60 * 1000,
+      // 窗口获得焦点时不重新获取
+      refetchOnWindowFocus: false,
+      // 重连时不重新获取
+      refetchOnReconnect: false,
+      // 重试配置
+      retry: 1,
+    },
+    mutations: {
+      // mutation 错误不重试
+      retry: false,
+    },
+  },
+});
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;

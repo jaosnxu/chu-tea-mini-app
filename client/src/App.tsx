@@ -1,59 +1,64 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
+import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { TelegramProvider } from "./contexts/TelegramContext";
 import { StoreProvider } from "./contexts/StoreContext";
 import { CartProvider } from "./contexts/CartContext";
 import { useTelegramTheme } from "./hooks/useTelegramTheme";
+import PageSkeleton from "./components/PageSkeleton";
 
-// 页面组件
+// 首屏页面（不懒加载）
 import Home from "./pages/Home";
 import Landing from "./pages/Landing";
-import Menu from "./pages/Menu";
-import ProductDetail from "./pages/ProductDetail";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import Orders from "./pages/Orders";
-import OrderDetail from "./pages/OrderDetail";
-import Mall from "./pages/Mall";
-import MallProductDetail from "./pages/MallProductDetail";
-import MallCart from "./pages/MallCart";
-import MallCheckout from "./pages/MallCheckout";
-import Profile from "./pages/Profile";
-import MemberCenter from "./pages/MemberCenter";
-import Coupons from "./pages/Coupons";
-import Points from "./pages/Points";
-import Addresses from "./pages/Addresses";
-import InfluencerCenter from "./pages/InfluencerCenter";
-import Settings from "./pages/Settings";
-import DisplayScreen from "./pages/DisplayScreen";
-import StoreSelector from "./pages/StoreSelector";
-import Payment from "./pages/Payment";
-import PaymentCallback from "./pages/PaymentCallback";
+import NotFound from "@/pages/NotFound";
 
-// 后台管理页面
-import AdminLayout from "./components/AdminLayout";
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminAds from "./pages/admin/AdsManagement";
-import AdminProducts from "./pages/admin/ProductsManagement";
-import AdminCoupons from "./pages/admin/CouponsManagement";
-import AdminOrders from "./pages/admin/OrdersManagement";
-import AdminMarketing from "./pages/admin/MarketingManagement";
-import AdminStores from "./pages/admin/StoresManagement";
-import AdminUsers from "./pages/admin/UsersManagement";
-import AdminApiConfig from "./pages/admin/ApiConfigManagement";
-import AdminLogs from "./pages/admin/LogsManagement";
-import AdminNotifications from "./pages/admin/NotificationsManagement";
-import AdminIikoConfig from "./pages/admin/IikoConfig";
-import AdminIikoMonitor from "./pages/admin/IikoMonitor";
-import AdminYooKassaConfig from "./pages/admin/YooKassaConfig";
-import AdminPaymentHistory from "./pages/admin/PaymentHistory";
+// 懒加载页面组件
+const Menu = lazy(() => import("./pages/Menu"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Orders = lazy(() => import("./pages/Orders"));
+const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const Mall = lazy(() => import("./pages/Mall"));
+const MallProductDetail = lazy(() => import("./pages/MallProductDetail"));
+const MallCart = lazy(() => import("./pages/MallCart"));
+const MallCheckout = lazy(() => import("./pages/MallCheckout"));
+const Profile = lazy(() => import("./pages/Profile"));
+const MemberCenter = lazy(() => import("./pages/MemberCenter"));
+const Coupons = lazy(() => import("./pages/Coupons"));
+const Points = lazy(() => import("./pages/Points"));
+const Addresses = lazy(() => import("./pages/Addresses"));
+const InfluencerCenter = lazy(() => import("./pages/InfluencerCenter"));
+const Settings = lazy(() => import("./pages/Settings"));
+const DisplayScreen = lazy(() => import("./pages/DisplayScreen"));
+const StoreSelector = lazy(() => import("./pages/StoreSelector"));
+const Payment = lazy(() => import("./pages/Payment"));
+const PaymentCallback = lazy(() => import("./pages/PaymentCallback"));
+
+// 后台管理页面（懒加载）
+const AdminLayout = lazy(() => import("./components/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AdminAds = lazy(() => import("./pages/admin/AdsManagement"));
+const AdminProducts = lazy(() => import("./pages/admin/ProductsManagement"));
+const AdminCoupons = lazy(() => import("./pages/admin/CouponsManagement"));
+const AdminOrders = lazy(() => import("./pages/admin/OrdersManagement"));
+const AdminMarketing = lazy(() => import("./pages/admin/MarketingManagement"));
+const AdminStores = lazy(() => import("./pages/admin/StoresManagement"));
+const AdminUsers = lazy(() => import("./pages/admin/UsersManagement"));
+const AdminApiConfig = lazy(() => import("./pages/admin/ApiConfigManagement"));
+const AdminLogs = lazy(() => import("./pages/admin/LogsManagement"));
+const AdminNotifications = lazy(() => import("./pages/admin/NotificationsManagement"));
+const AdminIikoConfig = lazy(() => import("./pages/admin/IikoConfig"));
+const AdminIikoMonitor = lazy(() => import("./pages/admin/IikoMonitor"));
+const AdminYooKassaConfig = lazy(() => import("./pages/admin/YooKassaConfig"));
+const AdminPaymentHistory = lazy(() => import("./pages/admin/PaymentHistory"));
 
 function Router() {
   return (
-    <Switch>
+    <Suspense fallback={<PageSkeleton />}>
+      <Switch>
       {/* 首页/落地页 */}
       <Route path="/" component={Home} />
       <Route path="/landing/:slug" component={Landing} />
@@ -109,9 +114,9 @@ function Router() {
       <Route path="/admin/payments" component={() => <AdminLayout><AdminPaymentHistory /></AdminLayout>} />
       
       {/* 404 */}
-      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
+    </Suspense>
   );
 }
 

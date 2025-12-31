@@ -24,6 +24,36 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React 核心库
+          'react-vendor': ['react', 'react-dom', 'react/jsx-runtime'],
+          // 路由库
+          'router': ['wouter'],
+          // UI 组件库
+          'ui-vendor': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-scroll-area',
+          ],
+          // tRPC 相关
+          'trpc': ['@trpc/client', '@trpc/react-query', '@tanstack/react-query'],
+          // 国际化
+          'i18n': ['react-i18next', 'i18next'],
+          // 图表库（如果使用）
+          'charts': ['recharts'],
+        },
+      },
+    },
+    // 启用 CSS 代码分割
+    cssCodeSplit: true,
+    // 设置 chunk 大小警告阈值
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     host: true,
