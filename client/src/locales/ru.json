@@ -413,7 +413,29 @@
       "enterCode": "Введите код",
       "verify": "Подтвердить",
       "botInfo": "Информация о боте",
-      "botInfoDesc": "После настройки Telegram Bot Token система будет автоматически отправлять уведомления"
+      "botInfoDesc": "После настройки Telegram Bot Token система будет автоматически отправлять уведомления",
+      "guide": {
+        "howToCreate": "Как создать Telegram Bot",
+        "title": "Как создать Telegram Bot",
+        "description": "Следуйте этим шагам, чтобы создать бота для получения уведомлений",
+        "step1Title": "Откройте @BotFather в Telegram",
+        "step1Desc": "Найдите и откройте официального бота @BotFather в Telegram",
+        "openBotFather": "Открыть @BotFather",
+        "step2Title": "Создайте нового бота",
+        "step2Desc": "Отправьте команду /newbot боту @BotFather",
+        "step3Title": "Введите имя бота",
+        "step3Desc": "Введите отображаемое имя вашего бота, например: CHU TEA Notifications",
+        "step4Title": "Введите username бота",
+        "step4Desc": "Введите уникальный username, который должен заканчиваться на 'bot', например: chutea_notifications_bot",
+        "step5Title": "Скопируйте Bot Token",
+        "step5Desc": "@BotFather отправит вам токен. Скопируйте его и вставьте в поле 'API Key' на странице настроек API.",
+        "step5Note": "Токен выглядит так: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz",
+        "step6Title": "Настройте бота (необязательно)",
+        "step6Desc": "Вы можете настроить описание, аватар и команды бота через @BotFather",
+        "setDescription": "Установить описание бота",
+        "setUserpic": "Установить аватар бота",
+        "setCommands": "Установить команды бота"
+      }
     },
     "search": {
       "placeholder": "Поиск..."

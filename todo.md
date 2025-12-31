@@ -263,3 +263,10 @@
 - [x] 完善管理员绑定流程和 UI
 - [x] 集成通知推送到 Telegram
 - [x] 测试 Telegram 消息推送
+
+## Telegram Bot 创建和配置
+- [x] 创建 Bot 创建指南页面（@BotFather 步骤说明）
+- [x] 完善 API 配置页面的 Telegram Bot Token 输入
+- [x] 实现 Webhook 自动配置功能
+- [x] 添加测试消息发送功能
+- [x] 测试 Bot 配置流程

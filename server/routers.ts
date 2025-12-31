@@ -554,6 +554,21 @@ export const appRouter = router({
         if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
         return await db.testApiConnection(input.id);
       }),
+    setWebhook: protectedProcedure
+      .input(z.object({ webhookUrl: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        const { setTelegramWebhook } = await import('./telegram');
+        const success = await setTelegramWebhook(input.webhookUrl);
+        return { success, message: success ? 'Webhook set successfully' : 'Failed to set webhook' };
+      }),
+    sendTestMessage: protectedProcedure
+      .input(z.object({ chatId: z.string(), message: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        const { sendTelegramMessage } = await import('./telegram');
+        return await sendTelegramMessage(input.chatId, input.message);
+      }),
   }),
 
   // 后台操作日志

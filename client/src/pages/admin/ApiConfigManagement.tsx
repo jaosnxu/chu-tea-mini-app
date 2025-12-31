@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { trpc } from "@/lib/trpc";
+import TelegramBotGuide from "@/components/TelegramBotGuide";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ export default function ApiConfigManagement() {
   const { t, i18n } = useTranslation();
   const [editingConfig, setEditingConfig] = useState<any>(null);
   const [showSecrets, setShowSecrets] = useState<Record<number, boolean>>({});
+  const [showTelegramGuide, setShowTelegramGuide] = useState(false);
 
   const utils = trpc.useUtils();
 
@@ -113,6 +115,12 @@ export default function ApiConfigManagement() {
           <h1 className="text-2xl font-bold">{t("admin.api.title")}</h1>
           <p className="text-muted-foreground">{t("admin.api.subtitle", "Настройка API (IIKO, оплата, логистика)")}</p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => setShowTelegramGuide(true)}
+        >
+          {t("admin.telegram.guide.howToCreate", "Как создать Telegram Bot")}
+        </Button>
       </div>
 
       {isLoading ? (
@@ -131,9 +139,10 @@ export default function ApiConfigManagement() {
             <TabsTrigger value="pos">{t("admin.api.iiko")}</TabsTrigger>
             <TabsTrigger value="payment">{t("admin.api.payment")}</TabsTrigger>
             <TabsTrigger value="logistics">{t("admin.api.logistics")}</TabsTrigger>
+            <TabsTrigger value="notification">{t("admin.api.notification", "Уведомления")}</TabsTrigger>
           </TabsList>
 
-          {["pos", "payment", "logistics"].map((category) => (
+          {["pos", "payment", "logistics", "notification"].map((category) => (
             <TabsContent key={category} value={category} className="space-y-4">
               {groupedConfigs[category]?.length > 0 ? (
                 groupedConfigs[category].map((config: any) => (
@@ -236,6 +245,9 @@ export default function ApiConfigManagement() {
           ))}
         </Tabs>
       )}
+
+      {/* Telegram Bot 指南 */}
+      <TelegramBotGuide open={showTelegramGuide} onOpenChange={setShowTelegramGuide} />
 
       {/* 编辑对话框 */}
       <Dialog open={!!editingConfig} onOpenChange={() => setEditingConfig(null)}>
