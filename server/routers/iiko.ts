@@ -8,6 +8,8 @@ import {
   deleteIikoConfig,
 } from "../iiko-db.js";
 import { testIikoConnection, getIikoOrganizations, getIikoTerminalGroups } from "../iiko-auth.js";
+import { triggerQueueProcessing } from "../iiko-queue-processor.js";
+import { getSchedulerStatus } from "../iiko-scheduler.js";
 import { TRPCError } from "@trpc/server";
 
 export const iikoRouter = router({
@@ -165,4 +167,28 @@ export const iikoRouter = router({
 
       return terminalGroups;
     }),
+
+  /**
+   * 手动触发订单队列同步
+   */
+  triggerSync: protectedProcedure.mutation(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can trigger sync" });
+    }
+
+    const result = await triggerQueueProcessing();
+
+    return result;
+  }),
+
+  /**
+   * 获取调度器状态
+   */
+  getSchedulerStatus: protectedProcedure.query(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can view scheduler status" });
+    }
+
+    return getSchedulerStatus();
+  }),
 });
