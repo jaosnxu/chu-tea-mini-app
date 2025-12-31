@@ -1124,3 +1124,98 @@ export const yookassaConfig = mysqlTable('yookassa_config', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
+
+// ==================== 商品配置表（全局配置） ====================
+
+export const productConfig = mysqlTable('product_config', {
+  id: int('id').primaryKey().autoincrement(),
+  
+  // 配置键名
+  configKey: varchar('config_key', { length: 64 }).notNull().unique(),
+  
+  // 配置名称
+  nameZh: varchar('name_zh', { length: 128 }).notNull(),
+  nameRu: varchar('name_ru', { length: 128 }).notNull(),
+  nameEn: varchar('name_en', { length: 128 }).notNull(),
+  
+  // 配置类型
+  configType: mysqlEnum('config_type', ['sugar', 'ice', 'size', 'topping', 'other']).notNull(),
+  
+  // 配置值（JSON）
+  // 例如：{"enabled": true, "options": [{"name": "正常糖", "value": "normal", "isDefault": true}]}
+  configValue: json('config_value').$type<{
+    enabled: boolean;
+    isRequired?: boolean;
+    isMultiple?: boolean;
+    maxSelect?: number;
+    minSelect?: number;
+    options?: Array<{
+      name: string;
+      nameZh?: string;
+      nameRu?: string;
+      nameEn?: string;
+      value: string;
+      isDefault?: boolean;
+      priceAdjust?: number;
+      weight?: number; // 克重（用于小料）
+      isActive?: boolean;
+      sortOrder?: number;
+    }>;
+  }>().notNull(),
+  
+  // 是否启用
+  isActive: boolean('is_active').default(true).notNull(),
+  
+  // 排序
+  sortOrder: int('sort_order').default(0).notNull(),
+  
+  // 时间戳
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProductConfig = typeof productConfig.$inferSelect;
+export type InsertProductConfig = typeof productConfig.$inferInsert;
+
+// ==================== 商品选项配置表（覆盖全局配置） ====================
+
+export const productOptionConfig = mysqlTable('product_option_config', {
+  id: int('id').primaryKey().autoincrement(),
+  
+  // 关联商品
+  productId: int('product_id').notNull(),
+  
+  // 关联全局配置
+  configKey: varchar('config_key', { length: 64 }).notNull(),
+  
+  // 覆盖配置值
+  configValue: json('config_value').$type<{
+    enabled?: boolean;
+    isRequired?: boolean;
+    isMultiple?: boolean;
+    maxSelect?: number;
+    minSelect?: number;
+    options?: Array<{
+      name: string;
+      nameZh?: string;
+      nameRu?: string;
+      nameEn?: string;
+      value: string;
+      isDefault?: boolean;
+      priceAdjust?: number;
+      weight?: number;
+      isActive?: boolean;
+      sortOrder?: number;
+    }>;
+  }>(),
+  
+  // 是否启用
+  isActive: boolean('is_active').default(true).notNull(),
+  
+  // 时间戳
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProductOptionConfig = typeof productOptionConfig.$inferSelect;
+export type InsertProductOptionConfig = typeof productOptionConfig.$inferInsert;

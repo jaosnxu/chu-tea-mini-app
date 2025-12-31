@@ -37,11 +37,18 @@ export default function ProductDetail() {
     { enabled: !!params.id }
   );
 
-  // 初始化默认选项
+  // 初始化默认选项（根据选项类型决定是否默认选中）
   useEffect(() => {
     if (options.length > 0) {
       const defaults: Record<number, { itemId: number; name: string; price: string }> = {};
       options.forEach((option: any) => {
+        // 小料（topping）默认不选，其他选项选中默认值
+        const optionType = option.type?.toLowerCase() || '';
+        if (optionType === 'topping') {
+          // 小料默认不选，用户手动选择
+          return;
+        }
+        
         const defaultItem = option.items?.find((i: any) => i.isDefault) || option.items?.[0];
         if (defaultItem) {
           defaults[option.id] = {

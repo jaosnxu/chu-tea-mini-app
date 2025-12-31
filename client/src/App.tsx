@@ -55,6 +55,7 @@ const AdminIikoConfig = lazy(() => import("./pages/admin/IikoConfig"));
 const AdminIikoMonitor = lazy(() => import("./pages/admin/IikoMonitor"));
 const AdminYooKassaConfig = lazy(() => import("./pages/admin/YooKassaConfig"));
 const AdminPaymentHistory = lazy(() => import("./pages/admin/PaymentHistory"));
+const AdminProductConfig = lazy(() => import("./pages/admin/ProductConfig"));
 
 function Router() {
   return (
@@ -113,6 +114,7 @@ function Router() {
       <Route path="/admin/iiko-monitor" component={() => <AdminLayout><AdminIikoMonitor /></AdminLayout>} />
       <Route path="/admin/yookassa" component={() => <AdminLayout><AdminYooKassaConfig /></AdminLayout>} />
       <Route path="/admin/payments" component={() => <AdminLayout><AdminPaymentHistory /></AdminLayout>} />
+      <Route path="/admin/product-config" component={() => <AdminLayout><AdminProductConfig /></AdminLayout>} />
       
       {/* 404 */}
       <Route component={NotFound} />

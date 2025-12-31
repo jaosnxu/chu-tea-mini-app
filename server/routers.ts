@@ -1093,6 +1093,99 @@ export const appRouter = router({
         });
       }),
   }),
+
+  // ==================== 商品配置管理 ====================
+  productConfig: router({
+    // 获取所有全局配置
+    list: adminProcedure.query(async () => {
+      return await db.getAllProductConfigs();
+    }),
+
+    // 根据配置键获取配置
+    getByKey: publicProcedure
+      .input(z.object({ configKey: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getProductConfigByKey(input.configKey);
+      }),
+
+    // 创建全局配置
+    create: adminProcedure
+      .input(z.object({
+        configKey: z.string(),
+        nameZh: z.string(),
+        nameRu: z.string(),
+        nameEn: z.string(),
+        configType: z.enum(['sugar', 'ice', 'size', 'topping', 'other']),
+        configValue: z.any(),
+        isActive: z.boolean().optional(),
+        sortOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createProductConfig(input);
+      }),
+
+    // 更新全局配置
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        nameZh: z.string().optional(),
+        nameRu: z.string().optional(),
+        nameEn: z.string().optional(),
+        configValue: z.any().optional(),
+        isActive: z.boolean().optional(),
+        sortOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updateProductConfig(id, data);
+        return { success: true };
+      }),
+
+    // 删除全局配置
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteProductConfig(input.id);
+        return { success: true };
+      }),
+
+    // 获取商品的配置（合并全局配置和商品特定配置）
+    getMerged: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getProductConfigMerged(input.productId);
+      }),
+
+    // 设置商品特定配置
+    setProductConfig: adminProcedure
+      .input(z.object({
+        productId: z.number(),
+        configKey: z.string(),
+        configValue: z.any(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.setProductOptionConfig(input);
+        return { success: true };
+      }),
+
+    // 删除商品特定配置
+    deleteProductConfig: adminProcedure
+      .input(z.object({
+        productId: z.number(),
+        configKey: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.deleteProductOptionConfig(input.productId, input.configKey);
+        return { success: true };
+      }),
+
+    // 初始化默认配置
+    initDefaults: adminProcedure.mutation(async () => {
+      await db.initDefaultProductConfigs();
+      return { success: true };
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -409,7 +409,8 @@
       "notifications": "通知管理",
       "iikoMonitor": "IIKO 监控",
       "yookassa": "YooKassa 配置",
-      "payments": "支付记录"
+      "payments": "支付记录",
+      "productConfig": "商品配置"
     },
     "notifications": {
       "title": "通知",
@@ -717,5 +718,37 @@
       "confirmDelete": "确认删除？",
       "deleteWarning": "此操作不可撤销"
     }
+  },
+  "config": {
+    "productConfig": "商品配置",
+    "noConfig": "暂无配置",
+    "noConfigDesc": "点击下方按钮初始化默认配置",
+    "initDefaults": "初始化默认配置",
+    "resetDefaults": "重置为默认配置",
+    "initSuccess": "初始化成功",
+    "updateSuccess": "更新成功",
+    "deleteSuccess": "删除成功",
+    "sugar": "糖度",
+    "ice": "冰度",
+    "size": "容量",
+    "topping": "小料",
+    "enabled": "启用",
+    "required": "必选",
+    "multiple": "多选",
+    "maxSelect": "最多选择",
+    "options": "选项",
+    "addOption": "添加选项",
+    "editOption": "编辑选项",
+    "confirmDeleteOption": "确定要删除这个选项吗？",
+    "nameZh": "中文名称",
+    "nameRu": "俄文名称",
+    "nameEn": "英文名称",
+    "value": "值",
+    "priceAdjust": "价格调整",
+    "weight": "克重",
+    "isDefault": "默认选中",
+    "isActive": "启用",
+    "default": "默认",
+    "sortOrder": "排序"
   }
 }

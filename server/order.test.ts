@@ -15,6 +15,7 @@ vi.mock("./db", () => ({
   updateCartItem: vi.fn(),
   removeFromCart: vi.fn(),
   clearCart: vi.fn(),
+  getPaymentByOrderId: vi.fn(),
 }));
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;

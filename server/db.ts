@@ -9,6 +9,7 @@ import {
   operationLogs, homeEntries, apiConfigs, marketingCampaigns, adMaterials,
   notifications, notificationTemplates, notificationRules,
   telegramBotConfigs, adminTelegramBindings, yookassaConfig,
+  productConfig, productOptionConfig,
   InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -2741,4 +2742,266 @@ export async function getPaymentStatistics(period: 'today' | 'week' | 'month') {
     successRate: successRate.toFixed(2),
     refundRate: refundRate.toFixed(2),
   };
+}
+
+
+// ==================== 商品配置管理 ====================
+
+/**
+ * 获取所有全局配置
+ */
+export async function getAllProductConfigs() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  return await db.select().from(productConfig).orderBy(productConfig.sortOrder);
+}
+
+/**
+ * 根据配置键获取配置
+ */
+export async function getProductConfigByKey(configKey: string) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  const result = await db.select().from(productConfig).where(eq(productConfig.configKey, configKey)).limit(1);
+  return result[0] || null;
+}
+
+/**
+ * 创建全局配置
+ */
+export async function createProductConfig(data: {
+  configKey: string;
+  nameZh: string;
+  nameRu: string;
+  nameEn: string;
+  configType: 'sugar' | 'ice' | 'size' | 'topping' | 'other';
+  configValue: any;
+  isActive?: boolean;
+  sortOrder?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  const result = await db.insert(productConfig).values(data);
+  const insertId = result[0].insertId;
+  
+  // 查询并返回插入的记录
+  const inserted = await db.select().from(productConfig).where(eq(productConfig.id, insertId)).limit(1);
+  return inserted[0];
+}
+
+/**
+ * 更新全局配置
+ */
+export async function updateProductConfig(id: number, data: {
+  nameZh?: string;
+  nameRu?: string;
+  nameEn?: string;
+  configValue?: any;
+  isActive?: boolean;
+  sortOrder?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  await db.update(productConfig).set(data).where(eq(productConfig.id, id));
+}
+
+/**
+ * 删除全局配置
+ */
+export async function deleteProductConfig(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  await db.delete(productConfig).where(eq(productConfig.id, id));
+}
+
+/**
+ * 获取商品的配置（合并全局配置和商品特定配置）
+ */
+export async function getProductConfigMerged(productId: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  // 获取所有全局配置
+  const globalConfigs = await db.select().from(productConfig).where(eq(productConfig.isActive, true)).orderBy(productConfig.sortOrder);
+  
+  // 获取商品特定配置
+  const productConfigs = await db.select().from(productOptionConfig).where(eq(productOptionConfig.productId, productId));
+  
+  // 合并配置
+  const merged = globalConfigs.map(global => {
+    const override = productConfigs.find(p => p.configKey === global.configKey);
+    if (override && override.configValue) {
+      return {
+        ...global,
+        configValue: {
+          ...global.configValue,
+          ...override.configValue,
+        },
+        isActive: override.isActive,
+      };
+    }
+    return global;
+  });
+  
+  return merged;
+}
+
+/**
+ * 设置商品特定配置
+ */
+export async function setProductOptionConfig(data: {
+  productId: number;
+  configKey: string;
+  configValue: any;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  // 检查是否已存在
+  const existing = await db.select().from(productOptionConfig)
+    .where(and(
+      eq(productOptionConfig.productId, data.productId),
+      eq(productOptionConfig.configKey, data.configKey)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    // 更新
+    await db.update(productOptionConfig)
+      .set({
+        configValue: data.configValue,
+        isActive: data.isActive ?? true,
+      })
+      .where(eq(productOptionConfig.id, existing[0].id));
+  } else {
+    // 创建
+    await db.insert(productOptionConfig).values(data);
+  }
+}
+
+/**
+ * 删除商品特定配置
+ */
+export async function deleteProductOptionConfig(productId: number, configKey: string) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  await db.delete(productOptionConfig)
+    .where(and(
+      eq(productOptionConfig.productId, productId),
+      eq(productOptionConfig.configKey, configKey)
+    ));
+}
+
+/**
+ * 初始化默认配置（首次使用时调用）
+ */
+export async function initDefaultProductConfigs() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  // 检查是否已有配置
+  const existing = await db.select().from(productConfig).limit(1);
+  if (existing.length > 0) {
+    return; // 已有配置，不需要初始化
+  }
+  
+  // 创建默认配置
+  const defaultConfigs = [
+    {
+      configKey: 'sugar_level',
+      nameZh: '糖度',
+      nameRu: 'Уровень сахара',
+      nameEn: 'Sugar Level',
+      configType: 'sugar' as const,
+      configValue: {
+        enabled: true,
+        isRequired: true,
+        isMultiple: false,
+        maxSelect: 1,
+        options: [
+          { name: '正常糖', nameZh: '正常糖', nameRu: 'Обычный', nameEn: 'Normal', value: 'normal', isDefault: true, isActive: true, sortOrder: 1 },
+          { name: '少糖', nameZh: '少糖', nameRu: 'Меньше сахара', nameEn: 'Less Sugar', value: 'less', isDefault: false, isActive: true, sortOrder: 2 },
+          { name: '半糖', nameZh: '半糖', nameRu: 'Половина сахара', nameEn: 'Half Sugar', value: 'half', isDefault: false, isActive: true, sortOrder: 3 },
+          { name: '无糖', nameZh: '无糖', nameRu: 'Без сахара', nameEn: 'No Sugar', value: 'none', isDefault: false, isActive: true, sortOrder: 4 },
+        ],
+      },
+      isActive: true,
+      sortOrder: 1,
+    },
+    {
+      configKey: 'ice_level',
+      nameZh: '冰度',
+      nameRu: 'Уровень льда',
+      nameEn: 'Ice Level',
+      configType: 'ice' as const,
+      configValue: {
+        enabled: true,
+        isRequired: true,
+        isMultiple: false,
+        maxSelect: 1,
+        options: [
+          { name: '正常冰', nameZh: '正常冰', nameRu: 'Обычный лёд', nameEn: 'Normal Ice', value: 'normal', isDefault: true, isActive: true, sortOrder: 1 },
+          { name: '少冰', nameZh: '少冰', nameRu: 'Меньше льда', nameEn: 'Less Ice', value: 'less', isDefault: false, isActive: true, sortOrder: 2 },
+          { name: '去冰', nameZh: '去冰', nameRu: 'Без льда', nameEn: 'No Ice', value: 'none', isDefault: false, isActive: true, sortOrder: 3 },
+          { name: '温', nameZh: '温', nameRu: 'Тёплый', nameEn: 'Warm', value: 'warm', isDefault: false, isActive: true, sortOrder: 4 },
+          { name: '热', nameZh: '热', nameRu: 'Горячий', nameEn: 'Hot', value: 'hot', isDefault: false, isActive: true, sortOrder: 5 },
+        ],
+      },
+      isActive: true,
+      sortOrder: 2,
+    },
+    {
+      configKey: 'drink_size',
+      nameZh: '容量',
+      nameRu: 'Объём',
+      nameEn: 'Size',
+      configType: 'size' as const,
+      configValue: {
+        enabled: true,
+        isRequired: true,
+        isMultiple: false,
+        maxSelect: 1,
+        options: [
+          { name: '中杯 500ml', nameZh: '中杯 500ml', nameRu: 'Средний 500ml', nameEn: 'Medium 500ml', value: '500', isDefault: true, priceAdjust: 0, isActive: true, sortOrder: 1 },
+          { name: '大杯 700ml', nameZh: '大杯 700ml', nameRu: 'Большой 700ml', nameEn: 'Large 700ml', value: '700', isDefault: false, priceAdjust: 50, isActive: true, sortOrder: 2 },
+        ],
+      },
+      isActive: true,
+      sortOrder: 3,
+    },
+    {
+      configKey: 'toppings',
+      nameZh: '小料',
+      nameRu: 'Добавки',
+      nameEn: 'Toppings',
+      configType: 'topping' as const,
+      configValue: {
+        enabled: true,
+        isRequired: false,
+        isMultiple: true,
+        maxSelect: 3,
+        minSelect: 0,
+        options: [
+          { name: '珍珠', nameZh: '珍珠', nameRu: 'Жемчуг', nameEn: 'Pearl', value: 'pearl', isDefault: false, priceAdjust: 20, weight: 50, isActive: true, sortOrder: 1 },
+          { name: '椰果', nameZh: '椰果', nameRu: 'Кокос', nameEn: 'Coconut Jelly', value: 'coconut', isDefault: false, priceAdjust: 20, weight: 50, isActive: true, sortOrder: 2 },
+          { name: '布丁', nameZh: '布丁', nameRu: 'Пудинг', nameEn: 'Pudding', value: 'pudding', isDefault: false, priceAdjust: 25, weight: 60, isActive: true, sortOrder: 3 },
+          { name: '仙草', nameZh: '仙草', nameRu: 'Трава бессмертия', nameEn: 'Grass Jelly', value: 'grass_jelly', isDefault: false, priceAdjust: 20, weight: 50, isActive: true, sortOrder: 4 },
+          { name: '红豆', nameZh: '红豆', nameRu: 'Красная фасоль', nameEn: 'Red Bean', value: 'red_bean', isDefault: false, priceAdjust: 25, weight: 60, isActive: true, sortOrder: 5 },
+        ],
+      },
+      isActive: true,
+      sortOrder: 4,
+    },
+  ];
+  
+  for (const config of defaultConfigs) {
+    await db.insert(productConfig).values(config);
+  }
 }
