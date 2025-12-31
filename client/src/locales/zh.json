@@ -894,6 +894,13 @@
         "chartDescription": "显示每日订单数和收入变化",
         "orders": "订单数",
         "revenue": "收入"
+      },
+      "timeline": {
+        "title": "执行时间线",
+        "chartTitle": "最近的触发器执行记录",
+        "chartDescription": "点击查看每天的详细执行情况",
+        "orders": "订单数",
+        "revenue": "收入"
       }
     },
     "abTest": {

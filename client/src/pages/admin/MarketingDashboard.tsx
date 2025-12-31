@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TrendingUp, Package, DollarSign, Percent, Award } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, Percent, Award, Download } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { toast } from 'sonner';
 
 export default function MarketingDashboard() {
   const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'all'>('30d');
+  
+  const exportMutation = trpc.marketingTrigger.exportReport.useMutation();
 
   // 计算时间范围
   const getDateRange = () => {
@@ -44,6 +48,17 @@ export default function MarketingDashboard() {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   });
+  
+  // 获取执行时间线
+  const { data: timeline, isLoading: timelineLoading } = trpc.marketingTrigger.getExecutionTimeline.useQuery({
+    days: timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90,
+  });
+  
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { data: dateDetails } = trpc.marketingTrigger.getDateExecutionDetails.useQuery(
+    { date: selectedDate! },
+    { enabled: !!selectedDate }
+  );
 
   return (
     <div className="space-y-6">
@@ -55,16 +70,40 @@ export default function MarketingDashboard() {
           </p>
         </div>
 
-        <Select value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7d">{t('admin.marketingDashboard.last7Days')}</SelectItem>
-            <SelectItem value="30d">{t('admin.marketingDashboard.last30Days')}</SelectItem>
-            <SelectItem value="all">{t('admin.marketingDashboard.allTime')}</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const result = await exportMutation.mutateAsync({
+                  startDate: dateRange.startDate,
+                  endDate: dateRange.endDate,
+                  limit: 5,
+                });
+                const link = document.createElement('a');
+                link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${result.data}`;
+                link.download = result.filename;
+                link.click();
+                toast.success('导出成功');
+              } catch (error) {
+                toast.error('导出失败');
+              }
+            }}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            导出报告
+          </Button>
+          <Select value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7d">{t('admin.marketingDashboard.last7Days')}</SelectItem>
+              <SelectItem value="30d">{t('admin.marketingDashboard.last30Days')}</SelectItem>
+              <SelectItem value="all">{t('admin.marketingDashboard.allTime')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Top 5 触发器排名 */}
@@ -201,6 +240,75 @@ export default function MarketingDashboard() {
                   />
                 </LineChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              {t('admin.marketingDashboard.noData')}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+      
+      {/* 执行时间线 */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-purple-500" />
+          {t('admin.marketingDashboard.timeline.title')}
+        </h2>
+        
+        {timelineLoading ? (
+          <Skeleton className="h-96 w-full" />
+        ) : timeline && timeline.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('admin.marketingDashboard.timeline.chartTitle')}</CardTitle>
+              <CardDescription>{t('admin.marketingDashboard.timeline.chartDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {timeline.map((item: any) => (
+                  <div
+                    key={item.date}
+                    className="flex items-center justify-between p-3 border rounded hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => setSelectedDate(item.date)}
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium">{new Date(item.date).toLocaleDateString('zh-CN')}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {item.totalExecutions} 次执行 · {item.successRate}% 成功率
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="text-right">
+                        <div className="text-muted-foreground">{t('admin.marketingDashboard.timeline.orders')}</div>
+                        <div className="font-semibold">{item.orderCount}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-muted-foreground">{t('admin.marketingDashboard.timeline.revenue')}</div>
+                        <div className="font-semibold">₽{Number(item.revenue).toFixed(2)}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {selectedDate && dateDetails && (
+                <div className="mt-4 p-4 border-t">
+                  <h3 className="font-semibold mb-2">{new Date(selectedDate).toLocaleDateString('zh-CN')} 的触发器详情</h3>
+                  <div className="space-y-2">
+                    {dateDetails.map((detail: any) => (
+                      <div key={detail.triggerId} className="flex items-center justify-between text-sm">
+                        <span>{detail.triggerName}</span>
+                        <span className="text-muted-foreground">
+                          {detail.executionCount} 次 · {detail.successRate}% 成功
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (

@@ -1525,6 +1525,69 @@ export const appRouter = router({
         const { getGroupTags } = await import('./db/abTesting');
         return await getGroupTags();
       }),
+    
+    // 获取执行时间线
+    getExecutionTimeline: adminProcedure
+      .input(z.object({
+        days: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { getExecutionTimeline } = await import('./db/executionTimeline');
+        return await getExecutionTimeline(input?.days);
+      }),
+    
+    // 获取指定日期的执行详情
+    getDateExecutionDetails: adminProcedure
+      .input(z.object({
+        date: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const { getDateExecutionDetails } = await import('./db/executionTimeline');
+        return await getDateExecutionDetails(input.date);
+      }),
+    
+    // 预览触发器执行
+    previewExecution: adminProcedure
+      .input(z.object({
+        triggerType: z.string(),
+        triggerCondition: z.any(),
+        actionType: z.string(),
+        actionParams: z.any(),
+      }))
+      .query(async ({ input }) => {
+        const { previewTriggerExecution } = await import('./db/triggerPreview');
+        return await previewTriggerExecution(input);
+      }),
+    
+    // 导出营销报告
+    exportReport: adminProcedure
+      .input(z.object({
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        limit: z.number().optional(),
+      }).optional())
+      .mutation(async ({ input }) => {
+        const { exportMarketingReport } = await import('./db/marketingExport');
+        const buffer = await exportMarketingReport(input || {});
+        return {
+          data: Buffer.from(buffer).toString('base64'),
+          filename: `marketing-report-${new Date().toISOString().split('T')[0]}.xlsx`,
+        };
+      }),
+    
+    // 导出A/B测试报告
+    exportABTest: adminProcedure
+      .input(z.object({
+        groupTag: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { exportABTestReport } = await import('./db/marketingExport');
+        const buffer = await exportABTestReport(input.groupTag);
+        return {
+          data: Buffer.from(buffer).toString('base64'),
+          filename: `ab-test-${input.groupTag}-${new Date().toISOString().split('T')[0]}.xlsx`,
+        };
+      }),
   }),
 });
 

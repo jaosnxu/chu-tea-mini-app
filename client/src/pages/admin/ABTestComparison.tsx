@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, TrendingUp, Package, DollarSign, Percent } from 'lucide-react';
+import { Trophy, TrendingUp, Package, DollarSign, Percent, Download } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ABTestComparison() {
   const { t } = useTranslation();
   const [selectedGroup, setSelectedGroup] = useState<string>('');
+  
+  const exportMutation = trpc.marketingTrigger.exportABTest.useMutation();
 
   const { data: groupTags, isLoading: tagsLoading } = trpc.marketingTrigger.getGroupTags.useQuery();
   const { data: comparison, isLoading: comparisonLoading } = trpc.marketingTrigger.getGroupComparison.useQuery(
@@ -36,7 +40,30 @@ export default function ABTestComparison() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('admin.abTest.selectGroup')}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{t('admin.abTest.selectGroup')}</CardTitle>
+            {selectedGroup && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const result = await exportMutation.mutateAsync({ groupTag: selectedGroup });
+                    const link = document.createElement('a');
+                    link.href = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${result.data}`;
+                    link.download = result.filename;
+                    link.click();
+                    toast.success('导出成功');
+                  } catch (error) {
+                    toast.error('导出失败');
+                  }
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                导出对比报告
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {tagsLoading ? (

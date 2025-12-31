@@ -9,11 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Users, Ticket, DollarSign } from 'lucide-react';
 
 export default function MarketingTriggers() {
   const [, setLocation] = useLocation();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const { data: triggers, refetch } = trpc.marketingTrigger.list.useQuery();
   const createMutation = trpc.marketingTrigger.create.useMutation();
@@ -206,6 +210,13 @@ export default function MarketingTriggers() {
               <Button type="submit">保存</Button>
               <Button
                 type="button"
+                variant="secondary"
+                onClick={() => setShowPreview(true)}
+              >
+                预览效果
+              </Button>
+              <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
                   setShowForm(false);
@@ -294,6 +305,89 @@ export default function MarketingTriggers() {
           </Card>
         )}
       </div>
+      
+      {/* 预览对话框 */}
+      <PreviewDialog 
+        open={showPreview} 
+        onOpenChange={setShowPreview}
+        formData={formData}
+      />
     </div>
+  );
+}
+
+function PreviewDialog({ open, onOpenChange, formData }: any) {
+  const { data: preview, isLoading } = trpc.marketingTrigger.previewExecution.useQuery(
+    {
+      triggerType: formData.triggerType,
+      triggerCondition: JSON.parse(formData.conditions || '{}'),
+      actionType: formData.action,
+      actionParams: JSON.parse(formData.actionConfig || '{}'),
+    },
+    { enabled: open }
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>触发器执行预览</DialogTitle>
+          <DialogDescription>查看该触发器将影响的用户和预估成本</DialogDescription>
+        </DialogHeader>
+        
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        ) : preview ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm text-muted-foreground">目标用户</span>
+                </div>
+                <div className="text-2xl font-bold">{preview.targetUserCount}</div>
+              </Card>
+              
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Ticket className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm text-muted-foreground">优惠券数</span>
+                </div>
+                <div className="text-2xl font-bold">{preview.estimatedCouponCount}</div>
+              </Card>
+              
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-4 w-4 text-green-500" />
+                  <span className="text-sm text-muted-foreground">预估成本</span>
+                </div>
+                <div className="text-2xl font-bold">₽{preview.estimatedCost.toFixed(2)}</div>
+              </Card>
+            </div>
+            
+            {preview.targetUsers && preview.targetUsers.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-2">示例用户（前10个）</h3>
+                <div className="space-y-1">
+                  {preview.targetUsers.map((user: any, index: number) => (
+                    <div key={index} className="text-sm p-2 bg-muted rounded">
+                      {user.name || `用户 #${user.id}`}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground py-8">
+            无法获取预览数据
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
