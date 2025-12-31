@@ -5,11 +5,25 @@ import { Card } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
+import { useTelegramMainButton } from '@/hooks/useTelegramMainButton';
+import { isTelegramWebApp } from '@/lib/telegram';
 
 export default function Cart() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { teaCartItems, teaCartTotal, updateQuantity, removeItem, clearCart, isLoading } = useCart();
+  const isTelegramApp = isTelegramWebApp();
+  
+  // 集成 Telegram 主按钮
+  useTelegramMainButton(
+    teaCartItems.length > 0 ? {
+      text: `${t('cart.checkout')} (₽${teaCartTotal.toFixed(2)})`,
+      color: '#14b8a6', // teal-600
+      isVisible: true,
+      isActive: !isLoading,
+    } : null,
+    () => navigate('/checkout')
+  );
 
   if (teaCartItems.length === 0) {
     return (
@@ -103,20 +117,23 @@ export default function Cart() {
         })}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-gray-500">{t('cart.subtotal')}: </span>
-            <span className="text-xl font-bold text-teal-600">₽{teaCartTotal.toFixed(2)}</span>
+      {/* 如果不在 Telegram 中，显示传统的底部按钮 */}
+      {!isTelegramApp && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-gray-500">{t('cart.subtotal')}: </span>
+              <span className="text-xl font-bold text-teal-600">₽{teaCartTotal.toFixed(2)}</span>
+            </div>
+            <Button 
+              className="bg-teal-600 hover:bg-teal-700 px-8"
+              onClick={() => navigate('/checkout')}
+            >
+              {t('cart.checkout')}
+            </Button>
           </div>
-          <Button 
-            className="bg-teal-600 hover:bg-teal-700 px-8"
-            onClick={() => navigate('/checkout')}
-          >
-            {t('cart.checkout')}
-          </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

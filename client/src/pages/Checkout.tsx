@@ -12,12 +12,15 @@ import { useStore } from '@/contexts/StoreContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, MapPin, Clock, Ticket, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTelegramMainButton } from '@/hooks/useTelegramMainButton';
+import { isTelegramWebApp } from '@/lib/telegram';
 
 export default function Checkout() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { teaCartItems, teaCartTotal, clearCart } = useCart();
   const { currentStore } = useStore();
+  const isTelegramApp = isTelegramWebApp();
   
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
   const [remark, setRemark] = useState('');
@@ -63,6 +66,18 @@ export default function Checkout() {
       setIsSubmitting(false);
     }
   };
+  
+  // 集成 Telegram 主按钮
+  const mainButtonControls = useTelegramMainButton(
+    {
+      text: isSubmitting ? t('common.loading') : `${t('order.payNow')} ₽${teaCartTotal.toFixed(2)}`,
+      color: '#14b8a6', // teal-600
+      isVisible: true,
+      isActive: !isSubmitting && teaCartItems.length > 0,
+      isProgressVisible: isSubmitting,
+    },
+    handleSubmit
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -143,15 +158,18 @@ export default function Checkout() {
         </Card>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
-        <Button 
-          className="w-full bg-teal-600 hover:bg-teal-700 py-6"
-          onClick={handleSubmit}
-          disabled={isSubmitting || teaCartItems.length === 0}
-        >
-          {isSubmitting ? t('common.loading') : `${t('order.payNow')} ₽${teaCartTotal.toFixed(2)}`}
-        </Button>
-      </div>
+      {/* 如果不在 Telegram 中，显示传统的底部按钮 */}
+      {!isTelegramApp && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
+          <Button 
+            className="w-full bg-teal-600 hover:bg-teal-700 py-6"
+            onClick={handleSubmit}
+            disabled={isSubmitting || teaCartItems.length === 0}
+          >
+            {isSubmitting ? t('common.loading') : `${t('order.payNow')} ₽${teaCartTotal.toFixed(2)}`}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

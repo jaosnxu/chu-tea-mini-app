@@ -9,6 +9,8 @@ import { useCart } from '@/contexts/CartContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, MapPin, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTelegramMainButton } from '@/hooks/useTelegramMainButton';
+import { isTelegramWebApp } from '@/lib/telegram';
 
 export default function MallCheckout() {
   const { t } = useTranslation();
@@ -16,6 +18,7 @@ export default function MallCheckout() {
   const { mallCartItems, mallCartTotal } = useCart();
   const [remark, setRemark] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isTelegramApp = isTelegramWebApp();
 
   const { data: addresses = [] } = trpc.address.list.useQuery();
   const defaultAddress = addresses.find((a: { isDefault: boolean }) => a.isDefault) || addresses[0];
@@ -35,6 +38,18 @@ export default function MallCheckout() {
     } catch { toast.error(t('common.error')); }
     finally { setIsSubmitting(false); }
   };
+  
+  // 集成 Telegram 主按钮
+  const mainButtonControls = useTelegramMainButton(
+    {
+      text: isSubmitting ? t('common.loading') : `${t('order.payNow')} ₽${mallCartTotal.toFixed(2)}`,
+      color: '#9333ea', // purple-600
+      isVisible: true,
+      isActive: !isSubmitting && mallCartItems.length > 0 && !!defaultAddress,
+      isProgressVisible: isSubmitting,
+    },
+    handleSubmit
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -67,9 +82,12 @@ export default function MallCheckout() {
         </Card>
         <Card className="p-4"><h3 className="font-medium mb-3">{t('order.remark')}</h3><Textarea placeholder={t('order.remarkPlaceholder')} value={remark} onChange={(e) => setRemark(e.target.value)} rows={3} /></Card>
       </div>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
-        <Button className="w-full bg-purple-600 hover:bg-purple-700 py-6" onClick={handleSubmit} disabled={isSubmitting || mallCartItems.length === 0}>{isSubmitting ? t('common.loading') : `${t('order.payNow')} ₽${mallCartTotal.toFixed(2)}`}</Button>
-      </div>
+      {/* 如果不在 Telegram 中，显示传统的底部按钮 */}
+      {!isTelegramApp && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
+          <Button className="w-full bg-purple-600 hover:bg-purple-700 py-6" onClick={handleSubmit} disabled={isSubmitting || mallCartItems.length === 0}>{isSubmitting ? t('common.loading') : `${t('order.payNow')} ₽${mallCartTotal.toFixed(2)}`}</Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,11 +5,25 @@ import { Card } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
+import { useTelegramMainButton } from '@/hooks/useTelegramMainButton';
+import { isTelegramWebApp } from '@/lib/telegram';
 
 export default function MallCart() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { mallCartItems, mallCartTotal, updateQuantity, removeItem, clearCart, isLoading } = useCart();
+  const isTelegramApp = isTelegramWebApp();
+  
+  // 集成 Telegram 主按钮
+  useTelegramMainButton(
+    mallCartItems.length > 0 ? {
+      text: `${t('cart.checkout')} (₽${mallCartTotal.toFixed(2)})`,
+      color: '#9333ea', // purple-600
+      isVisible: true,
+      isActive: !isLoading,
+    } : null,
+    () => navigate('/mall/checkout')
+  );
 
   if (mallCartItems.length === 0) {
     return (
@@ -63,12 +77,15 @@ export default function MallCart() {
           );
         })}
       </div>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
-        <div className="flex items-center justify-between">
-          <div><span className="text-gray-500">{t('cart.subtotal')}: </span><span className="text-xl font-bold text-purple-600">₽{mallCartTotal.toFixed(2)}</span></div>
-          <Button className="bg-purple-600 hover:bg-purple-700 px-8" onClick={() => navigate('/mall/checkout')}>{t('cart.checkout')}</Button>
+      {/* 如果不在 Telegram 中，显示传统的底部按钮 */}
+      {!isTelegramApp && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
+          <div className="flex items-center justify-between">
+            <div><span className="text-gray-500">{t('cart.subtotal')}: </span><span className="text-xl font-bold text-purple-600">₽{mallCartTotal.toFixed(2)}</span></div>
+            <Button className="bg-purple-600 hover:bg-purple-700 px-8" onClick={() => navigate('/mall/checkout')}>{t('cart.checkout')}</Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
