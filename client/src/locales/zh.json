@@ -413,6 +413,7 @@
       "members": "会员管理",
       "marketing": "营销自动化",
       "marketingDashboard": "营销效果",
+      "abTest": "A/B 测试",
       "orders": "订单管理",
       "stores": "门店管理",
       "reports": "数据报表",
@@ -886,6 +887,30 @@
       "orders": "订单数",
       "revenue": "总收入",
       "avgOrderValue": "客单价",
+      "noData": "暂无数据",
+      "trends": {
+        "title": "趋势分析",
+        "chartTitle": "订单量和收入趋势",
+        "chartDescription": "显示每日订单数和收入变化",
+        "orders": "订单数",
+        "revenue": "收入"
+      }
+    },
+    "abTest": {
+      "title": "A/B 测试对比",
+      "description": "对比不同触发器的效果，找到最优方案",
+      "selectGroup": "选择分组",
+      "selectGroupDescription": "选择一个分组标签查看对比结果",
+      "selectGroupPlaceholder": "请选择分组标签",
+      "noGroups": "暂无分组",
+      "recommended": "推荐方案",
+      "recommendedDescription": "基于综合评分的最优方案",
+      "triggerId": "触发器 ID",
+      "best": "最佳",
+      "totalOrders": "订单数",
+      "totalRevenue": "总收入",
+      "conversionRate": "转化率",
+      "usageRate": "使用率",
       "noData": "暂无数据"
     },
     "performanceStats": {

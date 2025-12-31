@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE marketingTriggers \nADD COLUMN groupTag VARCHAR(64) NULL COMMENT 'A/B测试分组标签',\nADD COLUMN budget DECIMAL(12,2) NULL COMMENT '预算上限',\nADD COLUMN spent DECIMAL(12,2) DEFAULT 0.00 COMMENT '已消耗金额';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute ALTER TABLE marketingTriggers \nADD COLUMN groupTag VARCHAR(64) NULL COMMENT 'A/B测试分组标签',\nADD COLUMN budget DECIMAL(12,2) NULL COMMENT '预算上限',\nADD COLUMN spent DECIMAL(12,2) DEFAULT 0.00 COMMENT '已消耗金额';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 1: Duplicate column name 'groupTag'"
+  ]
+}

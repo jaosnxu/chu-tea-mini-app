@@ -254,6 +254,15 @@ export default function MarketingTriggers() {
                   {trigger.lastExecutedAt && (
                     <p>最后执行: {new Date(trigger.lastExecutedAt).toLocaleString()}</p>
                   )}
+                  {trigger.budget !== null && trigger.budget !== undefined && (
+                    <p className="flex items-center gap-2">
+                      <span>预算: ₽{Number(trigger.spent || 0).toFixed(2)} / ₽{Number(trigger.budget).toFixed(2)}</span>
+                      <span className="text-xs">({trigger.budget > 0 ? Math.round((Number(trigger.spent || 0) / Number(trigger.budget)) * 100) : 0}%)</span>
+                      {Number(trigger.spent || 0) >= Number(trigger.budget) && (
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">已超预算</span>
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2">

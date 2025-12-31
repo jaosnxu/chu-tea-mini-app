@@ -685,3 +685,21 @@
 - [x] 在服务器启动时初始化 CronScheduler
 - [x] 验证定时任务正常运行
 - [x] 添加日志记录
+
+## 营销高级功能（重新实现，2024-12-31）
+
+### 数据库字段
+- [x] 在 marketingTriggers 表添加 groupTag、budget、spent 字段
+- [x] 在 orders 和 userCoupons 表添加 campaignId 字段（已完成）
+
+### 后端 API
+- [x] 创建趋势数据 API（getTriggerTrends, getTriggerExecutionTrends）
+- [x] 创建分组对比 API（getGroupComparison, getGroupTags）
+- [x] 创建预算管理函数（incrementTriggerSpent）
+- [x] 在 triggerEngine 中添加预算检查逻辑
+
+### 前端界面
+- [x] 在营销效果仪表盘添加趋势图表（Recharts）
+- [x] 创建 A/B 测试对比页面
+- [x] 在触发器列表显示预算使用情况
+- [x] 添加导航和翻译

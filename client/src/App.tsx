@@ -61,6 +61,7 @@ const AdminMarketingTriggers = lazy(() => import("./pages/admin/MarketingTrigger
 const AdminTriggerExecutionHistory = lazy(() => import("./pages/admin/TriggerExecutionHistory"));
 const AdminMarketingDashboard = lazy(() => import("./pages/admin/MarketingDashboard"));
 const AdminTriggerTemplates = lazy(() => import("./pages/admin/TriggerTemplates"));
+const AdminABTestComparison = lazy(() => import("./pages/admin/ABTestComparison"));
 
 function Router() {
   return (
@@ -125,6 +126,7 @@ function Router() {
       <Route path="/admin/trigger-executions/:id" component={() => <AdminLayout><AdminTriggerExecutionHistory /></AdminLayout>} />
       <Route path="/admin/marketing-dashboard" component={() => <AdminLayout><AdminMarketingDashboard /></AdminLayout>} />
       <Route path="/admin/trigger-templates" component={() => <AdminLayout><AdminTriggerTemplates /></AdminLayout>} />
+      <Route path="/admin/ab-test" component={() => <AdminLayout><AdminABTestComparison /></AdminLayout>} />
       
       {/* 404 */}
       <Route component={NotFound} />

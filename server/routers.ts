@@ -1476,6 +1476,55 @@ export const appRouter = router({
           limit: input?.limit,
         });
       }),
+    
+    // 获取触发器效果趋势数据
+    getTrends: adminProcedure
+      .input(z.object({
+        triggerId: z.number().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { getTriggerTrends } = await import('./db/marketingTrends');
+        return await getTriggerTrends({
+          triggerId: input?.triggerId,
+          startDate: input?.startDate,
+          endDate: input?.endDate,
+        });
+      }),
+    
+    // 获取触发器执行趋势数据
+    getExecutionTrends: adminProcedure
+      .input(z.object({
+        triggerId: z.number().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { getTriggerExecutionTrends } = await import('./db/marketingTrends');
+        return await getTriggerExecutionTrends({
+          triggerId: input?.triggerId,
+          startDate: input?.startDate,
+          endDate: input?.endDate,
+        });
+      }),
+    
+    // 获取分组对比数据
+    getGroupComparison: adminProcedure
+      .input(z.object({
+        groupTag: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const { getGroupComparison } = await import('./db/abTesting');
+        return await getGroupComparison(input.groupTag);
+      }),
+    
+    // 获取所有分组标签
+    getGroupTags: adminProcedure
+      .query(async () => {
+        const { getGroupTags } = await import('./db/abTesting');
+        return await getGroupTags();
+      }),
   }),
 });
 

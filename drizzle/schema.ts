@@ -1288,6 +1288,9 @@ export const marketingTriggers = mysqlTable("marketingTriggers", {
   ]).notNull(),
   actionConfig: json("actionConfig").notNull(), // 动作配置（JSON格式）
   // 示例：{ "couponTemplateId": 123, "points": 100, "message": "欢迎新用户" }
+  groupTag: varchar("groupTag", { length: 64 }), // A/B测试分组标签
+  budget: decimal("budget", { precision: 12, scale: 2 }), // 预算上限
+  spent: decimal("spent", { precision: 12, scale: 2 }).default("0.00"), // 已消耗金额
   isActive: boolean("isActive").default(true).notNull(),
   executionCount: int("executionCount").default(0).notNull(), // 执行次数
   lastExecutedAt: timestamp("lastExecutedAt"), // 最后执行时间

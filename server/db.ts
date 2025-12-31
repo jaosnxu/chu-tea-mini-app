@@ -3384,6 +3384,17 @@ export async function updateMarketingTrigger(id: number, data: Partial<{
   return { success: true };
 }
 
+export async function incrementTriggerSpent(id: number, amount: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(marketingTriggers)
+    .set({ spent: sql`${marketingTriggers.spent} + ${amount}` })
+    .where(eq(marketingTriggers.id, id));
+  
+  return { success: true };
+}
+
 export async function deleteMarketingTrigger(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

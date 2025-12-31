@@ -121,6 +121,17 @@ export class TriggerEngine {
    */
   private static async executeAction(trigger: any, userId: number, campaignId?: string): Promise<void> {
     try {
+      // 检查预算
+      if (trigger.budget !== null && trigger.budget !== undefined) {
+        const spent = Number(trigger.spent || 0);
+        const budget = Number(trigger.budget);
+        if (spent >= budget) {
+          console.log(`[TriggerEngine] Trigger ${trigger.id} budget exceeded`);
+          await db.updateMarketingTrigger(trigger.id, { isActive: false });
+          throw new Error(`Budget exceeded for trigger ${trigger.id}`);
+        }
+      }
+      
       // 执行动作
       let result: any;
       // 生成 campaignId（如果没有提供）
@@ -147,6 +158,11 @@ export class TriggerEngine {
         status: 'success',
         result,
       });
+      
+      // 更新预算消耗
+      if (trigger.action === 'send_coupon' && trigger.budget !== null) {
+        await this.updateBudgetSpent(trigger.id, trigger.actionConfig);
+      }
       
       // 标记为已执行
       this.markAsExecuted(trigger.id, userId);
@@ -224,6 +240,27 @@ export class TriggerEngine {
     // 定期清理过期缓存
     if (this.executionCache.size > 10000) {
       this.cleanupCache();
+    }
+  }
+  
+  /**
+   * 更新预算消耗
+   */
+  private static async updateBudgetSpent(triggerId: number, actionConfig: any): Promise<void> {
+    try {
+      const couponTemplateId = actionConfig.couponTemplateId;
+      if (!couponTemplateId) return;
+      
+      const templates = await db.getAllCouponTemplates();
+      const template = templates.find((t: any) => t.id === couponTemplateId);
+      if (!template) return;
+      
+      const cost = Number(template.value || 0);
+      await db.incrementTriggerSpent(triggerId, cost);
+      
+      console.log(`[TriggerEngine] Updated budget spent for trigger ${triggerId}: +${cost}`);
+    } catch (error) {
+      console.error('[TriggerEngine] Error updating budget spent:', error);
     }
   }
   

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, Package, DollarSign, Percent, Award } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function MarketingDashboard() {
   const { t } = useTranslation();
@@ -36,6 +37,12 @@ export default function MarketingDashboard() {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
     limit: 5,
+  });
+  
+  // 获取趋势数据
+  const { data: trends, isLoading: trendsLoading } = trpc.marketingTrigger.getTrends.useQuery({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
   });
 
   return (
@@ -145,6 +152,57 @@ export default function MarketingDashboard() {
               );
             })}
           </div>
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              {t('admin.marketingDashboard.noData')}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+      
+      {/* 趋势图表 */}
+      <div>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-blue-500" />
+          {t('admin.marketingDashboard.trends.title')}
+        </h2>
+        
+        {trendsLoading ? (
+          <Skeleton className="h-80 w-full" />
+        ) : trends && trends.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('admin.marketingDashboard.trends.chartTitle')}</CardTitle>
+              <CardDescription>{t('admin.marketingDashboard.trends.chartDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={trends}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Legend />
+                  <Line 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="orderCount" 
+                    stroke="#8884d8" 
+                    name={t('admin.marketingDashboard.trends.orders')} 
+                  />
+                  <Line 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#82ca9d" 
+                    name={t('admin.marketingDashboard.trends.revenue')} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         ) : (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">

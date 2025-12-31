@@ -38,6 +38,7 @@ import {
   CreditCard,
   TrendingUp,
   BarChart3,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NotificationBell from "@/components/NotificationBell";
@@ -63,6 +64,7 @@ const navItems: NavItem[] = [
   { icon: ShoppingCart, labelKey: "admin.nav.orders", path: "/admin/orders" },
   { icon: Megaphone, labelKey: "admin.nav.marketing", path: "/admin/marketing" },
   { icon: TrendingUp, labelKey: "admin.nav.marketingDashboard", path: "/admin/marketing-dashboard" },
+  { icon: FlaskConical, labelKey: "admin.nav.abTest", path: "/admin/ab-test" },
   { icon: Store, labelKey: "admin.nav.stores", path: "/admin/stores" },
   { icon: Users, labelKey: "admin.nav.users", path: "/admin/users" },
   { icon: Bell, labelKey: "admin.nav.notifications", path: "/admin/notifications" },
