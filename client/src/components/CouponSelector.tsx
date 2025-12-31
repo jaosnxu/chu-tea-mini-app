@@ -17,6 +17,7 @@ interface CouponSelectorProps {
   items: Array<{ productId: number; quantity: number; price: number }>;
   selectedCouponId?: number | null;
   onSelectCoupon: (couponId: number | null, discount: number) => void;
+  disabled?: boolean;
 }
 
 interface UserCoupon {
@@ -40,7 +41,7 @@ interface UserCoupon {
   };
 }
 
-export function CouponSelector({ orderAmount, items, selectedCouponId, onSelectCoupon }: CouponSelectorProps) {
+export function CouponSelector({ orderAmount, items, selectedCouponId, onSelectCoupon, disabled = false }: CouponSelectorProps) {
   const { t } = useTranslation();
   const [showDialog, setShowDialog] = useState(false);
   const [calculatingCouponId, setCalculatingCouponId] = useState<number | null>(null);
@@ -118,7 +119,14 @@ export function CouponSelector({ orderAmount, items, selectedCouponId, onSelectC
 
   return (
     <>
-      <Card className="p-4 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setShowDialog(true)}>
+      <Card 
+        className={`p-4 transition-colors ${
+          disabled 
+            ? 'opacity-50 cursor-not-allowed' 
+            : 'cursor-pointer hover:bg-gray-50'
+        }`} 
+        onClick={() => !disabled && setShowDialog(true)}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Ticket className="w-5 h-5 text-teal-600" />

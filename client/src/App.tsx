@@ -62,6 +62,7 @@ const AdminTriggerExecutionHistory = lazy(() => import("./pages/admin/TriggerExe
 const AdminMarketingDashboard = lazy(() => import("./pages/admin/MarketingDashboard"));
 const AdminTriggerTemplates = lazy(() => import("./pages/admin/TriggerTemplates"));
 const AdminABTestComparison = lazy(() => import("./pages/admin/ABTestComparison"));
+const AdminDeliverySettings = lazy(() => import("./pages/admin/DeliverySettings"));
 
 function Router() {
   return (
@@ -122,6 +123,7 @@ function Router() {
       <Route path="/admin/yookassa" component={() => <AdminLayout><AdminYooKassaConfig /></AdminLayout>} />
       <Route path="/admin/payments" component={() => <AdminLayout><AdminPaymentHistory /></AdminLayout>} />
       <Route path="/admin/product-config" component={() => <AdminLayout><AdminProductConfig /></AdminLayout>} />
+      <Route path="/admin/delivery-settings" component={() => <AdminLayout><AdminDeliverySettings /></AdminLayout>} />
       <Route path="/admin/marketing-triggers" component={() => <AdminLayout><AdminMarketingTriggers /></AdminLayout>} />
       <Route path="/admin/trigger-executions/:id" component={() => <AdminLayout><AdminTriggerExecutionHistory /></AdminLayout>} />
       <Route path="/admin/marketing-dashboard" component={() => <AdminLayout><AdminMarketingDashboard /></AdminLayout>} />

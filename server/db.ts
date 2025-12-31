@@ -467,6 +467,7 @@ export async function createOrder(userId: number, data: {
   pickupTime?: string;
   couponId?: number;
   pointsUsed?: number;
+  usePoints?: boolean; // 是否使用积分支付
   remark?: string;
   campaignId?: string; // 营销活动ID
   items: Array<{
@@ -518,8 +519,8 @@ export async function createOrder(userId: number, data: {
   let couponDiscount = 0;
   let pointsDiscount = 0;
   
-  // 处理优惠券
-  if (data.couponId) {
+  // 处理优惠券（与积分互斥）
+  if (data.couponId && !data.usePoints) {
     try {
       const discountResult = await calculateCouponDiscount({
         couponId: data.couponId,
@@ -537,7 +538,24 @@ export async function createOrder(userId: number, data: {
     }
   }
   
-  if (data.pointsUsed && data.pointsUsed > 0) {
+  // 处理积分支付（与优惠券互斥）
+  if (data.usePoints && !data.couponId) {
+    // 获取用户积分
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (user.length === 0) {
+      throw new Error('用户不存在');
+    }
+    const availablePoints = user[0].availablePoints;
+    const requiredPoints = Math.ceil(subtotal); // 需要的积分数（1积分 = 1元）
+    
+    if (availablePoints < requiredPoints) {
+      throw new Error('积分不足');
+    }
+    
+    // 使用积分支付全额
+    pointsDiscount = subtotal;
+    data.pointsUsed = requiredPoints;
+  } else if (data.pointsUsed && data.pointsUsed > 0 && !data.couponId) {
     pointsDiscount = data.pointsUsed / 100; // 100积分 = 1元
   }
   

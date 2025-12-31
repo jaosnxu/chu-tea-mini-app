@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, router } from "./trpc";
+import { getDeliverySettings, updateDeliverySettings } from "../db/deliverySettings";
 
 export const systemRouter = router({
   health: publicProcedure
@@ -25,5 +26,22 @@ export const systemRouter = router({
       return {
         success: delivered,
       } as const;
+    }),
+
+  // 配送方式设置
+  getDeliverySettings: publicProcedure.query(async () => {
+    return await getDeliverySettings();
+  }),
+
+  updateDeliverySettings: adminProcedure
+    .input(
+      z.object({
+        enablePickup: z.boolean(),
+        enableDelivery: z.boolean(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await updateDeliverySettings(input);
+      return { success: true };
     }),
 });

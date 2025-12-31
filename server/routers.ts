@@ -229,6 +229,7 @@ export const appRouter = router({
         pickupTime: z.string().optional(),
         couponId: z.number().optional(),
         pointsUsed: z.number().optional(),
+        usePoints: z.boolean().optional(),
         remark: z.string().optional(),
         items: z.array(z.object({
           productId: z.number(),

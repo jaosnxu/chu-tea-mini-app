@@ -28,6 +28,13 @@ export default function Checkout() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCouponId, setSelectedCouponId] = useState<number | null>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [usePoints, setUsePoints] = useState(false);
+  
+  // 获取用户信息（积分）
+  const { data: currentUser } = trpc.auth.me.useQuery();
+  
+  // 获取配送方式配置
+  const { data: deliverySettings } = trpc.system.getDeliverySettings.useQuery();
 
   const createOrderMutation = trpc.order.create.useMutation();
 
@@ -50,6 +57,7 @@ export default function Checkout() {
         deliveryType,
         storeId: currentStore?.id,
         couponId: selectedCouponId || undefined,
+        usePoints,
         remark,
         items: teaCartItems.map(item => ({
           productId: item.productId,
@@ -75,12 +83,36 @@ export default function Checkout() {
     }
   };
   
-  const finalAmount = teaCartTotal - couponDiscount;
+  // 计算最终金额
+  let finalAmount = teaCartTotal;
+  if (usePoints) {
+    // 使用积分支付，金额为 0
+    finalAmount = 0;
+  } else if (couponDiscount > 0) {
+    // 使用优惠券
+    finalAmount = teaCartTotal - couponDiscount;
+  }
 
   const handleCouponSelect = (couponId: number | null, discount: number) => {
     setSelectedCouponId(couponId);
     setCouponDiscount(discount);
+    // 选择优惠券后取消积分支付
+    if (couponId) {
+      setUsePoints(false);
+    }
   };
+  
+  const handlePointsToggle = (checked: boolean) => {
+    setUsePoints(checked);
+    // 选择积分支付后取消优惠券
+    if (checked) {
+      setSelectedCouponId(null);
+      setCouponDiscount(0);
+    }
+  };
+  
+  // 检查积分是否足够支付订单
+  const canUsePoints = currentUser && currentUser.availablePoints >= Math.ceil(teaCartTotal);
 
   // 集成 Telegram 主按钮
   const mainButtonControls = useTelegramMainButton(
@@ -112,14 +144,18 @@ export default function Checkout() {
           <h3 className="font-medium mb-3">{t('order.deliveryType')}</h3>
           <RadioGroup value={deliveryType} onValueChange={(v) => setDeliveryType(v as 'pickup' | 'delivery')}>
             <div className="flex gap-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="pickup" id="pickup" />
-                <Label htmlFor="pickup">{t('order.pickup')}</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="delivery" id="delivery" />
-                <Label htmlFor="delivery">{t('order.delivery')}</Label>
-              </div>
+              {deliverySettings?.enablePickup && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="pickup" id="pickup" />
+                  <Label htmlFor="pickup">{t('order.pickup')}</Label>
+                </div>
+              )}
+              {deliverySettings?.enableDelivery && (
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="delivery" id="delivery" />
+                  <Label htmlFor="delivery">{t('order.delivery')}</Label>
+                </div>
+              )}
             </div>
           </RadioGroup>
         </Card>
@@ -183,7 +219,45 @@ export default function Checkout() {
           }))}
           selectedCouponId={selectedCouponId}
           onSelectCoupon={handleCouponSelect}
+          disabled={usePoints}
         />
+
+        {/* 积分支付 */}
+        {canUsePoints && (
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Ticket className="w-5 h-5 text-teal-600" />
+                <div>
+                  <p className="font-medium">{t('points.usePoints')}</p>
+                  <p className="text-sm text-gray-500">
+                    {t('points.available')}: {currentUser?.availablePoints} {t('points.points')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="usePoints"
+                  checked={usePoints}
+                  onChange={(e) => handlePointsToggle(e.target.checked)}
+                  disabled={selectedCouponId !== null}
+                  className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
+                />
+                <Label htmlFor="usePoints" className="cursor-pointer">
+                  {usePoints ? t('points.using') : t('points.use')}
+                </Label>
+              </div>
+            </div>
+            {usePoints && (
+              <div className="mt-3 p-3 bg-teal-50 rounded-lg">
+                <p className="text-sm text-teal-800">
+                  {t('points.willUse')} {Math.ceil(teaCartTotal)} {t('points.points')}
+                </p>
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* 备注 */}
         <Card className="p-4">

@@ -262,7 +262,11 @@
     "earn": "获得",
     "redeem": "使用",
     "expire": "过期",
-    "usePoints": "使用积分",
+    "usePoints": "使用积分支付",
+    "use": "使用",
+    "using": "使用中",
+    "available": "可用",
+    "willUse": "将使用",
     "pointsToUse": "可用 {{points}} 积分抵扣 {{amount}}",
     "earnRule": "消费 1 元 = 1 积分",
     "type": {
@@ -430,7 +434,8 @@
       "iikoMonitor": "IIKO 监控",
       "yookassa": "YooKassa 配置",
       "payments": "支付记录",
-      "productConfig": "商品配置"
+      "productConfig": "商品配置",
+      "deliverySettings": "配送设置"
     },
     "notifications": {
       "title": "通知",
@@ -769,7 +774,16 @@
     "isDefault": "默认选中",
     "isActive": "启用",
     "default": "默认",
-    "sortOrder": "排序"
+    "sortOrder": "排序",
+    "deliverySettings": "配送设置",
+    "deliveryMethod": "配送方式",
+    "enablePickup": "启用自提",
+    "enableDelivery": "启用配送",
+    "pickupDesc": "允许用户到店自提",
+    "deliveryDesc": "允许用户选择配送服务",
+    "saveSettings": "保存设置",
+    "settingsSaved": "设置已保存",
+    "atLeastOneMethod": "至少需要开启一种配送方式"
   },
   "notifications": {
     "settings": {

@@ -74,6 +74,7 @@ const navItems: NavItem[] = [
   { icon: CreditCard, labelKey: "admin.nav.yookassa", path: "/admin/yookassa" },
   { icon: Coins, labelKey: "admin.nav.payments", path: "/admin/payments" },
   { icon: Settings, labelKey: "admin.nav.productConfig", path: "/admin/product-config" },
+  { icon: Settings, labelKey: "admin.nav.deliverySettings", path: "/admin/delivery-settings" },
   { icon: FileText, labelKey: "admin.nav.logs", path: "/admin/logs" },
 ];
 
