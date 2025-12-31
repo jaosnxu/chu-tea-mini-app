@@ -30,6 +30,19 @@ import InfluencerCenter from "./pages/InfluencerCenter";
 import Settings from "./pages/Settings";
 import StoreSelector from "./pages/StoreSelector";
 
+// 后台管理页面
+import AdminLayout from "./components/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminAds from "./pages/admin/AdsManagement";
+import AdminProducts from "./pages/admin/ProductsManagement";
+import AdminCoupons from "./pages/admin/CouponsManagement";
+import AdminOrders from "./pages/admin/OrdersManagement";
+import AdminMarketing from "./pages/admin/MarketingManagement";
+import AdminStores from "./pages/admin/StoresManagement";
+import AdminUsers from "./pages/admin/UsersManagement";
+import AdminApiConfig from "./pages/admin/ApiConfigManagement";
+import AdminLogs from "./pages/admin/LogsManagement";
+
 function Router() {
   return (
     <Switch>
@@ -62,6 +75,18 @@ function Router() {
       <Route path="/addresses" component={Addresses} />
       <Route path="/influencer" component={InfluencerCenter} />
       <Route path="/settings" component={Settings} />
+      
+{/* 后台管理 */}
+      <Route path="/admin" component={() => <AdminLayout><AdminDashboard /></AdminLayout>} />
+      <Route path="/admin/ads" component={() => <AdminLayout><AdminAds /></AdminLayout>} />
+      <Route path="/admin/products" component={() => <AdminLayout><AdminProducts /></AdminLayout>} />
+      <Route path="/admin/coupons" component={() => <AdminLayout><AdminCoupons /></AdminLayout>} />
+      <Route path="/admin/orders" component={() => <AdminLayout><AdminOrders /></AdminLayout>} />
+      <Route path="/admin/marketing" component={() => <AdminLayout><AdminMarketing /></AdminLayout>} />
+      <Route path="/admin/stores" component={() => <AdminLayout><AdminStores /></AdminLayout>} />
+      <Route path="/admin/users" component={() => <AdminLayout><AdminUsers /></AdminLayout>} />
+      <Route path="/admin/api" component={() => <AdminLayout><AdminApiConfig /></AdminLayout>} />
+      <Route path="/admin/logs" component={() => <AdminLayout><AdminLogs /></AdminLayout>} />
       
       {/* 404 */}
       <Route path="/404" component={NotFound} />

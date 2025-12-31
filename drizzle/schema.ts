@@ -481,3 +481,321 @@ export const systemConfigs = mysqlTable("systemConfigs", {
 
 export type SystemConfig = typeof systemConfigs.$inferSelect;
 export type InsertSystemConfig = typeof systemConfigs.$inferInsert;
+
+// ==================== 后台管理系统 ====================
+
+// 管理员角色
+export const adminRoles = mysqlTable("adminRoles", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  nameZh: varchar("nameZh", { length: 64 }).notNull(),
+  nameRu: varchar("nameRu", { length: 64 }).notNull(),
+  nameEn: varchar("nameEn", { length: 64 }).notNull(),
+  permissions: json("permissions").$type<string[]>(),
+  description: text("description"),
+  isSystem: boolean("isSystem").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdminRole = typeof adminRoles.$inferSelect;
+export type InsertAdminRole = typeof adminRoles.$inferInsert;
+
+// 管理员用户
+export const adminUsers = mysqlTable("adminUsers", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  roleId: int("roleId").notNull(),
+  storeIds: json("storeIds").$type<number[]>(),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastLoginAt: timestamp("lastLoginAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type InsertAdminUser = typeof adminUsers.$inferInsert;
+
+// 操作日志
+export const operationLogs = mysqlTable("operationLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  adminUserId: int("adminUserId").notNull(),
+  module: varchar("module", { length: 32 }).notNull(),
+  action: varchar("action", { length: 32 }).notNull(),
+  targetType: varchar("targetType", { length: 32 }),
+  targetId: int("targetId"),
+  beforeData: json("beforeData"),
+  afterData: json("afterData"),
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OperationLog = typeof operationLogs.$inferSelect;
+export type InsertOperationLog = typeof operationLogs.$inferInsert;
+
+// 广告位配置
+export const adSlots = mysqlTable("adSlots", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  nameZh: varchar("nameZh", { length: 64 }).notNull(),
+  nameRu: varchar("nameRu", { length: 64 }).notNull(),
+  nameEn: varchar("nameEn", { length: 64 }).notNull(),
+  position: mysqlEnum("position", ["home_top", "home_bottom", "menu_banner", "mall_banner", "popup"]).notNull(),
+  width: int("width"),
+  height: int("height"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AdSlot = typeof adSlots.$inferSelect;
+export type InsertAdSlot = typeof adSlots.$inferInsert;
+
+// 广告素材
+export const adMaterials = mysqlTable("adMaterials", {
+  id: int("id").autoincrement().primaryKey(),
+  slotId: int("slotId").notNull(),
+  type: mysqlEnum("type", ["image", "video"]).default("image").notNull(),
+  mediaUrl: text("mediaUrl").notNull(),
+  thumbnailUrl: text("thumbnailUrl"),
+  linkType: mysqlEnum("linkType", ["none", "product", "category", "page", "external"]).default("none"),
+  linkValue: varchar("linkValue", { length: 256 }),
+  titleZh: varchar("titleZh", { length: 128 }),
+  titleRu: varchar("titleRu", { length: 128 }),
+  titleEn: varchar("titleEn", { length: 128 }),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  startAt: timestamp("startAt"),
+  endAt: timestamp("endAt"),
+  isActive: boolean("isActive").default(true).notNull(),
+  clicks: int("clicks").default(0).notNull(),
+  views: int("views").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdMaterial = typeof adMaterials.$inferSelect;
+export type InsertAdMaterial = typeof adMaterials.$inferInsert;
+
+// 首页入口配置
+export const homeEntries = mysqlTable("homeEntries", {
+  id: int("id").autoincrement().primaryKey(),
+  position: mysqlEnum("position", ["left", "right"]).notNull(),
+  entryType: mysqlEnum("entryType", ["order", "mall", "coupons", "points", "member", "custom"]).notNull(),
+  iconUrl: text("iconUrl"),
+  nameZh: varchar("nameZh", { length: 32 }),
+  nameRu: varchar("nameRu", { length: 32 }),
+  nameEn: varchar("nameEn", { length: 32 }),
+  linkPath: varchar("linkPath", { length: 128 }),
+  bgColor: varchar("bgColor", { length: 32 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type HomeEntry = typeof homeEntries.$inferSelect;
+export type InsertHomeEntry = typeof homeEntries.$inferInsert;
+
+// 营销活动
+export const marketingCampaigns = mysqlTable("marketingCampaigns", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  nameZh: varchar("nameZh", { length: 128 }).notNull(),
+  nameRu: varchar("nameRu", { length: 128 }).notNull(),
+  nameEn: varchar("nameEn", { length: 128 }).notNull(),
+  type: mysqlEnum("type", ["auto_coupon", "points_bonus", "member_upgrade", "birthday", "recall", "custom"]).notNull(),
+  triggerType: mysqlEnum("triggerType", ["event", "schedule", "manual"]).notNull(),
+  triggerCondition: json("triggerCondition").$type<{
+    event?: string;
+    schedule?: string;
+    userSegment?: string;
+    conditions?: Array<{ field: string; operator: string; value: any }>;
+  }>(),
+  actionType: mysqlEnum("actionType", ["send_coupon", "add_points", "send_notification", "upgrade_member"]).notNull(),
+  actionConfig: json("actionConfig").$type<{
+    couponTemplateId?: number;
+    pointsAmount?: number;
+    notificationTemplate?: string;
+    memberLevel?: string;
+  }>(),
+  priority: int("priority").default(0).notNull(),
+  silencePeriod: int("silencePeriod").default(0),
+  budget: decimal("budget", { precision: 12, scale: 2 }),
+  usedBudget: decimal("usedBudget", { precision: 12, scale: 2 }).default("0.00"),
+  maxExecutions: int("maxExecutions"),
+  executionCount: int("executionCount").default(0).notNull(),
+  startAt: timestamp("startAt"),
+  endAt: timestamp("endAt"),
+  status: mysqlEnum("status", ["draft", "pending", "active", "paused", "completed", "cancelled"]).default("draft").notNull(),
+  createdBy: int("createdBy"),
+  approvedBy: int("approvedBy"),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;
+export type InsertMarketingCampaign = typeof marketingCampaigns.$inferInsert;
+
+// 营销活动执行记录
+export const campaignExecutions = mysqlTable("campaignExecutions", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  userId: int("userId").notNull(),
+  actionType: varchar("actionType", { length: 32 }).notNull(),
+  actionResult: json("actionResult"),
+  status: mysqlEnum("status", ["success", "failed", "skipped"]).notNull(),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CampaignExecution = typeof campaignExecutions.$inferSelect;
+export type InsertCampaignExecution = typeof campaignExecutions.$inferInsert;
+
+// 积分规则配置
+export const pointsRules = mysqlTable("pointsRules", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  nameZh: varchar("nameZh", { length: 64 }).notNull(),
+  nameRu: varchar("nameRu", { length: 64 }).notNull(),
+  nameEn: varchar("nameEn", { length: 64 }).notNull(),
+  ruleType: mysqlEnum("ruleType", ["earn", "redeem", "expire", "bonus"]).notNull(),
+  baseRate: decimal("baseRate", { precision: 10, scale: 4 }),
+  memberLevelMultiplier: json("memberLevelMultiplier").$type<{
+    normal: number;
+    silver: number;
+    gold: number;
+    diamond: number;
+  }>(),
+  maxPointsPerOrder: int("maxPointsPerOrder"),
+  minOrderAmount: decimal("minOrderAmount", { precision: 10, scale: 2 }),
+  expirationDays: int("expirationDays"),
+  applicableOrderTypes: json("applicableOrderTypes").$type<string[]>(),
+  excludeCategories: json("excludeCategories").$type<number[]>(),
+  excludeProducts: json("excludeProducts").$type<number[]>(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PointsRule = typeof pointsRules.$inferSelect;
+export type InsertPointsRule = typeof pointsRules.$inferInsert;
+
+// 会员等级配置
+export const memberLevelConfigs = mysqlTable("memberLevelConfigs", {
+  id: int("id").autoincrement().primaryKey(),
+  level: mysqlEnum("level", ["normal", "silver", "gold", "diamond"]).notNull().unique(),
+  nameZh: varchar("nameZh", { length: 32 }).notNull(),
+  nameRu: varchar("nameRu", { length: 32 }).notNull(),
+  nameEn: varchar("nameEn", { length: 32 }).notNull(),
+  minSpent: decimal("minSpent", { precision: 12, scale: 2 }).notNull(),
+  pointsMultiplier: decimal("pointsMultiplier", { precision: 5, scale: 2 }).default("1.00").notNull(),
+  discountRate: decimal("discountRate", { precision: 5, scale: 2 }).default("0.00").notNull(),
+  birthdayGiftCouponId: int("birthdayGiftCouponId"),
+  upgradeGiftCouponId: int("upgradeGiftCouponId"),
+  benefits: json("benefits").$type<{
+    freeDelivery?: boolean;
+    prioritySupport?: boolean;
+    exclusiveProducts?: boolean;
+    earlyAccess?: boolean;
+  }>(),
+  iconUrl: text("iconUrl"),
+  badgeColor: varchar("badgeColor", { length: 16 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MemberLevelConfig = typeof memberLevelConfigs.$inferSelect;
+export type InsertMemberLevelConfig = typeof memberLevelConfigs.$inferInsert;
+
+// API配置
+export const apiConfigs = mysqlTable("apiConfigs", {
+  id: int("id").autoincrement().primaryKey(),
+  provider: varchar("provider", { length: 32 }).notNull().unique(),
+  nameZh: varchar("nameZh", { length: 64 }).notNull(),
+  nameRu: varchar("nameRu", { length: 64 }).notNull(),
+  nameEn: varchar("nameEn", { length: 64 }).notNull(),
+  category: mysqlEnum("category", ["payment", "logistics", "pos", "notification", "other"]).notNull(),
+  config: json("config").$type<Record<string, string>>(),
+  isActive: boolean("isActive").default(false).notNull(),
+  lastTestAt: timestamp("lastTestAt"),
+  lastTestResult: mysqlEnum("lastTestResult", ["success", "failed"]),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ApiConfig = typeof apiConfigs.$inferSelect;
+export type InsertApiConfig = typeof apiConfigs.$inferInsert;
+
+// 异常监控记录
+export const anomalyAlerts = mysqlTable("anomalyAlerts", {
+  id: int("id").autoincrement().primaryKey(),
+  alertType: mysqlEnum("alertType", ["fraud", "abuse", "system", "business"]).notNull(),
+  severity: mysqlEnum("severity", ["info", "warning", "critical"]).notNull(),
+  titleZh: varchar("titleZh", { length: 128 }).notNull(),
+  titleRu: varchar("titleRu", { length: 128 }).notNull(),
+  titleEn: varchar("titleEn", { length: 128 }).notNull(),
+  description: text("description"),
+  relatedUserId: int("relatedUserId"),
+  relatedOrderId: int("relatedOrderId"),
+  metadata: json("metadata"),
+  status: mysqlEnum("status", ["open", "investigating", "resolved", "dismissed"]).default("open").notNull(),
+  resolvedBy: int("resolvedBy"),
+  resolvedAt: timestamp("resolvedAt"),
+  resolution: text("resolution"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AnomalyAlert = typeof anomalyAlerts.$inferSelect;
+export type InsertAnomalyAlert = typeof anomalyAlerts.$inferInsert;
+
+// 优惠券审批流程
+export const couponApprovals = mysqlTable("couponApprovals", {
+  id: int("id").autoincrement().primaryKey(),
+  templateId: int("templateId").notNull(),
+  requestedBy: int("requestedBy").notNull(),
+  requestType: mysqlEnum("requestType", ["create", "modify", "batch_issue"]).notNull(),
+  requestData: json("requestData"),
+  estimatedCost: decimal("estimatedCost", { precision: 12, scale: 2 }),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  approvedBy: int("approvedBy"),
+  approvedAt: timestamp("approvedAt"),
+  rejectReason: text("rejectReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CouponApproval = typeof couponApprovals.$inferSelect;
+export type InsertCouponApproval = typeof couponApprovals.$inferInsert;
+
+// 用户标签
+export const userTags = mysqlTable("userTags", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  nameZh: varchar("nameZh", { length: 64 }).notNull(),
+  nameRu: varchar("nameRu", { length: 64 }).notNull(),
+  nameEn: varchar("nameEn", { length: 64 }).notNull(),
+  color: varchar("color", { length: 16 }),
+  category: mysqlEnum("category", ["behavior", "value", "lifecycle", "preference", "custom"]).notNull(),
+  autoAssign: boolean("autoAssign").default(false).notNull(),
+  assignCondition: json("assignCondition").$type<{
+    field: string;
+    operator: string;
+    value: any;
+  }>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserTag = typeof userTags.$inferSelect;
+export type InsertUserTag = typeof userTags.$inferInsert;
+
+// 用户标签关联
+export const userTagAssignments = mysqlTable("userTagAssignments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tagId: int("tagId").notNull(),
+  assignedBy: mysqlEnum("assignedBy", ["system", "manual"]).default("system").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserTagAssignment = typeof userTagAssignments.$inferSelect;
+export type InsertUserTagAssignment = typeof userTagAssignments.$inferInsert;

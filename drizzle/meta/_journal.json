@@ -15,6 +15,13 @@
       "when": 1767171509189,
       "tag": "0001_rare_magneto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1767176903659,
+      "tag": "0002_awesome_timeslip",
+      "breakpoints": true
     }
   ]
 }

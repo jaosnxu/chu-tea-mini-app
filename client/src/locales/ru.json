@@ -323,5 +323,289 @@
     "notFound": "Страница не найдена",
     "unauthorized": "Необходимо войти",
     "forbidden": "Доступ запрещён"
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "Панель управления",
+      "ads": "Реклама",
+      "products": "Товары",
+      "coupons": "Купоны",
+      "orders": "Заказы",
+      "marketing": "Маркетинг",
+      "stores": "Магазины",
+      "users": "Пользователи",
+      "api": "API настройки",
+      "logs": "Журнал операций"
+    },
+    "search": {
+      "placeholder": "Поиск..."
+    },
+    "user": {
+      "myAccount": "Мой аккаунт",
+      "settings": "Настройки",
+      "logout": "Выйти"
+    },
+    "ads": {
+      "title": "Управление рекламой",
+      "subtitle": "Карусели и входы",
+      "tabs": {
+        "carousel": "Карусель",
+        "entries": "Входы"
+      },
+      "carouselTitle": "Карусель",
+      "carouselDesc": "Управление баннерами",
+      "entriesTitle": "Входы",
+      "entriesDesc": "Управление входами",
+      "addMaterial": "Добавить материал",
+      "slots": {
+        "homeTop": "Главная (верх)",
+        "homeMiddle": "Главная (середина)",
+        "category": "Категории"
+      },
+      "table": {
+        "preview": "Превью",
+        "title": "Название",
+        "type": "Тип",
+        "link": "Ссылка",
+        "views": "Просмотры",
+        "clicks": "Клики",
+        "status": "Статус",
+        "actions": "Действия"
+      },
+      "form": {
+        "title": "Название",
+        "image": "Изображение",
+        "link": "Ссылка",
+        "linkType": "Тип ссылки",
+        "sortOrder": "Порядок"
+      },
+      "linkTypes": {
+        "category": "Категория",
+        "product": "Товар",
+        "url": "Внешняя ссылка",
+        "page": "Страница"
+      }
+    },
+    "dashboard": {
+      "title": "Панель управления",
+      "subtitle": "Обзор бизнеса",
+      "todayOrders": "Заказы сегодня",
+      "todayRevenue": "Выручка сегодня",
+      "totalUsers": "Всего пользователей",
+      "activeUsers": "Активные пользователи",
+      "recentOrders": "Последние заказы",
+      "recentOrdersDesc": "Последние 5 заказов",
+      "topProducts": "Популярные товары",
+      "orderStatus": "Статусы заказов",
+      "vsYesterday": "по сравнению со вчера",
+      "stats": {
+        "todayGmv": "Выручка сегодня",
+        "todayOrders": "Заказы сегодня",
+        "activeUsers": "Активные пользователи",
+        "newMembers": "Новые участники"
+      },
+      "systemAlerts": "Системные уведомления",
+      "systemAlertsDesc": "Требуют внимания",
+      "alerts": {
+        "lowStock": "Низкий запас товаров",
+        "pendingApproval": "Ожидают одобрения",
+        "paymentFailed": "Ошибки оплаты"
+      },
+      "activeProducts": "Активные товары",
+      "activeCoupons": "Активные купоны",
+      "totalMembers": "Всего участников",
+      "conversionRate": "Конверсия",
+      "mallStats": "Статистика магазина",
+      "mallStatsDesc": "Обзор продаж",
+      "pendingShipment": "Ожидают отправки",
+      "returnRequests": "Запросы на возврат"
+    },
+    "orders": {
+      "title": "Управление заказами",
+      "orderNo": "Номер заказа",
+      "customer": "Клиент",
+      "amount": "Сумма",
+      "status": {
+        "preparing": "Готовится",
+        "paid": "Оплачен",
+        "completed": "Завершён",
+        "delivering": "Доставляется",
+        "pending": "Ожидает"
+      },
+      "time": "Время",
+      "updateStatus": "Обновить статус",
+      "viewDetail": "Подробнее"
+    },
+    "coupons": {
+      "title": "Управление купонами",
+      "subtitle": "Создание и рассылка купонов",
+      "tabs": {
+        "templates": "Шаблоны",
+        "issued": "Выданные",
+        "approvals": "Одобрения",
+        "rules": "Правила"
+      },
+      "stats": {
+        "templates": "Шаблонов",
+        "issued": "Выдано",
+        "used": "Использовано",
+        "pending": "Ожидают"
+      },
+      "templatesTitle": "Шаблоны купонов",
+      "templatesDesc": "Список всех шаблонов",
+      "batchSend": "Массовая рассылка",
+      "addTemplate": "Добавить шаблон",
+      "table": {
+        "name": "Название",
+        "type": "Тип",
+        "value": "Значение",
+        "minAmount": "Мин. сумма",
+        "validity": "Срок",
+        "issued": "Выдано",
+        "status": "Статус",
+        "actions": "Действия"
+      },
+      "types": {
+        "discount": "Скидка %",
+        "percent": "Скидка %",
+        "fixed": "Фикс. скидка",
+        "gift": "Подарок",
+        "shipping": "Доставка"
+      },
+      "form": {
+        "name": "Название",
+        "description": "Описание",
+        "type": "Тип купона",
+        "value": "Значение",
+        "minAmount": "Мин. сумма заказа",
+        "maxDiscount": "Макс. скидка",
+        "startDate": "Начало",
+        "endDate": "Окончание",
+        "totalLimit": "Общий лимит",
+        "userLimit": "Лимит на пользователя"
+      },
+      "approvals": {
+        "title": "Ожидают одобрения",
+        "approve": "Одобрить",
+        "reject": "Отклонить"
+      }
+    },
+    "marketing": {
+      "title": "Маркетинг",
+      "rules": "Правила",
+      "addRule": "Добавить правило",
+      "trigger": "Триггер",
+      "action": "Действие",
+      "newUser": "Новый пользователь",
+      "birthday": "День рождения",
+      "firstOrder": "Первый заказ",
+      "inactiveUser": "Неактивный пользователь",
+      "sendCoupon": "Отправить купон",
+      "sendPoints": "Начислить баллы",
+      "sendNotification": "Отправить уведомление"
+    },
+    "api": {
+      "title": "API настройки",
+      "iiko": "IIKO",
+      "payment": "Платёжные системы",
+      "logistics": "Логистика",
+      "testConnection": "Тест соединения",
+      "connected": "Подключено",
+      "disconnected": "Отключено",
+      "lastTest": "Последний тест"
+    },
+    "logs": {
+      "title": "Журнал операций",
+      "operator": "Оператор",
+      "module": "Модуль",
+      "action": "Действие",
+      "time": "Время",
+      "description": "Описание",
+      "modules": {
+        "product": "Товары",
+        "coupon": "Купоны",
+        "user": "Пользователи",
+        "order": "Заказы",
+        "api": "API",
+        "permission": "Права"
+      },
+      "actions": {
+        "create": "Создание",
+        "update": "Обновление",
+        "delete": "Удаление"
+      }
+    },
+    "users": {
+      "title": "Пользователи",
+      "role": "Роль",
+      "admin": "Администратор",
+      "user": "Пользователь"
+    },
+    "stores": {
+      "title": "Магазины",
+      "subtitle": "Управление магазинами",
+      "addStore": "Добавить магазин",
+      "addStoreDesc": "Добавить новый магазин",
+      "editStore": "Редактировать",
+      "editStoreDesc": "Редактировать информацию",
+      "storeName": "Название",
+      "address": "Адрес",
+      "phone": "Телефон",
+      "businessHours": "Часы работы",
+      "status": "Статус",
+      "open": "Открыто",
+      "closed": "Закрыто",
+      "storeList": "Список магазинов",
+      "totalStores": "Всего {{count}} магазинов"
+    },
+    "products": {
+      "title": "Товары",
+      "subtitle": "Управление товарами и категориями",
+      "addProduct": "Добавить товар",
+      "editProduct": "Редактировать",
+      "productName": "Название",
+      "category": "Категория",
+      "price": "Цена",
+      "stock": "Наличие",
+      "status": "Статус",
+      "active": "Активен",
+      "inactive": "Неактивен",
+      "tabs": {
+        "products": "Товары",
+        "categories": "Категории",
+        "options": "Опции"
+      },
+      "listTitle": "Список товаров",
+      "listDesc": "Управление всеми товарами",
+      "searchPlaceholder": "Поиск товаров...",
+      "allCategories": "Все категории",
+      "moreFilters": "Фильтры",
+      "table": {
+        "image": "Фото",
+        "name": "Название",
+        "sku": "SKU",
+        "category": "Категория",
+        "price": "Цена",
+        "stock": "Наличие",
+        "status": "Статус",
+        "actions": "Действия"
+      }
+    },
+    "common": {
+      "add": "Добавить",
+      "edit": "Редактировать",
+      "delete": "Удалить",
+      "save": "Сохранить",
+      "cancel": "Отмена",
+      "confirm": "Подтвердить",
+      "search": "Поиск",
+      "refresh": "Обновить",
+      "actions": "Действия",
+      "all": "Все",
+      "noData": "Нет данных",
+      "loading": "Загрузка...",
+      "success": "Успешно",
+      "confirmDelete": "Удалить?"
+    }
   }
 }

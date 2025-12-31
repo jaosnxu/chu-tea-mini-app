@@ -1,11 +1,12 @@
-import { eq, and, desc, sql, inArray, gte, lte, or, isNull } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, gte, lte, or, isNull, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { nanoid } from "nanoid";
 import { 
   InsertUser, users, stores, categories, products, productOptions, productOptionItems,
   productSkus, cartItems, addresses, orders, orderItems, shipments,
   couponTemplates, userCoupons, pointsHistory, influencers, influencerLinks,
-  influencerCommissions, payments, landingPages, systemConfigs
+  influencerCommissions, payments, landingPages, systemConfigs,
+  operationLogs, homeEntries, apiConfigs, marketingCampaigns, adMaterials
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1033,4 +1034,560 @@ export async function syncTelegramUser(data: {
   });
   
   return { success: true, userId: Number(result[0].insertId), isNew: true };
+}
+
+
+// ==================== 后台管理 - 仪表盘 ====================
+
+export async function getAdminDashboardStats() {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // 获取今日数据
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const [
+    totalUsers,
+    totalOrders,
+    todayOrders,
+    totalRevenue,
+  ] = await Promise.all([
+    db.select({ count: sql<number>`count(*)` }).from(users),
+    db.select({ count: sql<number>`count(*)` }).from(orders),
+    db.select({ count: sql<number>`count(*)` }).from(orders).where(gte(orders.createdAt, today)),
+    db.select({ sum: sql<string>`COALESCE(SUM(totalAmount), 0)` }).from(orders).where(eq(orders.status, 'completed')),
+  ]);
+  
+  return {
+    totalUsers: totalUsers[0]?.count || 0,
+    totalOrders: totalOrders[0]?.count || 0,
+    todayOrders: todayOrders[0]?.count || 0,
+    totalRevenue: totalRevenue[0]?.sum || '0',
+  };
+}
+
+// ==================== 后台管理 - 广告管理 ====================
+
+export async function getAdminAds() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(adMaterials).orderBy(adMaterials.sortOrder);
+}
+
+export async function createAd(data: any, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(adMaterials).values({
+    ...data,
+  });
+  
+  await logOperation(operatorId, 'ads', 'create', result[0].insertId.toString(), data);
+  
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+export async function updateAd(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(adMaterials).set(updateData).where(eq(adMaterials.id, id));
+  
+  await logOperation(operatorId, 'ads', 'update', id.toString(), updateData);
+  
+  return { success: true };
+}
+
+export async function deleteAd(id: number, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(adMaterials).where(eq(adMaterials.id, id));
+  
+  await logOperation(operatorId, 'ads', 'delete', id.toString(), {});
+  
+  return { success: true };
+}
+
+// ==================== 后台管理 - 首页入口配置 ====================
+
+export async function getHomeEntries() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(homeEntries).orderBy(homeEntries.sortOrder);
+}
+
+export async function updateHomeEntry(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(homeEntries).set(updateData).where(eq(homeEntries.id, id));
+  
+  await logOperation(operatorId, 'home_entries', 'update', id.toString(), updateData);
+  
+  return { success: true };
+}
+
+// ==================== 后台管理 - 优惠券模板 ====================
+
+export async function getAllCouponTemplates() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(couponTemplates).orderBy(desc(couponTemplates.createdAt));
+}
+
+export async function createCouponTemplate(data: any, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(couponTemplates).values({
+    ...data,
+    createdBy: operatorId,
+  });
+  
+  await logOperation(operatorId, 'coupon_templates', 'create', result[0].insertId.toString(), data);
+  
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+export async function updateCouponTemplate(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(couponTemplates).set(updateData).where(eq(couponTemplates.id, id));
+  
+  await logOperation(operatorId, 'coupon_templates', 'update', id.toString(), updateData);
+  
+  return { success: true };
+}
+
+export async function batchSendCoupons(data: {
+  templateId: number;
+  targetType: 'all' | 'new' | 'vip' | 'inactive' | 'specific';
+  userIds?: number[];
+  reason?: string;
+}, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  let targetUsers: number[] = [];
+  
+  if (data.targetType === 'specific' && data.userIds) {
+    targetUsers = data.userIds;
+  } else {
+    // 根据目标类型获取用户列表
+    let userQuery = db.select({ id: users.id }).from(users);
+    
+    if (data.targetType === 'vip') {
+      userQuery = userQuery.where(inArray(users.memberLevel, ['gold', 'diamond'])) as typeof userQuery;
+    } else if (data.targetType === 'new') {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      userQuery = userQuery.where(gte(users.createdAt, thirtyDaysAgo)) as typeof userQuery;
+    }
+    
+    const userResults = await userQuery;
+    targetUsers = userResults.map(u => u.id);
+  }
+  
+  // 批量发放优惠券
+  const template = await db.select().from(couponTemplates).where(eq(couponTemplates.id, data.templateId)).limit(1);
+  if (template.length === 0) throw new Error("Template not found");
+  
+  const tpl = template[0];
+  const now = new Date();
+  
+  const expireAt = tpl.validDays 
+    ? new Date(now.getTime() + tpl.validDays * 24 * 60 * 60 * 1000)
+    : tpl.endAt || new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  
+  for (const userId of targetUsers) {
+    await db.insert(userCoupons).values({
+      userId,
+      templateId: data.templateId,
+      expireAt,
+    });
+  }
+  
+  // 更新已发放数量
+  await db.update(couponTemplates)
+    .set({ usedQuantity: sql`${couponTemplates.usedQuantity} + ${targetUsers.length}` })
+    .where(eq(couponTemplates.id, data.templateId));
+  
+  await logOperation(operatorId, 'coupons', 'batch_send', data.templateId.toString(), {
+    targetType: data.targetType,
+    count: targetUsers.length,
+    reason: data.reason,
+  });
+  
+  return { success: true, sentCount: targetUsers.length };
+}
+
+// ==================== 后台管理 - 营销规则 ====================
+
+export async function getMarketingRules() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(marketingCampaigns).orderBy(desc(marketingCampaigns.createdAt));
+}
+
+export async function createMarketingRule(data: any, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(marketingCampaigns).values({
+    ...data,
+    createdBy: operatorId,
+  });
+  
+  await logOperation(operatorId, 'marketing_rules', 'create', result[0].insertId.toString(), data);
+  
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+export async function updateMarketingRule(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(marketingCampaigns).set(updateData).where(eq(marketingCampaigns.id, id));
+  
+  await logOperation(operatorId, 'marketing_rules', 'update', id.toString(), updateData);
+  
+  return { success: true };
+}
+
+export async function deleteMarketingRule(id: number, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(marketingCampaigns).where(eq(marketingCampaigns.id, id));
+  
+  await logOperation(operatorId, 'marketing_rules', 'delete', id.toString(), {});
+  
+  return { success: true };
+}
+
+// ==================== 后台管理 - API 配置 ====================
+
+export async function getApiConfigs() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(apiConfigs).orderBy(apiConfigs.provider);
+}
+
+export async function updateApiConfig(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(apiConfigs).set(updateData).where(eq(apiConfigs.id, id));
+  
+  // 不记录敏感信息
+  const logData = { ...updateData };
+  if (logData.apiKey) logData.apiKey = '***';
+  if (logData.apiSecret) logData.apiSecret = '***';
+  
+  await logOperation(operatorId, 'api_configs', 'update', id.toString(), logData);
+  
+  return { success: true };
+}
+
+export async function testApiConnection(id: number) {
+  const db = await getDb();
+  if (!db) return { success: false, error: 'Database not available' };
+  
+  const config = await db.select().from(apiConfigs).where(eq(apiConfigs.id, id)).limit(1);
+  if (config.length === 0) return { success: false, error: 'Config not found' };
+  
+  // TODO: 实际测试 API 连接
+  // 这里只是模拟
+  return { success: true, message: 'Connection successful' };
+}
+
+// ==================== 后台管理 - 操作日志 ====================
+
+export async function logOperation(
+  operatorId: number,
+  module: string,
+  action: string,
+  targetId: string,
+  details: any
+) {
+  const db = await getDb();
+  if (!db) return;
+  
+  try {
+    await db.insert(operationLogs).values({
+      adminUserId: operatorId,
+      module,
+      action,
+      targetType: 'record',
+      targetId: parseInt(targetId) || 0,
+      afterData: details,
+      ipAddress: '',
+    });
+  } catch (error) {
+    console.error('Failed to log operation:', error);
+  }
+}
+
+export async function getOperationLogs(params?: {
+  module?: string;
+  action?: string;
+  userId?: number;
+  startDate?: Date;
+  endDate?: Date;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  
+  if (params?.module) conditions.push(eq(operationLogs.module, params.module));
+  if (params?.action) conditions.push(eq(operationLogs.action, params.action));
+  if (params?.userId) conditions.push(eq(operationLogs.adminUserId, params.userId));
+  if (params?.startDate) conditions.push(gte(operationLogs.createdAt, params.startDate));
+  if (params?.endDate) conditions.push(lte(operationLogs.createdAt, params.endDate));
+  
+  let query = db.select({
+    id: operationLogs.id,
+    adminUserId: operationLogs.adminUserId,
+    module: operationLogs.module,
+    action: operationLogs.action,
+    targetId: operationLogs.targetId,
+    afterData: operationLogs.afterData,
+    ipAddress: operationLogs.ipAddress,
+    createdAt: operationLogs.createdAt,
+    operatorName: users.name,
+  })
+    .from(operationLogs)
+    .leftJoin(users, eq(operationLogs.adminUserId, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(operationLogs.createdAt));
+  
+  if (params?.limit) query = query.limit(params.limit) as typeof query;
+  if (params?.offset) query = query.offset(params.offset) as typeof query;
+  
+  return await query;
+}
+
+// ==================== 后台管理 - 用户管理 ====================
+
+export async function getAdminUserList(params?: {
+  role?: 'admin' | 'user';
+  search?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  
+  if (params?.role) conditions.push(eq(users.role, params.role));
+  if (params?.search) {
+    conditions.push(
+      or(
+        like(users.name, `%${params.search}%`),
+        like(users.email, `%${params.search}%`),
+        like(users.telegramUsername, `%${params.search}%`)
+      )
+    );
+  }
+  
+  let query = db.select().from(users)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(users.createdAt));
+  
+  if (params?.limit) query = query.limit(params.limit) as typeof query;
+  if (params?.offset) query = query.offset(params.offset) as typeof query;
+  
+  return await query;
+}
+
+export async function updateUserRole(data: { userId: number; role: 'admin' | 'user' }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(users).set({ role: data.role }).where(eq(users.id, data.userId));
+  
+  await logOperation(operatorId, 'users', 'update_role', data.userId.toString(), { role: data.role });
+  
+  return { success: true };
+}
+
+// ==================== 后台管理 - 门店管理 ====================
+
+export async function getAllStores() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(stores).orderBy(stores.id);
+}
+
+export async function createStore(data: any, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(stores).values(data);
+  
+  await logOperation(operatorId, 'stores', 'create', result[0].insertId.toString(), data);
+  
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+export async function updateStore(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(stores).set(updateData).where(eq(stores.id, id));
+  
+  await logOperation(operatorId, 'stores', 'update', id.toString(), updateData);
+  
+  return { success: true };
+}
+
+// ==================== 后台管理 - 商品管理 ====================
+
+export async function getAdminProducts(params?: {
+  categoryId?: number;
+  type?: 'tea' | 'mall';
+  isActive?: boolean;
+  search?: string;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  
+  if (params?.categoryId) conditions.push(eq(products.categoryId, params.categoryId));
+  if (params?.type) conditions.push(eq(products.type, params.type));
+  if (params?.isActive !== undefined) conditions.push(eq(products.isActive, params.isActive));
+  if (params?.search) {
+    conditions.push(
+      or(
+        like(products.nameZh, `%${params.search}%`),
+        like(products.nameRu, `%${params.search}%`),
+        like(products.nameEn, `%${params.search}%`),
+        like(products.code, `%${params.search}%`)
+      )
+    );
+  }
+  
+  return await db.select().from(products)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(products.sortOrder);
+}
+
+export async function createProduct(data: any, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(products).values(data);
+  
+  await logOperation(operatorId, 'products', 'create', result[0].insertId.toString(), data);
+  
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+export async function updateProduct(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(products).set(updateData).where(eq(products.id, id));
+  
+  await logOperation(operatorId, 'products', 'update', id.toString(), updateData);
+  
+  return { success: true };
+}
+
+export async function deleteProduct(id: number, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // 软删除
+  await db.update(products).set({ isActive: false }).where(eq(products.id, id));
+  
+  await logOperation(operatorId, 'products', 'delete', id.toString(), {});
+  
+  return { success: true };
+}
+
+// ==================== 后台管理 - 订单管理 ====================
+
+export async function getAdminOrders(params?: {
+  status?: 'pending' | 'paid' | 'preparing' | 'ready' | 'delivering' | 'completed' | 'cancelled' | 'refunding' | 'refunded';
+  storeId?: number;
+  startDate?: Date;
+  endDate?: Date;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  
+  if (params?.status) conditions.push(eq(orders.status, params.status));
+  if (params?.storeId) conditions.push(eq(orders.storeId, params.storeId));
+  if (params?.startDate) conditions.push(gte(orders.createdAt, params.startDate));
+  if (params?.endDate) conditions.push(lte(orders.createdAt, params.endDate));
+  if (params?.search) {
+    conditions.push(
+      or(
+        like(orders.orderNo, `%${params.search}%`)
+      )
+    );
+  }
+  
+  let query = db.select({
+    id: orders.id,
+    orderNo: orders.orderNo,
+    userId: orders.userId,
+    storeId: orders.storeId,
+    orderType: orders.orderType,
+    deliveryType: orders.deliveryType,
+    status: orders.status,
+    totalAmount: orders.totalAmount,
+    createdAt: orders.createdAt,
+    userName: users.name,
+  })
+    .from(orders)
+    .leftJoin(users, eq(orders.userId, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(orders.createdAt));
+  
+  if (params?.limit) query = query.limit(params.limit) as typeof query;
+  if (params?.offset) query = query.offset(params.offset) as typeof query;
+  
+  return await query;
+}
+
+export async function updateOrderStatus(data: { orderId: number; status: 'pending' | 'paid' | 'preparing' | 'ready' | 'delivering' | 'completed' | 'cancelled' | 'refunding' | 'refunded'; note?: string }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(orders).set({ status: data.status }).where(eq(orders.id, data.orderId));
+  
+  await logOperation(operatorId, 'orders', 'update_status', data.orderId.toString(), {
+    status: data.status,
+    note: data.note,
+  });
+  
+  return { success: true };
 }

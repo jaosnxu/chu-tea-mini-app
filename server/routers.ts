@@ -335,6 +335,414 @@ export const appRouter = router({
         return await db.syncTelegramUser(input);
       }),
   }),
+
+  // ============ 后台管理 API ============
+  
+  // 后台仪表盘
+  adminDashboard: router({
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      // 检查管理员权限
+      if (ctx.user.role !== 'admin') {
+        throw new Error('Unauthorized');
+      }
+      return await db.getAdminDashboardStats();
+    }),
+  }),
+
+  // 后台广告管理
+  adminAds: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.getAdminAds();
+    }),
+    create: protectedProcedure
+      .input(z.object({
+        position: z.enum(['top', 'bottom', 'popup']),
+        mediaType: z.enum(['image', 'video']),
+        mediaUrl: z.string(),
+        linkType: z.enum(['none', 'internal', 'external']).optional(),
+        linkUrl: z.string().optional(),
+        titleZh: z.string().optional(),
+        titleRu: z.string().optional(),
+        titleEn: z.string().optional(),
+        sortOrder: z.number().optional(),
+        startTime: z.date().optional(),
+        endTime: z.date().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.createAd(input, ctx.user.id);
+      }),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        position: z.enum(['top', 'bottom', 'popup']).optional(),
+        mediaType: z.enum(['image', 'video']).optional(),
+        mediaUrl: z.string().optional(),
+        linkType: z.enum(['none', 'internal', 'external']).optional(),
+        linkUrl: z.string().optional(),
+        titleZh: z.string().optional(),
+        titleRu: z.string().optional(),
+        titleEn: z.string().optional(),
+        sortOrder: z.number().optional(),
+        isActive: z.boolean().optional(),
+        startTime: z.date().optional(),
+        endTime: z.date().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateAd(input, ctx.user.id);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.deleteAd(input.id, ctx.user.id);
+      }),
+  }),
+
+  // 后台首页入口配置
+  adminHomeEntries: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.getHomeEntries();
+    }),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        isEnabled: z.boolean().optional(),
+        entryType: z.enum(['order', 'mall', 'coupons', 'points']).optional(),
+        sortOrder: z.number().optional(),
+        iconUrl: z.string().optional(),
+        titleZh: z.string().optional(),
+        titleRu: z.string().optional(),
+        titleEn: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateHomeEntry(input, ctx.user.id);
+      }),
+  }),
+
+  // 后台优惠券模板管理
+  adminCoupons: router({
+    listTemplates: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.getAllCouponTemplates();
+    }),
+    createTemplate: protectedProcedure
+      .input(z.object({
+        nameZh: z.string(),
+        nameRu: z.string(),
+        nameEn: z.string(),
+        type: z.enum(['discount', 'fixed', 'gift', 'shipping']),
+        discountValue: z.string(),
+        minOrderAmount: z.string().optional(),
+        maxDiscountAmount: z.string().optional(),
+        validFrom: z.date().optional(),
+        validTo: z.date().optional(),
+        totalLimit: z.number().optional(),
+        perUserLimit: z.number().optional(),
+        dailyLimit: z.number().optional(),
+        applicableScope: z.enum(['all', 'teabot', 'mall', 'category', 'product']).optional(),
+        applicableIds: z.string().optional(),
+        storeIds: z.string().optional(),
+        isStackable: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.createCouponTemplate(input, ctx.user.id);
+      }),
+    updateTemplate: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        nameZh: z.string().optional(),
+        nameRu: z.string().optional(),
+        nameEn: z.string().optional(),
+        discountValue: z.string().optional(),
+        minOrderAmount: z.string().optional(),
+        maxDiscountAmount: z.string().optional(),
+        validFrom: z.date().optional(),
+        validTo: z.date().optional(),
+        totalLimit: z.number().optional(),
+        perUserLimit: z.number().optional(),
+        dailyLimit: z.number().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateCouponTemplate(input, ctx.user.id);
+      }),
+    batchSend: protectedProcedure
+      .input(z.object({
+        templateId: z.number(),
+        targetType: z.enum(['all', 'new', 'vip', 'inactive', 'specific']),
+        userIds: z.array(z.number()).optional(),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.batchSendCoupons(input, ctx.user.id);
+      }),
+  }),
+
+  // 后台营销自动化规则
+  adminMarketing: router({
+    listRules: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.getMarketingRules();
+    }),
+    createRule: protectedProcedure
+      .input(z.object({
+        nameZh: z.string(),
+        nameRu: z.string(),
+        nameEn: z.string(),
+        triggerType: z.enum(['register', 'birthday', 'inactive', 'first_order', 'order_count', 'total_spent']),
+        triggerCondition: z.string().optional(),
+        actionType: z.enum(['send_coupon', 'add_points', 'upgrade_level', 'send_notification']),
+        actionParams: z.string(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.createMarketingRule(input, ctx.user.id);
+      }),
+    updateRule: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        nameZh: z.string().optional(),
+        nameRu: z.string().optional(),
+        nameEn: z.string().optional(),
+        triggerCondition: z.string().optional(),
+        actionParams: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateMarketingRule(input, ctx.user.id);
+      }),
+    deleteRule: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.deleteMarketingRule(input.id, ctx.user.id);
+      }),
+  }),
+
+  // 后台 API 配置管理
+  adminApiConfig: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.getApiConfigs();
+    }),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        apiKey: z.string().optional(),
+        apiSecret: z.string().optional(),
+        endpoint: z.string().optional(),
+        isEnabled: z.boolean().optional(),
+        settings: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateApiConfig(input, ctx.user.id);
+      }),
+    test: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.testApiConnection(input.id);
+      }),
+  }),
+
+  // 后台操作日志
+  adminLogs: router({
+    list: protectedProcedure
+      .input(z.object({
+        module: z.string().optional(),
+        action: z.string().optional(),
+        userId: z.number().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.getOperationLogs(input);
+      }),
+  }),
+
+  // 后台人员管理
+  adminUsers: router({
+    list: protectedProcedure
+      .input(z.object({
+        role: z.enum(['admin', 'user']).optional(),
+        search: z.string().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.getAdminUserList(input);
+      }),
+    updateRole: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        role: z.enum(['admin', 'user']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateUserRole(input, ctx.user.id);
+      }),
+  }),
+
+  // 后台门店管理
+  adminStores: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.getAllStores();
+    }),
+    create: protectedProcedure
+      .input(z.object({
+        nameZh: z.string(),
+        nameRu: z.string(),
+        nameEn: z.string(),
+        address: z.string(),
+        city: z.string(),
+        phone: z.string().optional(),
+        latitude: z.string().optional(),
+        longitude: z.string().optional(),
+        openTime: z.string().optional(),
+        closeTime: z.string().optional(),
+        deliveryFee: z.string().optional(),
+        minOrderAmount: z.string().optional(),
+        iikoTerminalId: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.createStore(input, ctx.user.id);
+      }),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        nameZh: z.string().optional(),
+        nameRu: z.string().optional(),
+        nameEn: z.string().optional(),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        phone: z.string().optional(),
+        latitude: z.string().optional(),
+        longitude: z.string().optional(),
+        openTime: z.string().optional(),
+        closeTime: z.string().optional(),
+        deliveryFee: z.string().optional(),
+        minOrderAmount: z.string().optional(),
+        isActive: z.boolean().optional(),
+        iikoTerminalId: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateStore(input, ctx.user.id);
+      }),
+  }),
+
+  // 后台商品管理
+  adminProducts: router({
+    list: protectedProcedure
+      .input(z.object({
+        categoryId: z.number().optional(),
+        type: z.enum(['tea', 'mall']).optional(),
+        isActive: z.boolean().optional(),
+        search: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.getAdminProducts(input);
+      }),
+    create: protectedProcedure
+      .input(z.object({
+        sku: z.string(),
+        nameZh: z.string(),
+        nameRu: z.string(),
+        nameEn: z.string(),
+        descriptionZh: z.string().optional(),
+        descriptionRu: z.string().optional(),
+        descriptionEn: z.string().optional(),
+        categoryId: z.number(),
+        basePrice: z.string(),
+        imageUrl: z.string().optional(),
+        type: z.enum(['tea', 'mall']),
+        isHot: z.boolean().optional(),
+        isNew: z.boolean().optional(),
+        pointsEarn: z.number().optional(),
+        pointsRedeem: z.number().optional(),
+        iikoProductId: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.createProduct(input, ctx.user.id);
+      }),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        sku: z.string().optional(),
+        nameZh: z.string().optional(),
+        nameRu: z.string().optional(),
+        nameEn: z.string().optional(),
+        descriptionZh: z.string().optional(),
+        descriptionRu: z.string().optional(),
+        descriptionEn: z.string().optional(),
+        categoryId: z.number().optional(),
+        basePrice: z.string().optional(),
+        imageUrl: z.string().optional(),
+        isActive: z.boolean().optional(),
+        isHot: z.boolean().optional(),
+        isNew: z.boolean().optional(),
+        stock: z.number().optional(),
+        pointsEarn: z.number().optional(),
+        pointsRedeem: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateProduct(input, ctx.user.id);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.deleteProduct(input.id, ctx.user.id);
+      }),
+  }),
+
+  // 后台订单管理
+  adminOrders: router({
+    list: protectedProcedure
+      .input(z.object({
+        status: z.enum(['pending', 'paid', 'preparing', 'ready', 'delivering', 'completed', 'cancelled', 'refunding', 'refunded']).optional(),
+        storeId: z.number().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        search: z.string().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.getAdminOrders(input);
+      }),
+    updateStatus: protectedProcedure
+      .input(z.object({
+        orderId: z.number(),
+        status: z.enum(['pending', 'paid', 'preparing', 'ready', 'delivering', 'completed', 'cancelled', 'refunding', 'refunded']),
+        note: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.updateOrderStatus(input, ctx.user.id);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
