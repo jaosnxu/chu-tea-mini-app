@@ -8,6 +8,7 @@ import { trpc } from '@/lib/trpc';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, ShoppingBag, ChevronRight } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
+import { VirtualList } from '@/components/VirtualList';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -45,7 +46,7 @@ export default function Orders() {
           <TabsTrigger value="mall">{t('nav.mall')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tea" className="p-4 space-y-3">
+        <TabsContent value="tea" className="p-4">
           {teaLoading ? (
             <div className="flex justify-center py-10">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
@@ -53,13 +54,20 @@ export default function Orders() {
           ) : teaOrders.length === 0 ? (
             <EmptyOrders />
           ) : (
-            teaOrders.map((order: { id: number; orderNo: string; status: string; totalAmount: string; createdAt: Date }) => (
-              <OrderCard key={order.id} order={order} onClick={() => navigate(`/order/${order.id}`)} />
-            ))
+            <VirtualList
+              items={teaOrders}
+              estimateSize={120}
+              className="h-[calc(100vh-200px)]"
+              renderItem={(order: { id: number; orderNo: string; status: string; totalAmount: string; createdAt: Date }) => (
+                <div className="pb-3">
+                  <OrderCard order={order} onClick={() => navigate(`/order/${order.id}`)} />
+                </div>
+              )}
+            />
           )}
         </TabsContent>
 
-        <TabsContent value="mall" className="p-4 space-y-3">
+        <TabsContent value="mall" className="p-4">
           {mallLoading ? (
             <div className="flex justify-center py-10">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
@@ -67,9 +75,16 @@ export default function Orders() {
           ) : mallOrders.length === 0 ? (
             <EmptyOrders />
           ) : (
-            mallOrders.map((order: { id: number; orderNo: string; status: string; totalAmount: string; createdAt: Date }) => (
-              <OrderCard key={order.id} order={order} onClick={() => navigate(`/order/${order.id}`)} />
-            ))
+            <VirtualList
+              items={mallOrders}
+              estimateSize={120}
+              className="h-[calc(100vh-200px)]"
+              renderItem={(order: { id: number; orderNo: string; status: string; totalAmount: string; createdAt: Date }) => (
+                <div className="pb-3">
+                  <OrderCard order={order} onClick={() => navigate(`/order/${order.id}`)} />
+                </div>
+              )}
+            />
           )}
         </TabsContent>
       </Tabs>

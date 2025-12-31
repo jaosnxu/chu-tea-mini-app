@@ -2047,6 +2047,20 @@ export async function updateOrderStatus(data: { orderId: number; status: 'pendin
         const { upgraded, newLevel } = await checkAndUpgradeMemberLevel(order.userId, newTotalSpent);
         if (upgraded) {
           console.log(`[Order] User ${order.userId} upgraded to ${newLevel}`);
+          
+          // 发送会员升级通知
+          try {
+            const { sendMemberUpgradeNotification } = await import('./userNotifications');
+            const rules = await import('./db/pointsRules').then(m => m.getPointsRules());
+            await sendMemberUpgradeNotification({
+              userId: order.userId,
+              oldLevel: user.memberLevel,
+              newLevel,
+              newBonus: rules.levelBonus[newLevel],
+            });
+          } catch (error) {
+            console.error('[Order] Failed to send member upgrade notification:', error);
+          }
         }
       }
     } catch (error) {

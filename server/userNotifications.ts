@@ -270,3 +270,65 @@ ${params.message ? `\n${params.message}` : ''}`,
   
   return sendTelegramMessage(chatId, messages[lang]);
 }
+
+/**
+ * 发送会员升级通知到用户
+ */
+export async function sendMemberUpgradeNotification(params: {
+  userId: number;
+  oldLevel: 'normal' | 'silver' | 'gold' | 'diamond';
+  newLevel: 'normal' | 'silver' | 'gold' | 'diamond';
+  newBonus: number;
+  language?: 'zh' | 'ru' | 'en';
+}): Promise<boolean> {
+  const chatId = await getUserTelegramChatId(params.userId);
+  if (!chatId) {
+    console.log('[UserNotification] User has no Telegram chat ID');
+    return false;
+  }
+
+  const lang = params.language || 'zh';
+  const levelNames = {
+    zh: { normal: '普通会员', silver: '白银会员', gold: '黄金会员', diamond: '钻石会员' },
+    ru: { normal: 'Обычный', silver: 'Серебряный', gold: 'Золотой', diamond: 'Бриллиантовый' },
+    en: { normal: 'Normal', silver: 'Silver', gold: 'Gold', diamond: 'Diamond' },
+  };
+
+  const messages = {
+    zh: `🎉 恭喜升级！
+
+您的会员等级已从 ${levelNames.zh[params.oldLevel]} 升级到 ${levelNames.zh[params.newLevel]}！
+
+✨ 新等级权益：
+• 积分加成：+${params.newBonus}%
+• 消费时可获得更多积分
+• 专属会员优惠
+
+感谢您对 CHU TEA 的支持！`,
+    ru: `🎉 Поздравляем с повышением!
+
+Ваш уровень повышен с ${levelNames.ru[params.oldLevel]} до ${levelNames.ru[params.newLevel]}!
+
+✨ Новые привилегии:
+• Бонус баллов: +${params.newBonus}%
+• Больше баллов за покупки
+• Эксклюзивные скидки
+
+Спасибо за поддержку CHU TEA!`,
+    en: `🎉 Congratulations on your upgrade!
+
+Your membership level has been upgraded from ${levelNames.en[params.oldLevel]} to ${levelNames.en[params.newLevel]}!
+
+✨ New benefits:
+• Points bonus: +${params.newBonus}%
+• Earn more points on purchases
+• Exclusive member discounts
+
+Thank you for supporting CHU TEA!`,
+  };
+
+  return await sendTelegramMessage({
+    chatId,
+    message: messages[lang],
+  });
+}

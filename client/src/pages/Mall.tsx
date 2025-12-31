@@ -10,6 +10,7 @@ import { useCart } from '@/contexts/CartContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, ShoppingCart, Search, Flame } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
+import { VirtualList } from '@/components/VirtualList';
 
 export default function Mall() {
   const { t } = useTranslation();
@@ -65,34 +66,39 @@ export default function Mall() {
           </div>
         </ScrollArea>
 
-        <ScrollArea className="flex-1 h-[calc(100vh-140px)]">
-          <div className="p-3 grid grid-cols-2 gap-3">
-            {isLoading ? (
-              <div className="col-span-2 flex justify-center py-10">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
-              </div>
-            ) : products.length === 0 ? (
-              <div className="col-span-2 text-center py-10 text-gray-400">{t('common.noData')}</div>
-            ) : (
-              products.map((product) => (
-                <Card key={product.id} className="overflow-hidden cursor-pointer hover:shadow-md" onClick={() => navigate(`/mall/product/${product.id}`)}>
-                  <div className="relative aspect-square">
-                    {product.image ? (
-                      <img src={product.image} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No Image</div>
-                    )}
-                    {product.isHot && <Badge className="absolute top-1 left-1 bg-red-500"><Flame className="w-3 h-3" /></Badge>}
-                  </div>
-                  <div className="p-2">
-                    <h3 className="font-medium text-sm truncate">{getLocalizedText({ zh: product.nameZh, ru: product.nameRu, en: product.nameEn })}</h3>
-                    <span className="text-purple-600 font-bold">₽{product.basePrice}</span>
-                  </div>
-                </Card>
-              ))
-            )}
-          </div>
-        </ScrollArea>
+        <div className="flex-1 h-[calc(100vh-140px)]">
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-10 text-gray-400">{t('common.noData')}</div>
+          ) : (
+            <VirtualList
+              items={products}
+              estimateSize={220}
+              className="h-full"
+              renderItem={(product, index) => (
+                <div className={`px-3 ${index % 2 === 0 ? 'float-left' : 'float-right'} w-1/2`}>
+                  <Card className="overflow-hidden cursor-pointer hover:shadow-md mb-3" onClick={() => navigate(`/mall/product/${product.id}`)}>
+                    <div className="relative aspect-square">
+                      {product.image ? (
+                        <img src={product.image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                      )}
+                      {product.isHot && <Badge className="absolute top-1 left-1 bg-red-500"><Flame className="w-3 h-3" /></Badge>}
+                    </div>
+                    <div className="p-2">
+                      <h3 className="font-medium text-sm truncate">{getLocalizedText({ zh: product.nameZh, ru: product.nameRu, en: product.nameEn })}</h3>
+                      <span className="text-purple-600 font-bold">₽{product.basePrice}</span>
+                    </div>
+                  </Card>
+                </div>
+              )}
+            />
+          )}
+        </div>
       </div>
 
       {mallCartCount > 0 && (

@@ -775,3 +775,9 @@
 - [x] 增强乐观 UI 更新机制（useOptimisticUpdate Hook）
 - [x] 添加触感反馈（useHaptic Hook）到关键交互
 - [x] 增强 Service Worker 离线缓存策略（图片过期检查、分类缓存）
+
+## 会员升级通知和虚拟列表应用
+
+- [x] 实现会员升级 Telegram 通知功能
+- [x] 在订单历史页面应用虚拟列表组件
+- [x] 在商品列表页面应用虚拟列表组件
