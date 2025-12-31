@@ -313,6 +313,24 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         return await db.claimCoupon(ctx.user.id, input.templateId);
       }),
+    calculateDiscount: protectedProcedure
+      .input(z.object({
+        couponId: z.number(),
+        orderAmount: z.number(),
+        items: z.array(z.object({
+          productId: z.number(),
+          quantity: z.number(),
+          price: z.number(),
+        })),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const discount = await db.calculateCouponDiscount({
+          couponId: input.couponId,
+          orderAmount: input.orderAmount,
+          items: input.items,
+        });
+        return { discount };
+      }),
   }),
 
   // 积分路由

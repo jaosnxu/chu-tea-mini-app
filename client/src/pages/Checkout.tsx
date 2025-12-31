@@ -14,6 +14,7 @@ import { ChevronLeft, MapPin, Clock, Ticket, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramMainButton } from '@/hooks/useTelegramMainButton';
 import { isTelegramWebApp } from '@/lib/telegram';
+import { CouponSelector } from '@/components/CouponSelector';
 
 export default function Checkout() {
   const { t } = useTranslation();
@@ -25,6 +26,8 @@ export default function Checkout() {
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
   const [remark, setRemark] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCouponId, setSelectedCouponId] = useState<number | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   const createOrderMutation = trpc.order.create.useMutation();
 
@@ -71,10 +74,17 @@ export default function Checkout() {
     }
   };
   
+  const finalAmount = teaCartTotal - couponDiscount;
+
+  const handleCouponSelect = (couponId: number | null, discount: number) => {
+    setSelectedCouponId(couponId);
+    setCouponDiscount(discount);
+  };
+
   // 集成 Telegram 主按钮
   const mainButtonControls = useTelegramMainButton(
     {
-      text: isSubmitting ? t('common.loading') : `${t('order.payNow')} ₽${teaCartTotal.toFixed(2)}`,
+      text: isSubmitting ? t('common.loading') : `${t('order.payNow')} ₽${finalAmount.toFixed(2)}`,
       color: '#14b8a6', // teal-600
       isVisible: true,
       isActive: !isSubmitting && teaCartItems.length > 0,
@@ -144,11 +154,35 @@ export default function Checkout() {
               );
             })}
           </div>
-          <div className="border-t mt-3 pt-3 flex justify-between font-bold">
-            <span>{t('order.total')}</span>
-            <span className="text-teal-600">₽{teaCartTotal.toFixed(2)}</span>
+          <div className="border-t mt-3 pt-3 space-y-2">
+            <div className="flex justify-between">
+              <span>{t('order.subtotal')}</span>
+              <span>₽{teaCartTotal.toFixed(2)}</span>
+            </div>
+            {couponDiscount > 0 && (
+              <div className="flex justify-between text-teal-600">
+                <span>{t('coupon.discount')}</span>
+                <span>-₽{couponDiscount.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold text-lg">
+              <span>{t('order.total')}</span>
+              <span className="text-teal-600">₽{finalAmount.toFixed(2)}</span>
+            </div>
           </div>
         </Card>
+
+        {/* 优惠券选择 */}
+        <CouponSelector
+          orderAmount={teaCartTotal}
+          items={teaCartItems.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: parseFloat(item.unitPrice),
+          }))}
+          selectedCouponId={selectedCouponId}
+          onSelectCoupon={handleCouponSelect}
+        />
 
         {/* 备注 */}
         <Card className="p-4">

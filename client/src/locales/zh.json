@@ -221,18 +221,32 @@
   "coupon": {
     "myCoupons": "我的优惠券",
     "coupons": "优惠券",
-    "available": "可用",
+    "available": "可用 {{count}} 张",
     "used": "已使用",
     "expired": "已过期",
     "noCoupons": "暂无优惠券",
     "selectCoupon": "选择优惠券",
     "notUseCoupon": "不使用优惠券",
+    "notUse": "不使用",
     "validUntil": "有效期至",
     "minOrder": "满 {{amount}} 可用",
     "storeLimit": "限指定门店",
     "productLimit": "限指定商品",
     "getCoupon": "领取优惠券",
-    "couponReceived": "领取成功"
+    "couponReceived": "领取成功",
+    "saving": "已优惠",
+    "discount": "优惠券折扣",
+    "notMeetRequirement": "未满足使用条件",
+    "buyOneGetOne": "买一送一",
+    "freeProduct": "免费商品",
+    "type": {
+      "fixed": "满减券",
+      "percent": "折扣券",
+      "product": "商品券",
+      "gift": "礼品券",
+      "buyOneGetOne": "买一送一",
+      "freeProduct": "免费券"
+    }
   },
   "points": {
     "myPoints": "我的积分",
