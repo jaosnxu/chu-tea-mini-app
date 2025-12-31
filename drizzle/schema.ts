@@ -1219,3 +1219,44 @@ export const productOptionConfig = mysqlTable('product_option_config', {
 
 export type ProductOptionConfig = typeof productOptionConfig.$inferSelect;
 export type InsertProductOptionConfig = typeof productOptionConfig.$inferInsert;
+
+
+// ==================== 用户通知偏好表 ====================
+
+export const userNotificationPreferences = mysqlTable('user_notification_preferences', {
+  id: int('id').primaryKey().autoincrement(),
+  
+  // 用户ID
+  userId: int('user_id').notNull().unique(),
+  
+  // 订单状态通知（支付成功、制作中、配送中、已完成）
+  orderStatusEnabled: boolean('order_status_enabled').default(true).notNull(),
+  
+  // 优惠活动通知（新优惠券、促销活动、会员权益）
+  promotionEnabled: boolean('promotion_enabled').default(true).notNull(),
+  
+  // 系统消息通知（账户变更、积分变动、等级升级）
+  systemMessageEnabled: boolean('system_message_enabled').default(true).notNull(),
+  
+  // 营销推送通知（新品推荐、节日活动）
+  marketingEnabled: boolean('marketing_enabled').default(false).notNull(),
+  
+  // 物流更新通知（发货、在途、签收）
+  shippingEnabled: boolean('shipping_enabled').default(true).notNull(),
+  
+  // 推送通知渠道偏好
+  channelTelegram: boolean('channel_telegram').default(true).notNull(),
+  channelEmail: boolean('channel_email').default(false).notNull(),
+  channelSms: boolean('channel_sms').default(false).notNull(),
+  
+  // 免打扰时段（24小时制，例如 "22:00-08:00"）
+  quietHoursStart: varchar('quiet_hours_start', { length: 5 }),
+  quietHoursEnd: varchar('quiet_hours_end', { length: 5 }),
+  
+  // 时间戳
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserNotificationPreference = typeof userNotificationPreferences.$inferSelect;
+export type InsertUserNotificationPreference = typeof userNotificationPreferences.$inferInsert;

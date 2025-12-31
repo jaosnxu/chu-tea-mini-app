@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
 import { useTelegramContext } from '@/contexts/TelegramContext';
-import { User, Star, Gift, MapPin, Share2, Settings, ChevronRight, Crown } from 'lucide-react';
+import { User, Star, Gift, MapPin, Share2, Settings, ChevronRight, Crown, Bell } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 
 const memberLevelColors: Record<string, string> = {
@@ -31,6 +31,7 @@ export default function Profile() {
     { icon: <Star className="w-5 h-5 text-purple-500" />, label: t('points.myPoints'), path: '/points' },
     { icon: <MapPin className="w-5 h-5 text-teal-500" />, label: t('address.myAddresses'), path: '/addresses' },
     { icon: <Share2 className="w-5 h-5 text-blue-500" />, label: t('influencer.center'), path: '/influencer' },
+    { icon: <Bell className="w-5 h-5 text-orange-500" />, label: t('notifications.settings.title'), path: '/notification-settings' },
     { icon: <Settings className="w-5 h-5 text-gray-500" />, label: t('settings.settings'), path: '/settings' },
   ];
 

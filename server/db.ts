@@ -9,7 +9,7 @@ import {
   operationLogs, homeEntries, apiConfigs, marketingCampaigns, adMaterials,
   notifications, notificationTemplates, notificationRules,
   telegramBotConfigs, adminTelegramBindings, yookassaConfig,
-  productConfig, productOptionConfig,
+  productConfig, productOptionConfig, userNotificationPreferences,
   InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -3003,5 +3003,124 @@ export async function initDefaultProductConfigs() {
   
   for (const config of defaultConfigs) {
     await db.insert(productConfig).values(config);
+  }
+}
+
+
+// ==================== 用户通知偏好管理 ====================
+
+/**
+ * 获取用户通知偏好
+ */
+export async function getUserNotificationPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  const result = await db.select().from(userNotificationPreferences).where(eq(userNotificationPreferences.userId, userId)).limit(1);
+  
+  // 如果用户没有偏好设置，返回默认值
+  if (result.length === 0) {
+    return {
+      userId,
+      orderStatusEnabled: true,
+      promotionEnabled: true,
+      systemMessageEnabled: true,
+      marketingEnabled: false,
+      shippingEnabled: true,
+      channelTelegram: true,
+      channelEmail: false,
+      channelSms: false,
+      quietHoursStart: null,
+      quietHoursEnd: null,
+    };
+  }
+  
+  return result[0];
+}
+
+/**
+ * 更新用户通知偏好
+ */
+export async function updateUserNotificationPreferences(userId: number, preferences: {
+  orderStatusEnabled?: boolean;
+  promotionEnabled?: boolean;
+  systemMessageEnabled?: boolean;
+  marketingEnabled?: boolean;
+  shippingEnabled?: boolean;
+  channelTelegram?: boolean;
+  channelEmail?: boolean;
+  channelSms?: boolean;
+  quietHoursStart?: string | null;
+  quietHoursEnd?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  // 检查是否已存在
+  const existing = await db.select().from(userNotificationPreferences).where(eq(userNotificationPreferences.userId, userId)).limit(1);
+  
+  if (existing.length > 0) {
+    // 更新
+    await db.update(userNotificationPreferences)
+      .set(preferences)
+      .where(eq(userNotificationPreferences.userId, userId));
+  } else {
+    // 创建
+    await db.insert(userNotificationPreferences).values({
+      userId,
+      ...preferences,
+    });
+  }
+  
+  return await getUserNotificationPreferences(userId);
+}
+
+/**
+ * 检查用户是否启用了某类通知
+ */
+export async function isNotificationEnabled(userId: number, notificationType: 'order' | 'promotion' | 'system' | 'marketing' | 'shipping'): Promise<boolean> {
+  const preferences = await getUserNotificationPreferences(userId);
+  
+  switch (notificationType) {
+    case 'order':
+      return preferences.orderStatusEnabled;
+    case 'promotion':
+      return preferences.promotionEnabled;
+    case 'system':
+      return preferences.systemMessageEnabled;
+    case 'marketing':
+      return preferences.marketingEnabled;
+    case 'shipping':
+      return preferences.shippingEnabled;
+    default:
+      return false;
+  }
+}
+
+/**
+ * 检查当前时间是否在用户的免打扰时段
+ */
+export async function isInQuietHours(userId: number): Promise<boolean> {
+  const preferences = await getUserNotificationPreferences(userId);
+  
+  if (!preferences.quietHoursStart || !preferences.quietHoursEnd) {
+    return false; // 没有设置免打扰时段
+  }
+  
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTime = currentHour * 60 + currentMinute;
+  
+  const [startHour, startMinute] = preferences.quietHoursStart.split(':').map(Number);
+  const [endHour, endMinute] = preferences.quietHoursEnd.split(':').map(Number);
+  const startTime = startHour * 60 + startMinute;
+  const endTime = endHour * 60 + endMinute;
+  
+  // 处理跨午夜的情况（例如 22:00-08:00）
+  if (startTime > endTime) {
+    return currentTime >= startTime || currentTime < endTime;
+  } else {
+    return currentTime >= startTime && currentTime < endTime;
   }
 }

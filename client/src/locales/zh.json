@@ -750,5 +750,48 @@
     "isActive": "启用",
     "default": "默认",
     "sortOrder": "排序"
+  },
+  "notifications": {
+    "settings": {
+      "title": "通知设置",
+      "description": "管理您的通知偏好，控制接收哪些通知",
+      "types": "通知类型",
+      "channels": "通知渠道",
+      "quietHours": "免打扰时段",
+      "quietHoursDesc": "在此时段内不会收到非紧急通知",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
+      "orderStatus": "订单状态通知",
+      "orderStatusDesc": "支付成功、制作中、配送中、已完成",
+      "promotion": "优惠活动通知",
+      "promotionDesc": "新优惠券、促销活动、会员权益",
+      "systemMessage": "系统消息通知",
+      "systemMessageDesc": "账户变更、积分变动、等级升级",
+      "marketing": "营销推送通知",
+      "marketingDesc": "新品推荐、节日活动",
+      "shipping": "物流更新通知",
+      "shippingDesc": "发货、在途、签收",
+      "saved": "设置已保存"
+    }
+  },
+  "pwa": {
+    "badge": {
+      "title": "安装 CHU TEA 应用",
+      "description": "添加到主屏幕，获得更快的访问速度",
+      "install": "立即安装",
+      "later": "稍后"
+    },
+    "iosInstructions": "请点击分享按钮，然后选择“添加到主屏幕”"
+  },
+  "offline": {
+    "title": "离线订单",
+    "online": "网络已连接",
+    "offline": "网络已断开",
+    "pending": "待同步",
+    "syncing": "同步中",
+    "synced": "已同步",
+    "failed": "同步失败",
+    "syncNow": "立即同步",
+    "noOrders": "暂无离线订单"
   }
 }

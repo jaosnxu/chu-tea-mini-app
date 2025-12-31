@@ -1186,6 +1186,33 @@ export const appRouter = router({
       return { success: true };
     }),
   }),
+
+  // ==================== 用户通知偏好管理 ====================
+  notificationPreferences: router({
+    // 获取当前用户的通知偏好
+    get: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getUserNotificationPreferences(ctx.user.id);
+      }),
+
+    // 更新当前用户的通知偏好
+    update: protectedProcedure
+      .input(z.object({
+        orderStatusEnabled: z.boolean().optional(),
+        promotionEnabled: z.boolean().optional(),
+        systemMessageEnabled: z.boolean().optional(),
+        marketingEnabled: z.boolean().optional(),
+        shippingEnabled: z.boolean().optional(),
+        channelTelegram: z.boolean().optional(),
+        channelEmail: z.boolean().optional(),
+        channelSms: z.boolean().optional(),
+        quietHoursStart: z.string().nullable().optional(),
+        quietHoursEnd: z.string().nullable().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.updateUserNotificationPreferences(ctx.user.id, input);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

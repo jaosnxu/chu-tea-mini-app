@@ -14,6 +14,7 @@ import {
   Pause
 } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
+import AppStoreBadge from '@/components/AppStoreBadge';
 
 // 广告轮播项类型
 interface CarouselItem {
@@ -114,6 +115,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col pb-16">
+      {/* PWA 安装引导徽章 */}
+      <div className="fixed top-4 left-4 right-4 z-50">
+        <AppStoreBadge />
+      </div>
+
       {/* 上部轮播区域 */}
       <div className="flex-1">
         <MediaCarousel 

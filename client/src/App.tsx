@@ -33,6 +33,7 @@ const Points = lazy(() => import("./pages/Points"));
 const Addresses = lazy(() => import("./pages/Addresses"));
 const InfluencerCenter = lazy(() => import("./pages/InfluencerCenter"));
 const Settings = lazy(() => import("./pages/Settings"));
+const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const DisplayScreen = lazy(() => import("./pages/DisplayScreen"));
 const StoreSelector = lazy(() => import("./pages/StoreSelector"));
 const Payment = lazy(() => import("./pages/Payment"));
@@ -97,6 +98,7 @@ function Router() {
       <Route path="/addresses" component={Addresses} />
       <Route path="/influencer" component={InfluencerCenter} />
       <Route path="/settings" component={Settings} />
+      <Route path="/notification-settings" component={NotificationSettings} />
       
 {/* 后台管理 */}
       <Route path="/admin" component={() => <AdminLayout><AdminDashboard /></AdminLayout>} />

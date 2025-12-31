@@ -323,5 +323,48 @@
     "notFound": "Page not found",
     "unauthorized": "Please login first",
     "forbidden": "Access denied"
+  },
+  "notifications": {
+    "settings": {
+      "title": "Notification Settings",
+      "description": "Manage your notification preferences",
+      "types": "Notification Types",
+      "channels": "Notification Channels",
+      "quietHours": "Quiet Hours",
+      "quietHoursDesc": "You won't receive non-urgent notifications during this time",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "orderStatus": "Order Status",
+      "orderStatusDesc": "Paid, preparing, delivering, completed",
+      "promotion": "Promotions",
+      "promotionDesc": "New coupons, promotions, member benefits",
+      "systemMessage": "System Messages",
+      "systemMessageDesc": "Account changes, points, level upgrades",
+      "marketing": "Marketing",
+      "marketingDesc": "New products, holiday promotions",
+      "shipping": "Shipping Updates",
+      "shippingDesc": "Shipped, in transit, delivered",
+      "saved": "Settings saved"
+    }
+  },
+  "pwa": {
+    "badge": {
+      "title": "Install CHU TEA App",
+      "description": "Add to home screen for faster access",
+      "install": "Install Now",
+      "later": "Later"
+    },
+    "iosInstructions": "Tap the share button, then select \"Add to Home Screen\""
+  },
+  "offline": {
+    "title": "Offline Orders",
+    "online": "Network connected",
+    "offline": "Network disconnected",
+    "pending": "Pending sync",
+    "syncing": "Syncing",
+    "synced": "Synced",
+    "failed": "Sync failed",
+    "syncNow": "Sync Now",
+    "noOrders": "No offline orders"
   }
 }
