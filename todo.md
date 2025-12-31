@@ -284,3 +284,8 @@
 - [x] 测试 Bot 连接和消息发送
 - [x] 验证管理员绑定流程
 - [x] 测试新订单通知推送
+
+## Telegram Mini App 入口配置
+- [x] 配置 Bot 菜单按钮和 Web App URL
+- [x] 更新 Bot 欢迎消息添加入口按钮
+- [x] 测试从 Bot 进入 Mini App

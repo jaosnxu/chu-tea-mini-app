@@ -64,26 +64,19 @@ async function handleUpdate(update) {
       createdAt: new Date(),
     });
 
-    // 发送欢迎消息
-    const welcomeMessage = `🎉 欢迎使用 CHU TEA 通知系统！
+    // 发送欢迎消息（带有 Web App 按钮）
+    const welcomeMessage = `🍵 *欢迎来到 CHU TEA!*
 
-您的验证码是: *${verificationCode}*
+您好！感谢您使用 CHU TEA 奶茶点单系统。
 
-请在后台管理系统中输入此验证码完成绑定：
-1. 登录后台管理系统
-2. 点击右上角的通知铃铛
-3. 在"Telegram 绑定"部分输入验证码
-4. 点击"绑定"按钮
+点击下方按钮开始点单吧！
 
-验证码有效期：10分钟
+---
+🇷🇺 *Добро пожаловать в CHU TEA!*
 
-绑定成功后，您将收到以下通知：
-• 🛒 新订单提醒
-• 📦 库存预警
-• ⚠️ 支付失败提醒
-• 🚨 系统警报`;
+Нажмите кнопку ниже, чтобы начать заказ.`;
 
-    await sendMessage(chatId, welcomeMessage);
+    await sendMessageWithButton(chatId, welcomeMessage);
   } else if (text === '/help') {
     const helpMessage = `📖 CHU TEA Bot 帮助
 
@@ -94,6 +87,41 @@ async function handleUpdate(update) {
 如需帮助，请联系系统管理员。`;
 
     await sendMessage(chatId, helpMessage);
+  }
+}
+
+// 发送带按钮的消息
+async function sendMessageWithButton(chatId, text) {
+  const webAppUrl = 'https://3000-i0ovh96evdxwggmrl8tpz-d731c093.sg1.manus.computer';
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '🍵 打开 CHU TEA / Открыть приложение',
+                web_app: { url: webAppUrl }
+              }
+            ]
+          ]
+        }
+      }),
+    });
+
+    const data = await response.json();
+    if (data.ok) {
+      console.log('✅ 消息已发送');
+    } else {
+      console.error('❌ 发送失败:', data.description);
+    }
+  } catch (error) {
+    console.error('❌ 发送错误:', error.message);
   }
 }
 
