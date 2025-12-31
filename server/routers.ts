@@ -245,6 +245,57 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         return await db.createOrder(ctx.user.id, input);
       }),
+    
+    // 立即购买（直接创建订单，不经过购物车）
+    buyNow: protectedProcedure
+      .input(z.object({
+        productId: z.number(),
+        quantity: z.number(),
+        selectedOptions: z.array(z.object({
+          optionId: z.number(),
+          itemId: z.number(),
+          name: z.string(),
+          price: z.string(),
+        })).optional(),
+        orderType: z.enum(['tea', 'mall']).optional(),
+        deliveryType: z.enum(['delivery', 'pickup']).optional(),
+        addressId: z.number().optional(),
+        couponId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // 获取商品信息
+        const product = await db.getProductById(input.productId);
+        if (!product) {
+          throw new Error('Product not found');
+        }
+        
+        // 计算单价
+        const basePrice = parseFloat(product.basePrice);
+        const optionsPrice = (input.selectedOptions || []).reduce((sum, opt) => sum + parseFloat(opt.price || '0'), 0);
+        const unitPrice = (basePrice + optionsPrice).toFixed(2);
+        
+        // 转换选项格式
+        const selectedOptions = (input.selectedOptions || []).map(opt => ({
+          name: opt.name,
+          value: opt.name,
+          price: opt.price,
+        }));
+        
+        // 创建订单
+        return await db.createOrder(ctx.user.id, {
+          orderType: input.orderType || 'tea',
+          orderSource: 'telegram',
+          deliveryType: input.deliveryType || 'delivery',
+          addressId: input.addressId,
+          couponId: input.couponId,
+          items: [{
+            productId: input.productId,
+            quantity: input.quantity,
+            unitPrice,
+            selectedOptions,
+          }],
+        });
+      }),
     cancel: protectedProcedure
       .input(z.object({
         id: z.number(),

@@ -77,6 +77,8 @@
     "soldOut": "已售罄",
     "addToCart": "加入购物车",
     "addedToCart": "已加入购物车",
+    "buyNow": "立即购买",
+    "orderCreated": "订单创建成功",
     "customize": "选择规格",
     "productDetail": "商品详情"
   },

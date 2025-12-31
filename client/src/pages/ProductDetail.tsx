@@ -26,6 +26,9 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<number, { itemId: number; name: string; price: string }>>({});
   const [isAdding, setIsAdding] = useState(false);
+  const [isBuying, setIsBuying] = useState(false);
+  
+  const buyNowMutation = trpc.order.buyNow.useMutation();
 
   const { data: product, isLoading } = trpc.product.getById.useQuery(
     { id: parseInt(params.id || '0') },
@@ -112,6 +115,35 @@ export default function ProductDetail() {
       toast.error(t('common.error'));
     } finally {
       setIsAdding(false);
+    }
+  };
+  
+  const handleBuyNow = async () => {
+    setIsBuying(true);
+    hapticFeedback?.('impact', 'heavy');
+    
+    try {
+      const optionsArray = Object.entries(selectedOptions).map(([optionId, opt]) => ({
+        optionId: parseInt(optionId),
+        itemId: opt.itemId,
+        name: opt.name,
+        price: opt.price,
+      }));
+
+      const order = await buyNowMutation.mutateAsync({
+        productId: product.id,
+        quantity,
+        selectedOptions: optionsArray,
+        orderType: 'tea',
+      });
+
+      toast.success(t('menu.orderCreated'));
+      // 跳转到订单详情页面
+      navigate(`/order/${order.orderId}`);
+    } catch (error) {
+      toast.error(t('common.error'));
+    } finally {
+      setIsBuying(false);
     }
   };
 
@@ -219,29 +251,37 @@ export default function ProductDetail() {
 
       {/* 底部购买栏 */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="w-8 h-8 rounded-full border flex items-center justify-center"
-              disabled={quantity <= 1}
-            >
-              <Minus className="w-4 h-4" />
-            </button>
-            <span className="font-bold text-lg w-8 text-center">{quantity}</span>
-            <button
-              onClick={() => setQuantity(quantity + 1)}
-              className="w-8 h-8 rounded-full border border-teal-600 text-teal-600 flex items-center justify-center"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-          <Button
-            className="bg-teal-600 hover:bg-teal-700 px-8"
-            onClick={handleAddToCart}
-            disabled={isAdding}
+        <div className="flex items-center gap-3 mb-3">
+          <button
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            className="w-10 h-10 rounded-full border flex items-center justify-center"
+            disabled={quantity <= 1}
           >
-            {isAdding ? t('common.loading') : `${t('menu.addToCart')} ₽${totalPrice.toFixed(2)}`}
+            <Minus className="w-4 h-4" />
+          </button>
+          <span className="font-bold text-lg flex-1 text-center">{quantity}</span>
+          <button
+            onClick={() => setQuantity(quantity + 1)}
+            className="w-10 h-10 rounded-full border border-teal-600 text-teal-600 flex items-center justify-center"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 border-teal-600 text-teal-600 hover:bg-teal-50"
+            onClick={handleAddToCart}
+            disabled={isAdding || isBuying}
+          >
+            {isAdding ? t('common.loading') : t('menu.addToCart')}
+          </Button>
+          <Button
+            className="flex-1 bg-teal-600 hover:bg-teal-700"
+            onClick={handleBuyNow}
+            disabled={isAdding || isBuying}
+          >
+            {isBuying ? t('common.loading') : `${t('menu.buyNow')} ₽${totalPrice.toFixed(2)}`}
           </Button>
         </div>
       </div>
