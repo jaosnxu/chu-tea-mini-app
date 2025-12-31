@@ -7,6 +7,7 @@ import { trpc } from '@/lib/trpc';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, MapPin, Clock, Phone } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -22,6 +23,9 @@ export default function OrderDetail() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const params = useParams<{ id: string }>();
+  
+  // 显示 Telegram 返回按钮
+  useTelegramBackButton(true, () => navigate('/orders'));
 
   const { data: order, isLoading, refetch } = trpc.order.getById.useQuery(
     { id: parseInt(params.id || '0') },

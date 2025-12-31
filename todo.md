@@ -293,6 +293,6 @@
 ## Telegram Mini App SDK 集成
 - [x] 安装 @twa-dev/sdk 并初始化
 - [x] 实现 Telegram 用户自动登录
-- [ ] 适配 Telegram 主题颜色
-- [ ] 添加返回按钮和关闭确认
-- [ ] 测试 SDK 功能
+- [x] 适配 Telegram 主题颜色
+- [x] 添加返回按钮和关闭确认
+- [x] 测试 SDK 功能

@@ -11,6 +11,7 @@ import { useTelegramContext } from '@/contexts/TelegramContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
 
 export default function ProductDetail() {
   const { t } = useTranslation();
@@ -18,6 +19,9 @@ export default function ProductDetail() {
   const params = useParams<{ id: string }>();
   const { addToCart, teaCartCount } = useCart();
   const { hapticFeedback } = useTelegramContext();
+  
+  // 显示 Telegram 返回按钮
+  useTelegramBackButton(true, () => navigate('/menu'));
   
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<number, { itemId: number; name: string; price: string }>>({});

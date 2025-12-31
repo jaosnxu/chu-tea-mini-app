@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
@@ -7,6 +6,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { TelegramProvider } from "./contexts/TelegramContext";
 import { StoreProvider } from "./contexts/StoreContext";
 import { CartProvider } from "./contexts/CartContext";
+import { useTelegramTheme } from "./hooks/useTelegramTheme";
 
 // 页面组件
 import Home from "./pages/Home";
@@ -98,6 +98,9 @@ function Router() {
 }
 
 function App() {
+  // 监听 Telegram 主题变化
+  useTelegramTheme();
+  
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
@@ -105,7 +108,6 @@ function App() {
           <StoreProvider>
             <CartProvider>
               <TooltipProvider>
-                <Toaster />
                 <Router />
               </TooltipProvider>
             </CartProvider>

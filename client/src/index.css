@@ -43,6 +43,20 @@
 }
 
 :root {
+  /* Telegram 主题颜色变量（将由 JavaScript 动态设置） */
+  --tg-bg-color: #ffffff;
+  --tg-secondary-bg-color: #f4f4f5;
+  --tg-text-color: #000000;
+  --tg-hint-color: #999999;
+  --tg-link-color: #2481cc;
+  --tg-button-color: #2481cc;
+  --tg-button-text-color: #ffffff;
+  --tg-header-bg-color: #ffffff;
+  --tg-section-bg-color: #ffffff;
+  --tg-section-header-text-color: #6d6d72;
+  --tg-subtitle-text-color: #999999;
+  --tg-destructive-text-color: #ff3b30;
+  
   --primary: var(--color-blue-700);
   --primary-foreground: var(--color-blue-50);
   --sidebar-primary: var(--color-blue-600);
@@ -79,6 +93,20 @@
 }
 
 .dark {
+  /* Telegram 深色主题颜色变量（将由 JavaScript 动态设置） */
+  --tg-bg-color: #212121;
+  --tg-secondary-bg-color: #0f0f0f;
+  --tg-text-color: #ffffff;
+  --tg-hint-color: #aaaaaa;
+  --tg-link-color: #8774e1;
+  --tg-button-color: #8774e1;
+  --tg-button-text-color: #ffffff;
+  --tg-header-bg-color: #212121;
+  --tg-section-bg-color: #0f0f0f;
+  --tg-section-header-text-color: #aaaaaa;
+  --tg-subtitle-text-color: #aaaaaa;
+  --tg-destructive-text-color: #ff595a;
+  
   --primary: var(--color-blue-700);
   --primary-foreground: var(--color-blue-50);
   --sidebar-primary: var(--color-blue-500);

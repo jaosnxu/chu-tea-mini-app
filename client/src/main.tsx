@@ -8,10 +8,12 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 import "./lib/i18n"; // 初始化 i18n
-import { initTelegramSDK } from "./lib/telegram"; // 初始化 Telegram SDK
+import { initTelegramSDK, applyTelegramTheme } from "./lib/telegram"; // 初始化 Telegram SDK
 
 // 初始化 Telegram Web App
 initTelegramSDK();
+// 应用 Telegram 主题颜色
+applyTelegramTheme();
 
 const queryClient = new QueryClient();
 

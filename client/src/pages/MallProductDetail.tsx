@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
 
 export default function MallProductDetail() {
   const { t } = useTranslation();
@@ -15,6 +16,9 @@ export default function MallProductDetail() {
   const { addToCart, mallCartCount } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  
+  // 显示 Telegram 返回按钮
+  useTelegramBackButton(true, () => navigate('/mall'));
 
   const { data: product, isLoading } = trpc.product.getById.useQuery(
     { id: parseInt(params.id || '0') },
