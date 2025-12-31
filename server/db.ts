@@ -545,7 +545,138 @@ export async function createOrder(userId: number, data: {
   // 清空购物车
   await clearCart(userId, data.orderType);
   
+  // 发送订单确认通知到用户 Telegram
+  try {
+    const { sendOrderConfirmationToUser } = await import('./userNotifications');
+    
+    // 获取门店名称
+    let storeName: string | undefined;
+    if (data.storeId) {
+      const store = await db.select().from(stores).where(eq(stores.id, data.storeId)).limit(1);
+      if (store.length > 0) {
+        storeName = store[0].nameRu || undefined;
+      }
+    }
+    
+    // 获取用户语言偏好
+    const [user] = await db.select({ language: users.language }).from(users).where(eq(users.id, userId)).limit(1);
+    const language = (user?.language || 'ru') as 'zh' | 'ru' | 'en';
+    
+    // 构建商品列表
+    const itemsForNotification = [];
+    for (const item of data.items) {
+      const product = await getProductById(item.productId);
+      itemsForNotification.push({
+        name: product?.nameRu || 'Unknown',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      });
+    }
+    
+    // 计算预计送达时间（30-60分钟）
+    const estimatedMinutes = data.deliveryType === 'delivery' ? 45 : 20;
+    const estimatedTime = new Date(Date.now() + estimatedMinutes * 60 * 1000);
+    const estimatedDeliveryTime = estimatedTime.toLocaleTimeString(language === 'zh' ? 'zh-CN' : language === 'ru' ? 'ru-RU' : 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    
+    await sendOrderConfirmationToUser({
+      userId,
+      orderNo,
+      orderType: data.orderType,
+      deliveryType: data.deliveryType,
+      totalAmount: totalAmount.toFixed(2),
+      items: itemsForNotification,
+      storeName,
+      address: addressSnapshot?.address,
+      estimatedDeliveryTime,
+      language,
+    });
+  } catch (error) {
+    console.error('[Order] Failed to send order confirmation:', error);
+  }
+  
   return { success: true, orderId, orderNo };
+}
+
+// ==================== 物流信息相关 ====================
+
+export async function createShipment(data: {
+  orderId: number;
+  carrier: string;
+  trackingNo?: string;
+  estimatedDelivery?: Date;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // 获取订单信息
+  const [order] = await db.select().from(orders).where(eq(orders.id, data.orderId)).limit(1);
+  if (!order) throw new Error("Order not found");
+  
+  // 创建物流记录
+  const result = await db.insert(shipments).values({
+    orderId: data.orderId,
+    carrier: data.carrier,
+    trackingNo: data.trackingNo,
+    status: 'pending',
+    estimatedDelivery: data.estimatedDelivery,
+  });
+  
+  const shipmentId = Number(result[0].insertId);
+  
+  // 更新订单状态为 "delivering"
+  await db.update(orders).set({ status: 'delivering' }).where(eq(orders.id, data.orderId));
+  
+  // 发送物流追踪通知到用户 Telegram
+  try {
+    const { sendShipmentTrackingToUser } = await import('./userNotifications');
+    
+    // 获取用户语言偏好
+    const [user] = await db.select({ language: users.language }).from(users).where(eq(users.id, order.userId)).limit(1);
+    const language = (user?.language || 'ru') as 'zh' | 'ru' | 'en';
+    
+    // 格式化预计送达时间
+    let estimatedDeliveryTime: string | undefined;
+    if (data.estimatedDelivery) {
+      estimatedDeliveryTime = data.estimatedDelivery.toLocaleString(language === 'zh' ? 'zh-CN' : language === 'ru' ? 'ru-RU' : 'en-US');
+    }
+    
+    await sendShipmentTrackingToUser({
+      userId: order.userId,
+      orderNo: order.orderNo,
+      courierCompany: data.carrier,
+      trackingNumber: data.trackingNo || '待分配',
+      estimatedDeliveryTime,
+      language,
+    });
+  } catch (error) {
+    console.error('[Shipment] Failed to send tracking notification:', error);
+  }
+  
+  return { success: true, shipmentId };
+}
+
+export async function updateShipmentStatus(shipmentId: number, status: 'pending' | 'picked' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'failed', trackingHistory?: Array<{ time: string; status: string; location?: string; description: string }>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(shipments).set({ 
+    status,
+    trackingHistory,
+    deliveredAt: status === 'delivered' ? new Date() : undefined,
+  }).where(eq(shipments.id, shipmentId));
+  
+  // 如果物流状态为 "delivered"，更新订单状态为 "completed"
+  if (status === 'delivered') {
+    const [shipment] = await db.select().from(shipments).where(eq(shipments.id, shipmentId)).limit(1);
+    if (shipment) {
+      await db.update(orders).set({ status: 'completed' }).where(eq(orders.id, shipment.orderId));
+    }
+  }
+  
+  return { success: true };
 }
 
 export async function cancelOrder(userId: number, id: number, reason?: string) {
@@ -1585,12 +1716,88 @@ export async function updateOrderStatus(data: { orderId: number; status: 'pendin
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // 获取订单信息
+  const [order] = await db.select().from(orders).where(eq(orders.id, data.orderId)).limit(1);
+  if (!order) throw new Error("Order not found");
+  
   await db.update(orders).set({ status: data.status }).where(eq(orders.id, data.orderId));
   
   await logOperation(operatorId, 'orders', 'update_status', data.orderId.toString(), {
     status: data.status,
     note: data.note,
   });
+  
+  // 发送通知到用户 Telegram
+  try {
+    const { sendPaymentSuccessToUser, sendOrderStatusUpdateToUser } = await import('./userNotifications');
+    
+    // 获取用户语言偏好
+    const [user] = await db.select({ language: users.language }).from(users).where(eq(users.id, order.userId)).limit(1);
+    const language = (user?.language || 'ru') as 'zh' | 'ru' | 'en';
+    
+    // 如果状态更新为 "paid"，发送支付成功通知
+    if (data.status === 'paid') {
+      await sendPaymentSuccessToUser({
+        userId: order.userId,
+        orderNo: order.orderNo,
+        amount: order.totalAmount,
+        paymentMethod: '在线支付',
+        transactionId: `TXN${order.orderNo}`,
+        paymentTime: new Date(),
+        language,
+      });
+    }
+    
+    // 其他状态更新通知
+    const statusTexts = {
+      zh: {
+        pending: '待支付',
+        paid: '已支付',
+        preparing: '制作中',
+        ready: '待取餐',
+        delivering: '配送中',
+        completed: '已完成',
+        cancelled: '已取消',
+        refunding: '退款中',
+        refunded: '已退款',
+      },
+      ru: {
+        pending: 'Ожидает оплаты',
+        paid: 'Оплачено',
+        preparing: 'Готовится',
+        ready: 'Готов к выдаче',
+        delivering: 'Доставляется',
+        completed: 'Завершен',
+        cancelled: 'Отменен',
+        refunding: 'Возврат средств',
+        refunded: 'Возвращено',
+      },
+      en: {
+        pending: 'Pending Payment',
+        paid: 'Paid',
+        preparing: 'Preparing',
+        ready: 'Ready for Pickup',
+        delivering: 'Delivering',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+        refunding: 'Refunding',
+        refunded: 'Refunded',
+      },
+    };
+    
+    if (data.status !== 'paid') {
+      await sendOrderStatusUpdateToUser({
+        userId: order.userId,
+        orderNo: order.orderNo,
+        status: data.status,
+        statusText: statusTexts[language][data.status],
+        message: data.note,
+        language,
+      });
+    }
+  } catch (error) {
+    console.error('[Order] Failed to send status update notification:', error);
+  }
   
   return { success: true };
 }
