@@ -10,11 +10,37 @@ export default function MemberCenter() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
   const { data: member } = trpc.member.info.useQuery();
+  const { data: pointsRules } = trpc.system.getPointsRules.useQuery();
 
   const level = member?.memberLevel || 'normal';
+  const totalSpent = parseFloat(member?.totalSpent || '0');
+  const currentBonus = pointsRules?.levelBonus[level] || 0;
+  
+  let nextLevel = '';
+  let nextThreshold = 0;
+  let progress = 0;
+  
+  if (pointsRules) {
+    if (level === 'normal') {
+      nextLevel = 'silver';
+      nextThreshold = pointsRules.upgradeThreshold.silver;
+      progress = (totalSpent / nextThreshold) * 100;
+    } else if (level === 'silver') {
+      nextLevel = 'gold';
+      nextThreshold = pointsRules.upgradeThreshold.gold;
+      progress = (totalSpent / nextThreshold) * 100;
+    } else if (level === 'gold') {
+      nextLevel = 'diamond';
+      nextThreshold = pointsRules.upgradeThreshold.diamond;
+      progress = (totalSpent / nextThreshold) * 100;
+    } else {
+      progress = 100;
+    }
+  }
+  
   const benefits = [
+    { icon: <Star className="w-5 h-5" />, title: '积分加成', desc: `消费额外获得 +${currentBonus}% 积分` },
     { icon: <Gift className="w-5 h-5" />, title: t('member.benefit.birthday'), desc: t('member.benefit.birthdayDesc') },
-    { icon: <Star className="w-5 h-5" />, title: t('member.benefit.points'), desc: t('member.benefit.pointsDesc') },
     { icon: <Zap className="w-5 h-5" />, title: t('member.benefit.discount'), desc: t('member.benefit.discountDesc') },
   ];
 
@@ -32,7 +58,13 @@ export default function MemberCenter() {
             <Crown className="w-8 h-8" />
             <div><p className="font-bold text-lg">{t(`member.${level}`)}</p><p className="text-sm text-white/80">{t('member.currentLevel')}</p></div>
           </div>
-          <Progress value={50} className="h-2 bg-white/30" />
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-white/80">{nextLevel ? `下一等级：${nextLevel === 'silver' ? '白银' : nextLevel === 'gold' ? '黄金' : '钻石'}` : '已达最高等级'}</span>
+              {nextLevel && <span className="text-white/80">{totalSpent.toFixed(0)} / {nextThreshold} ₽</span>}
+            </div>
+            <Progress value={Math.min(progress, 100)} className="h-2 bg-white/30" />
+          </div>
         </div>
       </header>
       <div className="p-4 space-y-4">

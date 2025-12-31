@@ -435,7 +435,8 @@
       "yookassa": "YooKassa 配置",
       "payments": "支付记录",
       "productConfig": "商品配置",
-      "deliverySettings": "配送设置"
+      "deliverySettings": "配送设置",
+      "pointsRules": "积分规则"
     },
     "notifications": {
       "title": "通知",

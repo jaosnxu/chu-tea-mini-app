@@ -2015,6 +2015,45 @@ export async function updateOrderStatus(data: { orderId: number; status: 'pendin
     note: data.note,
   });
   
+  // 订单完成时发放积分并检查会员升级
+  if (data.status === 'completed' && order.pointsUsed === 0) {
+    try {
+      const { calculateOrderPoints, checkAndUpgradeMemberLevel } = await import('./db/pointsRules');
+      const [user] = await db.select().from(users).where(eq(users.id, order.userId)).limit(1);
+      
+      if (user) {
+        const orderAmount = parseFloat(order.totalAmount);
+        const { basePoints, bonusPoints, totalPoints } = await calculateOrderPoints(orderAmount, user.memberLevel);
+        
+        await db.update(users).set({
+          totalPoints: user.totalPoints + totalPoints,
+          availablePoints: user.availablePoints + totalPoints,
+        }).where(eq(users.id, order.userId));
+        
+        await db.insert(pointsHistory).values({
+          userId: order.userId,
+          type: 'earn',
+          points: totalPoints,
+          balance: user.availablePoints + totalPoints,
+          orderId: order.id,
+          descriptionZh: `订单消费获得积分（基础${basePoints}+加成${bonusPoints}）`,
+          descriptionRu: `Получено баллов за заказ (базовые ${basePoints}+бонус ${bonusPoints})`,
+          descriptionEn: `Earned points from order (base ${basePoints}+bonus ${bonusPoints})`,
+        });
+        
+        const newTotalSpent = parseFloat(user.totalSpent) + orderAmount;
+        await db.update(users).set({ totalSpent: newTotalSpent.toFixed(2) }).where(eq(users.id, order.userId));
+        
+        const { upgraded, newLevel } = await checkAndUpgradeMemberLevel(order.userId, newTotalSpent);
+        if (upgraded) {
+          console.log(`[Order] User ${order.userId} upgraded to ${newLevel}`);
+        }
+      }
+    } catch (error) {
+      console.error('[Order] Failed to award points:', error);
+    }
+  }
+  
   // 发送通知到用户 Telegram
   try {
     const { sendPaymentSuccessToUser, sendOrderStatusUpdateToUser } = await import('./userNotifications');
