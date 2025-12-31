@@ -23,7 +23,11 @@
     "currency": "₽",
     "points": "积分",
     "required": "必选",
-    "copied": "已复制"
+    "copied": "已复制",
+    "send": "发送",
+    "sending": "发送中...",
+    "all": "全部",
+    "refresh": "刷新"
   },
   "nav": {
     "home": "首页",
@@ -341,7 +345,71 @@
       "logs": "操作日志",
       "permissions": "权限管理",
       "settings": "系统设置",
-      "users": "用户管理"
+      "users": "用户管理",
+      "notifications": "通知管理"
+    },
+    "notifications": {
+      "title": "通知",
+      "management": "通知管理",
+      "managementDesc": "管理系统通知和推送设置",
+      "history": "通知历史",
+      "settings": "通知设置",
+      "sendTest": "发送测试通知",
+      "sendTestDesc": "发送一条测试通知以验证配置",
+      "channel": "渠道",
+      "channels": {
+        "system": "系统通知",
+        "telegram": "Telegram",
+        "email": "邮件",
+        "sms": "短信"
+      },
+      "titleLabel": "标题",
+      "titlePlaceholder": "输入通知标题",
+      "content": "内容",
+      "contentPlaceholder": "输入通知内容",
+      "priority": {
+        "label": "优先级",
+        "low": "低",
+        "normal": "普通",
+        "high": "高",
+        "urgent": "紧急"
+      },
+      "status": "状态",
+      "statuses": {
+        "pending": "待发送",
+        "sent": "已发送",
+        "delivered": "已送达",
+        "failed": "发送失败",
+        "read": "已读"
+      },
+      "createdAt": "创建时间",
+      "empty": "暂无通知",
+      "markAllRead": "全部标记为已读",
+      "viewAll": "查看全部",
+      "justNow": "刚刚",
+      "minutesAgo": "{{count}}分钟前",
+      "hoursAgo": "{{count}}小时前",
+      "daysAgo": "{{count}}天前",
+      "notifySettings": "通知设置",
+      "notifySettingsDesc": "配置您希望接收的通知类型",
+      "notifyNewOrder": "新订单通知",
+      "notifyNewOrderDesc": "收到新订单时发送通知",
+      "notifyPaymentFailed": "支付失败通知",
+      "notifyPaymentFailedDesc": "订单支付失败时发送通知",
+      "notifyLowStock": "库存预警通知",
+      "notifyLowStockDesc": "商品库存低于阈值时发送通知",
+      "notifySystemAlert": "系统警报通知",
+      "notifySystemAlertDesc": "系统出现异常时发送通知",
+      "telegramBinding": "Telegram 绑定",
+      "telegramBindingDesc": "绑定 Telegram 账号以接收即时通知",
+      "telegramConnected": "Telegram 已连接",
+      "telegramNotConnected": "Telegram 未连接",
+      "verifiedAt": "验证时间",
+      "howToConnect": "如何连接",
+      "step1": "在 Telegram 中搜索并打开 CHU TEA Bot",
+      "step2": "发送下方的验证码给 Bot",
+      "step3": "等待验证完成",
+      "verificationCode": "验证码"
     },
     "search": {
       "placeholder": "搜索..."

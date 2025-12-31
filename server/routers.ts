@@ -743,6 +743,132 @@ export const appRouter = router({
         return await db.updateOrderStatus(input, ctx.user.id);
       }),
   }),
+
+  // 后台通知管理
+  adminNotifications: router({
+    // 获取通知列表
+    list: protectedProcedure
+      .input(z.object({
+        channel: z.enum(['system', 'telegram', 'email', 'sms']).optional(),
+        status: z.enum(['pending', 'sent', 'delivered', 'failed', 'read']).optional(),
+        priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+        recipientType: z.enum(['admin', 'user']).optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.getNotificationHistory(input);
+      }),
+    
+    // 获取未读通知数量
+    unreadCount: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.getUnreadNotificationCount(ctx.user.id);
+    }),
+    
+    // 获取管理员通知（用于铃铛组件）
+    myNotifications: protectedProcedure
+      .input(z.object({
+        limit: z.number().optional(),
+        unreadOnly: z.boolean().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.getAdminNotifications(ctx.user.id, input);
+      }),
+    
+    // 标记通知为已读
+    markAsRead: protectedProcedure
+      .input(z.object({ notificationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.markNotificationAsRead(input.notificationId, ctx.user.id);
+      }),
+    
+    // 标记所有通知为已读
+    markAllAsRead: protectedProcedure.mutation(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.markAllNotificationsAsRead(ctx.user.id);
+    }),
+    
+    // 发送测试通知
+    sendTest: protectedProcedure
+      .input(z.object({
+        channel: z.enum(['system', 'telegram']),
+        title: z.string(),
+        content: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.createNotification({
+          recipientType: 'admin',
+          recipientId: ctx.user.id,
+          channel: input.channel,
+          titleZh: input.title,
+          titleRu: input.title,
+          titleEn: input.title,
+          contentZh: input.content,
+          contentRu: input.content,
+          contentEn: input.content,
+          priority: 'normal',
+          status: 'sent',
+        });
+      }),
+    
+    // 获取 Telegram 绑定状态
+    getTelegramBinding: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      return await db.getAdminTelegramBinding(ctx.user.id);
+    }),
+    
+    // 绑定/更新 Telegram
+    bindTelegram: protectedProcedure
+      .input(z.object({
+        telegramChatId: z.string(),
+        telegramUsername: z.string().optional(),
+        notifyNewOrder: z.boolean().optional(),
+        notifyPaymentFailed: z.boolean().optional(),
+        notifyLowStock: z.boolean().optional(),
+        notifySystemAlert: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.upsertAdminTelegramBinding({
+          adminUserId: ctx.user.id,
+          ...input,
+        });
+      }),
+    
+    // 验证 Telegram 绑定
+    verifyTelegram: protectedProcedure
+      .input(z.object({ code: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        return await db.verifyAdminTelegramBinding(ctx.user.id, input.code);
+      }),
+    
+    // 更新通知设置
+    updateSettings: protectedProcedure
+      .input(z.object({
+        notifyNewOrder: z.boolean().optional(),
+        notifyPaymentFailed: z.boolean().optional(),
+        notifyLowStock: z.boolean().optional(),
+        notifySystemAlert: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        const binding = await db.getAdminTelegramBinding(ctx.user.id);
+        if (!binding) throw new Error('Telegram not bound');
+        return await db.upsertAdminTelegramBinding({
+          adminUserId: ctx.user.id,
+          telegramChatId: binding.telegramChatId,
+          ...input,
+        });
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

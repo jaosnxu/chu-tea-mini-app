@@ -37,6 +37,7 @@ import {
   Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import NotificationBell from "@/components/NotificationBell";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -60,6 +61,7 @@ const navItems: NavItem[] = [
   { icon: Megaphone, labelKey: "admin.nav.marketing", path: "/admin/marketing" },
   { icon: Store, labelKey: "admin.nav.stores", path: "/admin/stores" },
   { icon: Users, labelKey: "admin.nav.users", path: "/admin/users" },
+  { icon: Bell, labelKey: "admin.nav.notifications", path: "/admin/notifications" },
   { icon: Plug, labelKey: "admin.nav.api", path: "/admin/api" },
   { icon: FileText, labelKey: "admin.nav.logs", path: "/admin/logs" },
 ];
@@ -201,10 +203,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </DropdownMenu>
 
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-            </Button>
+            <NotificationBell />
 
             {/* User Menu */}
             <DropdownMenu>

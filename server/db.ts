@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, inArray, gte, lte, or, isNull, like } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, gte, lte, or, isNull, like, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { nanoid } from "nanoid";
 import { 
@@ -1945,4 +1945,135 @@ export async function getNotificationHistory(params?: {
   if (params?.offset) query = query.offset(params.offset) as typeof query;
   
   return await query;
+}
+
+// 获取管理员通知列表
+export async function getAdminNotifications(adminUserId: number, params?: {
+  limit?: number;
+  unreadOnly?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [
+    eq(notifications.recipientType, 'admin'),
+    eq(notifications.recipientId, adminUserId),
+  ];
+  
+  if (params?.unreadOnly) {
+    conditions.push(ne(notifications.status, 'read'));
+  }
+  
+  let query = db.select().from(notifications)
+    .where(and(...conditions))
+    .orderBy(desc(notifications.createdAt));
+  
+  if (params?.limit) {
+    query = query.limit(params.limit) as typeof query;
+  }
+  
+  return await query;
+}
+
+// 发送新订单通知给管理员
+export async function sendNewOrderNotification(orderId: number, orderNumber: string, totalAmount: string, storeName: string) {
+  const db = await getDb();
+  if (!db) return;
+  
+  // 获取需要接收新订单通知的管理员
+  const admins = await getAdminsForNotification('newOrder');
+  
+  for (const admin of admins) {
+    await createNotification({
+      recipientType: 'admin',
+      recipientId: admin.adminUserId,
+      channel: 'system',
+      titleZh: '新订单通知',
+      titleRu: 'Новый заказ',
+      titleEn: 'New Order',
+      contentZh: `收到新订单 #${orderNumber}，金额 ₽${totalAmount}，门店：${storeName}`,
+      contentRu: `Новый заказ #${orderNumber}, сумма ₽${totalAmount}, магазин: ${storeName}`,
+      contentEn: `New order #${orderNumber}, amount ₽${totalAmount}, store: ${storeName}`,
+      priority: 'high',
+      relatedType: 'order',
+      relatedId: orderId,
+      status: 'sent',
+    });
+  }
+}
+
+// 发送库存预警通知给管理员
+export async function sendLowStockNotification(productId: number, productName: string, currentStock: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const admins = await getAdminsForNotification('lowStock');
+  
+  for (const admin of admins) {
+    await createNotification({
+      recipientType: 'admin',
+      recipientId: admin.adminUserId,
+      channel: 'system',
+      titleZh: '库存预警',
+      titleRu: 'Предупреждение о запасах',
+      titleEn: 'Low Stock Alert',
+      contentZh: `商品「${productName}」库存不足，当前库存：${currentStock}`,
+      contentRu: `Товар «${productName}» заканчивается, текущий остаток: ${currentStock}`,
+      contentEn: `Product "${productName}" is low on stock, current stock: ${currentStock}`,
+      priority: 'high',
+      relatedType: 'product',
+      relatedId: productId,
+      status: 'sent',
+    });
+  }
+}
+
+// 发送支付失败通知给管理员
+export async function sendPaymentFailedNotification(orderId: number, orderNumber: string, errorMessage: string) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const admins = await getAdminsForNotification('paymentFailed');
+  
+  for (const admin of admins) {
+    await createNotification({
+      recipientType: 'admin',
+      recipientId: admin.adminUserId,
+      channel: 'system',
+      titleZh: '支付失败',
+      titleRu: 'Ошибка оплаты',
+      titleEn: 'Payment Failed',
+      contentZh: `订单 #${orderNumber} 支付失败：${errorMessage}`,
+      contentRu: `Заказ #${orderNumber} не оплачен: ${errorMessage}`,
+      contentEn: `Order #${orderNumber} payment failed: ${errorMessage}`,
+      priority: 'urgent',
+      relatedType: 'order',
+      relatedId: orderId,
+      status: 'sent',
+    });
+  }
+}
+
+// 发送系统警报通知给管理员
+export async function sendSystemAlertNotification(title: string, content: string, priority: 'low' | 'normal' | 'high' | 'urgent' = 'high') {
+  const db = await getDb();
+  if (!db) return;
+  
+  const admins = await getAdminsForNotification('systemAlert');
+  
+  for (const admin of admins) {
+    await createNotification({
+      recipientType: 'admin',
+      recipientId: admin.adminUserId,
+      channel: 'system',
+      titleZh: title,
+      titleRu: title,
+      titleEn: title,
+      contentZh: content,
+      contentRu: content,
+      contentEn: content,
+      priority,
+      status: 'sent',
+    });
+  }
 }

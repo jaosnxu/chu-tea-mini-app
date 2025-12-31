@@ -23,7 +23,11 @@
     "currency": "₽",
     "points": "баллы",
     "required": "Обязательно",
-    "copied": "Скопировано"
+    "copied": "Скопировано",
+    "send": "Отправить",
+    "sending": "Отправка...",
+    "all": "Все",
+    "refresh": "Обновить"
   },
   "nav": {
     "home": "Главная",
@@ -335,7 +339,71 @@
       "stores": "Магазины",
       "users": "Пользователи",
       "api": "API настройки",
-      "logs": "Журнал операций"
+      "logs": "Журнал операций",
+      "notifications": "Уведомления"
+    },
+    "notifications": {
+      "title": "Уведомления",
+      "management": "Управление уведомлениями",
+      "managementDesc": "Управление системными уведомлениями и настройками пуш-уведомлений",
+      "history": "История уведомлений",
+      "settings": "Настройки уведомлений",
+      "sendTest": "Отправить тестовое уведомление",
+      "sendTestDesc": "Отправьте тестовое уведомление для проверки настроек",
+      "channel": "Канал",
+      "channels": {
+        "system": "Системное",
+        "telegram": "Telegram",
+        "email": "Эл. почта",
+        "sms": "SMS"
+      },
+      "titleLabel": "Заголовок",
+      "titlePlaceholder": "Введите заголовок",
+      "content": "Содержание",
+      "contentPlaceholder": "Введите содержание",
+      "priority": {
+        "label": "Приоритет",
+        "low": "Низкий",
+        "normal": "Обычный",
+        "high": "Высокий",
+        "urgent": "Срочный"
+      },
+      "status": "Статус",
+      "statuses": {
+        "pending": "Ожидает",
+        "sent": "Отправлено",
+        "delivered": "Доставлено",
+        "failed": "Ошибка",
+        "read": "Прочитано"
+      },
+      "createdAt": "Дата создания",
+      "empty": "Нет уведомлений",
+      "markAllRead": "Отметить все как прочитанные",
+      "viewAll": "Посмотреть все",
+      "justNow": "Только что",
+      "minutesAgo": "{{count}} мин. назад",
+      "hoursAgo": "{{count}} ч. назад",
+      "daysAgo": "{{count}} дн. назад",
+      "notifySettings": "Настройки уведомлений",
+      "notifySettingsDesc": "Настройте типы уведомлений, которые хотите получать",
+      "notifyNewOrder": "Новый заказ",
+      "notifyNewOrderDesc": "Получать уведомления о новых заказах",
+      "notifyPaymentFailed": "Ошибка оплаты",
+      "notifyPaymentFailedDesc": "Получать уведомления об ошибках оплаты",
+      "notifyLowStock": "Низкий остаток",
+      "notifyLowStockDesc": "Получать уведомления о низком остатке товаров",
+      "notifySystemAlert": "Системные оповещения",
+      "notifySystemAlertDesc": "Получать уведомления о системных сбоях",
+      "telegramBinding": "Привязка Telegram",
+      "telegramBindingDesc": "Привяжите Telegram для получения мгновенных уведомлений",
+      "telegramConnected": "Telegram подключен",
+      "telegramNotConnected": "Telegram не подключен",
+      "verifiedAt": "Дата подтверждения",
+      "howToConnect": "Как подключить",
+      "step1": "Найдите CHU TEA Bot в Telegram",
+      "step2": "Отправьте код подтверждения боту",
+      "step3": "Дождитесь подтверждения",
+      "verificationCode": "Код подтверждения"
     },
     "search": {
       "placeholder": "Поиск..."

@@ -42,6 +42,7 @@ import AdminStores from "./pages/admin/StoresManagement";
 import AdminUsers from "./pages/admin/UsersManagement";
 import AdminApiConfig from "./pages/admin/ApiConfigManagement";
 import AdminLogs from "./pages/admin/LogsManagement";
+import AdminNotifications from "./pages/admin/NotificationsManagement";
 
 function Router() {
   return (
@@ -87,6 +88,7 @@ function Router() {
       <Route path="/admin/users" component={() => <AdminLayout><AdminUsers /></AdminLayout>} />
       <Route path="/admin/api" component={() => <AdminLayout><AdminApiConfig /></AdminLayout>} />
       <Route path="/admin/logs" component={() => <AdminLayout><AdminLogs /></AdminLayout>} />
+      <Route path="/admin/notifications" component={AdminNotifications} />
       
       {/* 404 */}
       <Route path="/404" component={NotFound} />
