@@ -306,7 +306,8 @@
     "available": "Доступно",
     "getCoupon": "Получить",
     "viewMenu": "Меню",
-    "hotProducts": "Хиты продаж"
+    "hotProducts": "Хиты продаж",
+    "longPressToSwitch": "Долгое нажатие для смены функции"
   },
   "settings": {
     "settings": "Настройки",

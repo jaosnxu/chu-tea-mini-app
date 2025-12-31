@@ -306,7 +306,8 @@
     "available": "可领取",
     "getCoupon": "立即领取",
     "viewMenu": "查看菜单",
-    "hotProducts": "热销商品"
+    "hotProducts": "热销商品",
+    "longPressToSwitch": "长按入口可切换功能"
   },
   "settings": {
     "settings": "设置",

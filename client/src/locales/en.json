@@ -306,7 +306,8 @@
     "available": "Available",
     "getCoupon": "Get Coupon",
     "viewMenu": "View Menu",
-    "hotProducts": "Hot Products"
+    "hotProducts": "Hot Products",
+    "longPressToSwitch": "Long press to switch function"
   },
   "settings": {
     "settings": "Settings",

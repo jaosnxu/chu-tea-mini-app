@@ -1,181 +1,163 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'wouter';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTelegramContext } from '@/contexts/TelegramContext';
-import { useStore } from '@/contexts/StoreContext';
-import { getLocalizedText } from '@/lib/i18n';
 import { 
   Coffee, 
   ShoppingBag, 
-  MapPin, 
-  Gift, 
-  Star,
+  Gift,
+  Sparkles,
+  ChevronLeft,
   ChevronRight,
-  Sparkles
+  Play,
+  Pause
 } from 'lucide-react';
+
+// 广告轮播项类型
+interface CarouselItem {
+  id: number;
+  type: 'image' | 'video';
+  url: string;
+  link?: string;
+}
+
+// 功能入口配置类型
+interface EntryConfig {
+  id: string;
+  type: 'order' | 'mall' | 'coupon' | 'points';
+  enabled: boolean;
+  icon: React.ReactNode;
+  label: string;
+  path: string;
+  gradient: string;
+}
 
 export default function Home() {
   const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const { isTelegram, user, setHeaderColor, setBackgroundColor } = useTelegramContext();
-  const { currentStore } = useStore();
+  const { isTelegram, setHeaderColor, setBackgroundColor } = useTelegramContext();
+
+  // 模拟广告数据 - 实际应从后台获取
+  const [topCarouselItems] = useState<CarouselItem[]>([
+    { id: 1, type: 'image', url: '/products/milk-tea-cup.png', link: '/menu' },
+    { id: 2, type: 'image', url: '/products/fruit-tea-cup.png', link: '/menu' },
+    { id: 3, type: 'image', url: '/products/pearl-milk-tea.png', link: '/product/1' },
+  ]);
+
+  const [bottomCarouselItems] = useState<CarouselItem[]>([
+    { id: 4, type: 'image', url: '/products/pearl-milk-tea.png', link: '/mall' },
+    { id: 5, type: 'image', url: '/products/milk-tea-cup.png', link: '/coupons' },
+    { id: 6, type: 'image', url: '/products/fruit-tea-cup.png', link: '/points' },
+  ]);
+
+  // 功能入口配置 - 可从后台控制开关和类型
+  const [entryConfigs, setEntryConfigs] = useState<EntryConfig[]>([
+    {
+      id: 'entry1',
+      type: 'order',
+      enabled: true,
+      icon: <Coffee className="w-10 h-10" />,
+      label: t('nav.order'),
+      path: '/menu',
+      gradient: 'from-teal-500 to-teal-600'
+    },
+    {
+      id: 'entry2',
+      type: 'mall',
+      enabled: true,
+      icon: <ShoppingBag className="w-10 h-10" />,
+      label: t('nav.mall'),
+      path: '/mall',
+      gradient: 'from-purple-500 to-purple-600'
+    }
+  ]);
 
   // 设置 Telegram 主题
   useEffect(() => {
     if (isTelegram) {
-      setHeaderColor('#0d9488');
-      setBackgroundColor('#f0fdfa');
+      setHeaderColor('#000000');
+      setBackgroundColor('#000000');
     }
   }, [isTelegram, setHeaderColor, setBackgroundColor]);
 
-  const storeName = currentStore 
-    ? getLocalizedText({ 
-        zh: currentStore.nameZh, 
-        ru: currentStore.nameRu, 
-        en: currentStore.nameEn 
-      })
-    : t('store.selectStore');
+  // 切换入口类型
+  const toggleEntryType = (entryId: string) => {
+    setEntryConfigs(prev => prev.map(entry => {
+      if (entry.id === entryId) {
+        // 循环切换类型: order -> mall -> coupon -> points -> order
+        const types: Array<'order' | 'mall' | 'coupon' | 'points'> = ['order', 'mall', 'coupon', 'points'];
+        const currentIndex = types.indexOf(entry.type);
+        const nextIndex = (currentIndex + 1) % types.length;
+        const nextType = types[nextIndex];
+        
+        const configs: Record<string, Partial<EntryConfig>> = {
+          order: { icon: <Coffee className="w-10 h-10" />, label: t('nav.order'), path: '/menu', gradient: 'from-teal-500 to-teal-600' },
+          mall: { icon: <ShoppingBag className="w-10 h-10" />, label: t('nav.mall'), path: '/mall', gradient: 'from-purple-500 to-purple-600' },
+          coupon: { icon: <Gift className="w-10 h-10" />, label: t('coupon.myCoupons'), path: '/coupons', gradient: 'from-orange-400 to-pink-500' },
+          points: { icon: <Sparkles className="w-10 h-10" />, label: t('points.myPoints'), path: '/points', gradient: 'from-yellow-400 to-orange-500' },
+        };
+        
+        return { ...entry, type: nextType, ...configs[nextType] };
+      }
+      return entry;
+    }));
+  };
+
+  // 切换入口开关
+  const toggleEntryEnabled = (entryId: string) => {
+    setEntryConfigs(prev => prev.map(entry => 
+      entry.id === entryId ? { ...entry, enabled: !entry.enabled } : entry
+    ));
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
-      {/* 头部 */}
-      <header className="bg-gradient-to-r from-teal-600 to-teal-500 text-white px-4 pt-6 pb-12 rounded-b-3xl shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold">CHU TEA</h1>
-            <p className="text-teal-100 text-sm">{t('landing.slogan')}</p>
-          </div>
-          {user && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm">{user.first_name}</span>
-            </div>
-          )}
+    <div className="min-h-screen bg-black flex flex-col">
+      {/* 上部轮播区域 */}
+      <div className="flex-1">
+        <MediaCarousel 
+          items={topCarouselItems} 
+          onItemClick={(item) => item.link && navigate(item.link)}
+        />
+      </div>
+
+      {/* 中间功能入口区域 */}
+      <div className="px-4 py-6 bg-gradient-to-b from-black/80 to-black/80">
+        <div className="grid grid-cols-2 gap-4">
+          {entryConfigs.map((entry) => (
+            entry.enabled && (
+              <Card 
+                key={entry.id}
+                className={`p-6 cursor-pointer hover:shadow-xl transition-all transform hover:scale-105 bg-gradient-to-br ${entry.gradient} text-white border-0`}
+                onClick={() => navigate(entry.path)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  toggleEntryType(entry.id);
+                }}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="bg-white/20 rounded-full p-4 mb-3">
+                    {entry.icon}
+                  </div>
+                  <h3 className="font-bold text-xl">{entry.label}</h3>
+                </div>
+              </Card>
+            )
+          ))}
         </div>
         
-        {/* 门店选择 */}
-        <Card 
-          className="bg-white/20 backdrop-blur border-0 p-3 cursor-pointer hover:bg-white/30 transition-colors"
-          onClick={() => navigate('/store-selector')}
-        >
-          <div className="flex items-center justify-between text-white">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              <div>
-                <p className="font-medium">{storeName}</p>
-                {currentStore?.isOpen ? (
-                  <span className="text-xs text-teal-100">{t('store.open')}</span>
-                ) : (
-                  <span className="text-xs text-orange-200">{t('store.closed')}</span>
-                )}
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5" />
-          </div>
-        </Card>
-      </header>
-
-      {/* 新用户礼包 */}
-      <div className="px-4 -mt-6">
-        <Card className="bg-gradient-to-r from-orange-400 to-pink-500 text-white p-4 shadow-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 rounded-full p-2">
-                <Gift className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="font-bold">{t('landing.newUserGift')}</p>
-                <p className="text-sm text-white/80">3 {t('coupon.available')}</p>
-              </div>
-            </div>
-            <Button 
-              variant="secondary" 
-              size="sm"
-              className="bg-white text-orange-500 hover:bg-white/90"
-              onClick={() => navigate('/coupons')}
-            >
-              {t('landing.getCoupon')}
-            </Button>
-          </div>
-        </Card>
+        {/* 入口配置提示 */}
+        <p className="text-center text-gray-500 text-xs mt-3">
+          {t('home.longPressToSwitch') || '长按入口可切换功能'}
+        </p>
       </div>
 
-      {/* 主要功能入口 */}
-      <div className="px-4 mt-6 grid grid-cols-2 gap-4">
-        {/* 点单 */}
-        <Card 
-          className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-br from-teal-500 to-teal-600 text-white"
-          onClick={() => navigate('/menu')}
-        >
-          <div className="flex flex-col items-center text-center">
-            <div className="bg-white/20 rounded-full p-3 mb-3">
-              <Coffee className="w-8 h-8" />
-            </div>
-            <h3 className="font-bold text-lg">{t('nav.order')}</h3>
-            <p className="text-sm text-teal-100 mt-1">{t('landing.viewMenu')}</p>
-          </div>
-        </Card>
-
-        {/* 商城 */}
-        <Card 
-          className="p-4 cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-500 to-purple-600 text-white"
-          onClick={() => navigate('/mall')}
-        >
-          <div className="flex flex-col items-center text-center">
-            <div className="bg-white/20 rounded-full p-3 mb-3">
-              <ShoppingBag className="w-8 h-8" />
-            </div>
-            <h3 className="font-bold text-lg">{t('nav.mall')}</h3>
-            <p className="text-sm text-purple-100 mt-1">{t('mall.hotProducts')}</p>
-          </div>
-        </Card>
-      </div>
-
-      {/* 快捷入口 */}
-      <div className="px-4 mt-6">
-        <div className="grid grid-cols-4 gap-2">
-          <QuickEntry 
-            icon={<Star className="w-5 h-5 text-yellow-500" />}
-            label={t('member.memberCenter')}
-            onClick={() => navigate('/member')}
-          />
-          <QuickEntry 
-            icon={<Gift className="w-5 h-5 text-pink-500" />}
-            label={t('coupon.myCoupons')}
-            onClick={() => navigate('/coupons')}
-          />
-          <QuickEntry 
-            icon={<Sparkles className="w-5 h-5 text-purple-500" />}
-            label={t('points.myPoints')}
-            onClick={() => navigate('/points')}
-          />
-          <QuickEntry 
-            icon={<ShoppingBag className="w-5 h-5 text-teal-500" />}
-            label={t('order.orderHistory')}
-            onClick={() => navigate('/orders')}
-          />
-        </div>
-      </div>
-
-      {/* 热门推荐 */}
-      <div className="px-4 mt-6 pb-24">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-800">{t('menu.popular')}</h2>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-teal-600"
-            onClick={() => navigate('/menu')}
-          >
-            {t('common.viewAll')}
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
-        
-        <div className="text-center text-gray-400 py-8">
-          {t('common.loading')}
-        </div>
+      {/* 下部轮播区域 */}
+      <div className="flex-1">
+        <MediaCarousel 
+          items={bottomCarouselItems} 
+          onItemClick={(item) => item.link && navigate(item.link)}
+        />
       </div>
 
       {/* 底部导航 */}
@@ -184,25 +166,126 @@ export default function Home() {
   );
 }
 
-// 快捷入口组件
-function QuickEntry({ 
-  icon, 
-  label, 
-  onClick 
+// 媒体轮播组件 - 支持图片和视频
+function MediaCarousel({ 
+  items, 
+  onItemClick 
 }: { 
-  icon: React.ReactNode; 
-  label: string; 
-  onClick: () => void;
+  items: CarouselItem[]; 
+  onItemClick?: (item: CarouselItem) => void;
 }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 自动轮播
+  useEffect(() => {
+    if (isPlaying && items.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex(prev => (prev + 1) % items.length);
+      }, 5000);
+    }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isPlaying, items.length]);
+
+  const goToPrev = () => {
+    setCurrentIndex(prev => (prev - 1 + items.length) % items.length);
+  };
+
+  const goToNext = () => {
+    setCurrentIndex(prev => (prev + 1) % items.length);
+  };
+
+  const togglePlayPause = () => {
+    setIsPlaying(prev => !prev);
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+    }
+  };
+
+  const currentItem = items[currentIndex];
+
+  if (!currentItem) return null;
+
   return (
-    <div 
-      className="flex flex-col items-center p-2 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
-      onClick={onClick}
-    >
-      <div className="bg-gray-100 rounded-full p-2 mb-1">
-        {icon}
+    <div className="relative w-full h-full overflow-hidden group">
+      {/* 媒体内容 */}
+      <div 
+        className="w-full h-full cursor-pointer"
+        onClick={() => onItemClick?.(currentItem)}
+      >
+        {currentItem.type === 'video' ? (
+          <video
+            ref={videoRef}
+            src={currentItem.url}
+            className="w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        ) : (
+          <img
+            src={currentItem.url}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        )}
       </div>
-      <span className="text-xs text-gray-600 text-center">{label}</span>
+
+      {/* 左右切换按钮 */}
+      {items.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); goToPrev(); }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); goToNext(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </>
+      )}
+
+      {/* 播放/暂停按钮（视频时显示） */}
+      {currentItem.type === 'video' && (
+        <button
+          onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
+          className="absolute bottom-4 right-4 bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+        </button>
+      )}
+
+      {/* 指示器 */}
+      {items.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          {items.map((_, index) => (
+            <button
+              key={index}
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+              className={`w-2 h-2 rounded-full transition-all ${
+                index === currentIndex 
+                  ? 'bg-white w-6' 
+                  : 'bg-white/50 hover:bg-white/70'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -217,11 +300,11 @@ function BottomNav() {
     { path: '/menu', icon: <Coffee className="w-5 h-5" />, label: t('nav.order') },
     { path: '/mall', icon: <ShoppingBag className="w-5 h-5" />, label: t('nav.mall') },
     { path: '/orders', icon: <ShoppingBag className="w-5 h-5" />, label: t('nav.orders') },
-    { path: '/profile', icon: <Star className="w-5 h-5" />, label: t('nav.profile') },
+    { path: '/profile', icon: <Sparkles className="w-5 h-5" />, label: t('nav.profile') },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 safe-area-pb">
+    <nav className="bg-black/90 border-t border-gray-800 px-2 py-2 safe-area-pb">
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
           const isActive = location === item.path;
@@ -231,8 +314,8 @@ function BottomNav() {
               onClick={() => navigate(item.path)}
               className={`flex flex-col items-center px-3 py-1 rounded-lg transition-colors ${
                 isActive 
-                  ? 'text-teal-600' 
-                  : 'text-gray-400 hover:text-gray-600'
+                  ? 'text-teal-400' 
+                  : 'text-gray-500 hover:text-gray-300'
               }`}
             >
               {item.icon}
