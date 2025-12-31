@@ -9,7 +9,7 @@ import {
 } from "../iiko-db.js";
 import { testIikoConnection, getIikoOrganizations, getIikoTerminalGroups } from "../iiko-auth.js";
 import { triggerQueueProcessing } from "../iiko-queue-processor.js";
-import { getSchedulerStatus } from "../iiko-scheduler.js";
+import { getSchedulerStatus, triggerMenuSync } from "../iiko-scheduler.js";
 import { TRPCError } from "@trpc/server";
 
 export const iikoRouter = router({
@@ -171,12 +171,25 @@ export const iikoRouter = router({
   /**
    * 手动触发订单队列同步
    */
-  triggerSync: protectedProcedure.mutation(async ({ ctx }) => {
+  triggerOrderSync: protectedProcedure.mutation(async ({ ctx }) => {
     if (ctx.user.role !== "admin") {
       throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can trigger sync" });
     }
 
     const result = await triggerQueueProcessing();
+
+    return result;
+  }),
+
+  /**
+   * 手动触发菜单同步
+   */
+  triggerMenuSync: protectedProcedure.mutation(async ({ ctx }) => {
+    if (ctx.user.role !== "admin") {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can trigger menu sync" });
+    }
+
+    const result = await triggerMenuSync();
 
     return result;
   }),
