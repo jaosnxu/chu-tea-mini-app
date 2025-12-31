@@ -405,8 +405,10 @@
 ## 俄罗斯支付网关集成
 - [x] 选择支付网关（YooKassa）
 - [x] 研究 YooKassa API 文档
-- [ ] 创建支付配置数据库表
-- [ ] 实现支付创建 API
-- [ ] 实现支付回调处理
-- [ ] 创建支付页面
+- [x] 创建支付配置数据库表（yookassa_config, payments）
+- [x] 安装 YooKassa Node.js SDK
+- [x] 创建 YooKassa 认证服务
+- [x] 实现支付创建 API
+- [x] 实现 Webhook 处理器
+- [ ] 在结算页面集成支付按钮
 - [ ] 测试支付流程

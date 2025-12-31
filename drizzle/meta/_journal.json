@@ -71,6 +71,13 @@
       "when": 1767193093888,
       "tag": "0009_wet_karma",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1767193650201,
+      "tag": "0010_funny_karnak",
+      "breakpoints": true
     }
   ]
 }

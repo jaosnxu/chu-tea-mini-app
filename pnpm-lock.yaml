@@ -16,6 +16,9 @@ importers:
 
   .:
     dependencies:
+      '@a2seven/yoo-checkout':
+        specifier: ^1.1.4
+        version: 1.1.4
       '@aws-sdk/client-s3':
         specifier: ^3.693.0
         version: 3.907.0
@@ -292,6 +295,10 @@ importers:
         version: 2.1.9(@types/node@24.7.0)(lightningcss@1.30.1)
 
 packages:
+
+  '@a2seven/yoo-checkout@1.1.4':
+    resolution: {integrity: sha512-Xn8E6fJKVUpSqTTEgigoi0Woyvmc1/UuHukwpQUTEtxD2l4skTEeqPlhd0J4xum6lQ/0eGzeJP+/MgpkE9Ak9g==}
+    engines: {node: '>=12'}
 
   '@antfu/install-pkg@1.1.0':
     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
@@ -2164,6 +2171,10 @@ packages:
   '@twa-dev/types@8.0.2':
     resolution: {integrity: sha512-ICQ6n4NaUPPzV3/GzflVQS6Nnu5QX2vr9OlOG8ZkFf3rSJXzRKazrLAbZlVhCPPWkIW3MMuELPsE6tByrA49qA==}
 
+  '@types/axios@0.14.4':
+    resolution: {integrity: sha512-9JgOaunvQdsQ/qW2OPmE5+hCeUB52lQSolecrFrthct55QekhmXEwT203s20RL+UHtCQc15y3VXpby9E7Kkh/g==}
+    deprecated: This is a stub types definition. axios provides its own type definitions, so you do not need this installed.
+
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
 
@@ -2423,6 +2434,9 @@ packages:
   aws-ssl-profiles@1.1.2:
     resolution: {integrity: sha512-NZKeq9AfyQvEeNlN0zSYAaWrmBffJh3IELMZfRpJVWgrpEbtEpnjvzqBPf+mxoI287JohRDoa+/nsfqqiZmF6g==}
     engines: {node: '>= 6.0.0'}
+
+  axios@0.21.4:
+    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
 
   axios@1.12.2:
     resolution: {integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw==}
@@ -4199,6 +4213,10 @@ packages:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
 
+  uuid@8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
+
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
@@ -4376,6 +4394,14 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+
+  '@a2seven/yoo-checkout@1.1.4':
+    dependencies:
+      '@types/axios': 0.14.4
+      axios: 0.21.4
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
 
   '@antfu/install-pkg@1.1.0':
     dependencies:
@@ -6508,6 +6534,12 @@ snapshots:
 
   '@twa-dev/types@8.0.2': {}
 
+  '@types/axios@0.14.4':
+    dependencies:
+      axios: 1.12.2
+    transitivePeerDependencies:
+      - debug
+
   '@types/babel__core@7.20.5':
     dependencies:
       '@babel/parser': 7.28.4
@@ -6821,6 +6853,12 @@ snapshots:
       postcss-value-parser: 4.2.0
 
   aws-ssl-profiles@1.1.2: {}
+
+  axios@0.21.4:
+    dependencies:
+      follow-redirects: 1.15.11
+    transitivePeerDependencies:
+      - debug
 
   axios@1.12.2:
     dependencies:
@@ -8936,6 +8974,8 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@11.1.0: {}
+
+  uuid@8.3.2: {}
 
   vary@1.1.2: {}
 

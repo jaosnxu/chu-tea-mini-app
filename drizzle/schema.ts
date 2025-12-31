@@ -1095,3 +1095,13 @@ export const iikoCategoryMapping = mysqlTable("iiko_category_mapping", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
+
+// YooKassa 支付配置表
+export const yookassaConfig = mysqlTable('yookassa_config', {
+  id: int('id').primaryKey().autoincrement(),
+  shopId: varchar('shop_id', { length: 255 }).notNull(),
+  secretKey: text('secret_key').notNull(),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+});
