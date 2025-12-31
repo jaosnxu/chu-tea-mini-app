@@ -928,3 +928,158 @@ export const adminTelegramBindings = mysqlTable("adminTelegramBindings", {
 
 export type AdminTelegramBinding = typeof adminTelegramBindings.$inferSelect;
 export type InsertAdminTelegramBinding = typeof adminTelegramBindings.$inferInsert;
+
+
+// ==================== IIKO 系统集成 ====================
+
+/**
+ * IIKO API 配置表
+ * 存储 IIKO 系统的 API 连接配置
+ * 每个门店可以有独立的 IIKO 配置（支持多个体户）
+ */
+export const iikoConfig = mysqlTable("iiko_config", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 门店关联（支持一个门店一个配置）
+  storeId: int("storeId"), // 关联门店 ID（可选，null 表示全局配置）
+  configName: varchar("configName", { length: 255 }).notNull(), // 配置名称（用于区分多个配置）
+  
+  // API 配置
+  apiUrl: varchar("apiUrl", { length: 255 }).notNull().default("https://api-ru.iiko.services"),
+  apiLogin: varchar("apiLogin", { length: 255 }).notNull(), // API 登录凭证
+  
+  // 组织配置
+  organizationId: varchar("organizationId", { length: 64 }).notNull(), // 组织 ID (UUID)
+  organizationName: varchar("organizationName", { length: 255 }), // 组织名称（可选，用于显示）
+  
+  // 终端配置
+  terminalGroupId: varchar("terminalGroupId", { length: 64 }), // 终端组 ID (UUID，可选)
+  terminalGroupName: varchar("terminalGroupName", { length: 255 }), // 终端组名称（可选，用于显示）
+  
+  // 菜单同步配置
+  menuRevision: int("menuRevision").default(0), // 菜单版本号，用于增量更新
+  lastMenuSyncAt: timestamp("lastMenuSyncAt"), // 最后一次菜单同步时间
+  autoSyncMenu: boolean("autoSyncMenu").notNull().default(false), // 是否自动同步菜单
+  syncIntervalMinutes: int("syncIntervalMinutes").default(30), // 同步间隔（分钟）
+  
+  // 状态和元数据
+  isActive: boolean("isActive").notNull().default(true), // 是否启用
+  accessToken: text("accessToken"), // 当前访问令牌（缓存）
+  tokenExpiresAt: timestamp("tokenExpiresAt"), // 令牌过期时间
+  
+  // 限流配置
+  maxRequestsPerMinute: int("maxRequestsPerMinute").default(60), // 每分钟最大请求数
+  lastRequestAt: timestamp("lastRequestAt"), // 最后一次请求时间
+  requestCount: int("requestCount").default(0), // 当前分钟内请求计数
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type IikoConfig = typeof iikoConfig.$inferSelect;
+export type InsertIikoConfig = typeof iikoConfig.$inferInsert;
+
+/**
+ * IIKO 订单数据缓存表
+ * 中间层暂存订单数据，批量同步到 IIKO，避免频繁调用
+ */
+export const iikoOrderQueue = mysqlTable("iiko_order_queue", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 关联本地订单
+  orderId: int("orderId").notNull(), // 本地订单 ID
+  orderNo: varchar("orderNo", { length: 64 }).notNull(), // 本地订单号
+  storeId: int("storeId").notNull(), // 门店 ID
+  
+  // 订单数据快照（JSON 格式）
+  orderData: text("orderData").notNull(), // 完整订单数据（JSON）
+  
+  // 队列状态
+  queueStatus: mysqlEnum("queueStatus", ["pending", "processing", "completed", "failed"]).notNull().default("pending"),
+  priority: int("priority").notNull().default(0), // 优先级（数字越大优先级越高）
+  retryCount: int("retryCount").notNull().default(0), // 重试次数
+  maxRetries: int("maxRetries").notNull().default(3), // 最大重试次数
+  
+  // 执行信息
+  processedAt: timestamp("processedAt"), // 处理时间
+  completedAt: timestamp("completedAt"), // 完成时间
+  errorMessage: text("errorMessage"), // 错误消息
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type IikoOrderQueue = typeof iikoOrderQueue.$inferSelect;
+export type InsertIikoOrderQueue = typeof iikoOrderQueue.$inferInsert;
+
+/**
+ * IIKO 订单同步记录表
+ * 记录订单同步到 IIKO 的状态
+ */
+export const iikoOrderSync = mysqlTable("iiko_order_sync", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 关联本地订单
+  orderId: int("orderId").notNull(), // 本地订单 ID
+  orderNo: varchar("orderNo", { length: 64 }).notNull(), // 本地订单号
+  
+  // IIKO 订单信息
+  iikoOrderId: varchar("iikoOrderId", { length: 64 }), // IIKO 订单 ID (UUID)
+  iikoExternalNumber: varchar("iikoExternalNumber", { length: 64 }), // IIKO 外部订单号
+  
+  // 同步状态
+  syncStatus: mysqlEnum("syncStatus", ["pending", "syncing", "success", "failed"]).notNull().default("pending"),
+  syncAttempts: int("syncAttempts").notNull().default(0), // 同步尝试次数
+  lastSyncAt: timestamp("lastSyncAt"), // 最后一次同步时间
+  
+  // 错误信息
+  errorMessage: text("errorMessage"), // 错误消息
+  errorCode: varchar("errorCode", { length: 64 }), // 错误代码
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type IikoOrderSync = typeof iikoOrderSync.$inferSelect;
+export type InsertIikoOrderSync = typeof iikoOrderSync.$inferInsert;
+
+/**
+ * IIKO 菜单同步记录表
+ * 记录从 IIKO 同步的菜单数据（缓存层）
+ */
+export const iikoMenuSync = mysqlTable("iiko_menu_sync", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 关联配置
+  configId: int("configId").notNull(), // IIKO 配置 ID
+  storeId: int("storeId"), // 门店 ID（可选）
+  
+  // IIKO 商品信息
+  iikoProductId: varchar("iikoProductId", { length: 64 }).notNull(), // IIKO 商品 ID (UUID)
+  iikoProductName: varchar("iikoProductName", { length: 255 }).notNull(), // IIKO 商品名称
+  iikoCategoryId: varchar("iikoCategoryId", { length: 64 }), // IIKO 分类 ID
+  iikoCategoryName: varchar("iikoCategoryName", { length: 255 }), // IIKO 分类名称
+  
+  // 关联本地商品
+  localProductId: int("localProductId"), // 本地商品 ID
+  
+  // 商品数据（缓存）
+  productData: text("productData"), // 完整商品数据（JSON）
+  price: decimal("price", { precision: 10, scale: 2 }), // 价格
+  isAvailable: boolean("isAvailable").notNull().default(true), // 是否可用
+  isInStopList: boolean("isInStopList").notNull().default(false), // 是否在缺货列表中
+  
+  // 同步信息
+  lastSyncAt: timestamp("lastSyncAt").notNull(), // 最后同步时间
+  syncStatus: mysqlEnum("syncStatus", ["success", "failed", "pending"]).notNull().default("success"),
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type IikoMenuSync = typeof iikoMenuSync.$inferSelect;
+export type InsertIikoMenuSync = typeof iikoMenuSync.$inferInsert;
