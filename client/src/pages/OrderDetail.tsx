@@ -9,6 +9,9 @@ import { ChevronLeft, MapPin, Clock, Phone, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +48,8 @@ export default function OrderDetail() {
   );
 
   const { user } = useAuth();
+  const [refundAmount, setRefundAmount] = useState<string>('');
+  const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
   const cancelMutation = trpc.order.cancel.useMutation();
   const refundMutation = trpc.payment.createRefund.useMutation();
   const { data: payment } = trpc.payment.getByOrderId.useQuery(
@@ -63,19 +68,41 @@ export default function OrderDetail() {
     }
   };
 
+  const handleRefundDialogOpen = () => {
+    if (order) {
+      setRefundAmount(order.totalAmount);
+      setIsRefundDialogOpen(true);
+    }
+  };
+
   const handleRefund = async () => {
     if (!order || !payment || !payment.gatewayPaymentId) {
       toast.error(t('order.refund.noPayment'));
       return;
     }
+    
+    const amount = parseFloat(refundAmount);
+    const maxAmount = parseFloat(order.totalAmount);
+    
+    if (isNaN(amount) || amount <= 0) {
+      toast.error(t('order.refund.invalidAmount'));
+      return;
+    }
+    
+    if (amount > maxAmount) {
+      toast.error(t('order.refund.exceedsMax'));
+      return;
+    }
+    
     try {
       await refundMutation.mutateAsync({
         paymentId: payment.gatewayPaymentId,
-        amount: order.totalAmount,
+        amount: amount.toFixed(2),
         currency: 'RUB',
-        description: `Refund for order ${order.orderNo}`,
+        description: `Refund ${amount === maxAmount ? 'full' : 'partial'} for order ${order.orderNo}`,
       });
       toast.success(t('order.refund.success'));
+      setIsRefundDialogOpen(false);
       refetch();
     } catch (error: any) {
       toast.error(error.message || t('order.refund.failed'));
@@ -220,12 +247,13 @@ export default function OrderDetail() {
               </Button>
             )}
             {user?.role === 'admin' && payment?.status === 'succeeded' && (
-              <AlertDialog>
+              <AlertDialog open={isRefundDialogOpen} onOpenChange={setIsRefundDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="destructive" 
                     className="flex-1"
                     disabled={refundMutation.isPending}
+                    onClick={handleRefundDialogOpen}
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     {t('order.refund.button')}
@@ -235,9 +263,28 @@ export default function OrderDetail() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>{t('order.refund.confirmTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      {t('order.refund.confirmDesc', { amount: order.totalAmount })}
+                      {t('order.refund.partialDesc')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
+                  <div className="py-4">
+                    <Label htmlFor="refundAmount">{t('order.refund.amountLabel')}</Label>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Input
+                        id="refundAmount"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max={order.totalAmount}
+                        value={refundAmount}
+                        onChange={(e) => setRefundAmount(e.target.value)}
+                        placeholder="0.00"
+                      />
+                      <span className="text-sm text-gray-500">RUB</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {t('order.refund.maxAmount')}: ₽{order.totalAmount}
+                    </p>
+                  </div>
                   <AlertDialogFooter>
                     <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                     <AlertDialogAction onClick={handleRefund}>

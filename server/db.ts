@@ -2556,3 +2556,40 @@ export async function deleteYooKassaConfig(id: number) {
   
   return { success: true };
 }
+
+/**
+ * 获取所有支付记录（支持筛选和搜索）
+ */
+export async function getAllPayments(status?: string, search?: string) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  // 构建查询条件
+  const conditions = [];
+  
+  if (status) {
+    conditions.push(eq(payments.status, status as any));
+  }
+  
+  if (search) {
+    const searchNumber = parseInt(search);
+    if (!isNaN(searchNumber)) {
+      conditions.push(
+        or(
+          eq(payments.paymentNo, search),
+          eq(payments.orderId, searchNumber)
+        )
+      );
+    } else {
+      conditions.push(eq(payments.paymentNo, search));
+    }
+  }
+
+  // 执行查询
+  const query = conditions.length > 0
+    ? database.select().from(payments).where(and(...conditions))
+    : database.select().from(payments);
+
+  const results = await query.orderBy(desc(payments.createdAt));
+  return results;
+}

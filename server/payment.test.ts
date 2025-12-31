@@ -104,6 +104,27 @@ describe('Payment Integration Tests', () => {
     });
   });
 
+  describe('Payment List (Admin)', () => {
+    it('should allow admin to list all payments', async () => {
+      const caller = appRouter.createCaller(adminContext);
+      const payments = await caller.payment.list({});
+      expect(Array.isArray(payments)).toBe(true);
+    });
+
+    it('should allow admin to filter payments by status', async () => {
+      const caller = appRouter.createCaller(adminContext);
+      const payments = await caller.payment.list({ status: 'succeeded' });
+      expect(Array.isArray(payments)).toBe(true);
+    });
+
+    it('should not allow non-admin to list payments', async () => {
+      const caller = appRouter.createCaller(userContext);
+      await expect(
+        caller.payment.list({})
+      ).rejects.toThrow();
+    });
+  });
+
   describe('Refund Operations', () => {
     it('should allow admin to create refund', async () => {
       const caller = appRouter.createCaller(adminContext);

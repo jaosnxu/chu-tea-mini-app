@@ -251,7 +251,28 @@ export const appRouter = router({
         reason: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        return await db.cancelOrder(ctx.user.id, input.id, input.reason);
+        // 取消订单
+        const result = await db.cancelOrder(ctx.user.id, input.id, input.reason);
+        
+        // 检查是否需要退款
+        const payment = await db.getPaymentByOrderId(input.id);
+        if (payment && payment.status === 'succeeded' && payment.gatewayPaymentId) {
+          try {
+            // 自动发起退款
+            const yookassa = await import('./yookassa');
+            await yookassa.createRefund({
+              paymentId: payment.gatewayPaymentId,
+              amount: payment.amount,
+              currency: payment.currency,
+              description: `Auto refund for cancelled order ${input.id}`,
+            });
+          } catch (error) {
+            console.error('[Auto Refund Error]', error);
+            // 退款失败不影响订单取消
+          }
+        }
+        
+        return result;
       }),
   }),
 
@@ -486,6 +507,14 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const yookassa = await import('./yookassa');
         return await yookassa.getRefundStatus(input.refundId);
+      }),
+    list: adminProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        search: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getAllPayments(input.status, input.search);
       }),
   }),
 

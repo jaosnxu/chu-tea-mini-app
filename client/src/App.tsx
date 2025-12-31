@@ -49,6 +49,7 @@ import AdminNotifications from "./pages/admin/NotificationsManagement";
 import AdminIikoConfig from "./pages/admin/IikoConfig";
 import AdminIikoMonitor from "./pages/admin/IikoMonitor";
 import AdminYooKassaConfig from "./pages/admin/YooKassaConfig";
+import AdminPaymentHistory from "./pages/admin/PaymentHistory";
 
 function Router() {
   return (
@@ -105,6 +106,7 @@ function Router() {
       <Route path="/admin/iiko" component={() => <AdminLayout><AdminIikoConfig /></AdminLayout>} />
       <Route path="/admin/iiko-monitor" component={() => <AdminLayout><AdminIikoMonitor /></AdminLayout>} />
       <Route path="/admin/yookassa" component={() => <AdminLayout><AdminYooKassaConfig /></AdminLayout>} />
+      <Route path="/admin/payments" component={() => <AdminLayout><AdminPaymentHistory /></AdminLayout>} />
       
       {/* 404 */}
       <Route path="/404" component={NotFound} />

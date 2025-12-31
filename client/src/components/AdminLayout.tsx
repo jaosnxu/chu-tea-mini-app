@@ -68,6 +68,7 @@ const navItems: NavItem[] = [
   { icon: Cpu, labelKey: "admin.nav.iiko", path: "/admin/iiko" },
   { icon: BarChart3, labelKey: "admin.nav.iikoMonitor", path: "/admin/iiko-monitor" },
   { icon: CreditCard, labelKey: "admin.nav.yookassa", path: "/admin/yookassa" },
+  { icon: Coins, labelKey: "admin.nav.payments", path: "/admin/payments" },
   { icon: FileText, labelKey: "admin.nav.logs", path: "/admin/logs" },
 ];
 
