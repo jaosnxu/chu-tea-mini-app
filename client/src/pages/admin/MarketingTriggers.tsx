@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
 export default function MarketingTriggers() {
+  const [, setLocation] = useLocation();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -250,6 +252,13 @@ export default function MarketingTriggers() {
                 </div>
               </div>
               <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => setLocation(`/admin/trigger-executions/${trigger.id}`)}
+                >
+                  查看执行历史
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => handleEdit(trigger)}>
                   编辑
                 </Button>

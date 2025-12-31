@@ -28,7 +28,9 @@
     "sending": "发送中...",
     "all": "全部",
     "refresh": "刷新",
-    "optional": "可选"
+    "optional": "可选",
+    "previous": "上一页",
+    "page": "第 {{count}} 页"
   },
   "nav": {
     "home": "首页",
@@ -860,6 +862,17 @@
         "vip": "VIP 用户",
         "inactive": "流失用户"
       }
-    }
+    },
+    "triggerExecutionHistory": "触发器执行历史",
+    "totalExecutions": "总执行次数",
+    "successfulExecutions": "成功次数",
+    "failedExecutions": "失败次数",
+    "executionHistory": "执行历史",
+    "executionHistoryDescription": "查看触发器的执行记录和结果",
+    "allStatuses": "全部状态",
+    "success": "成功",
+    "failed": "失败",
+    "noExecutions": "暂无执行记录",
+    "userId": "用户ID"
   }
 }

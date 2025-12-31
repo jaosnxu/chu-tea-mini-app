@@ -3391,19 +3391,39 @@ export async function deleteMarketingTrigger(id: number) {
   return { success: true };
 }
 
-export async function getTriggerExecutions(triggerId?: number, limit = 50) {
+export async function getTriggerExecutions(params: {
+  triggerId?: number;
+  userId?: number;
+  status?: 'success' | 'failed';
+  limit?: number;
+  offset?: number;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  const { triggerId, userId, status, limit = 50, offset = 0 } = params;
+  
   let query = db.select().from(triggerExecutions);
   
+  const conditions = [];
   if (triggerId) {
-    query = query.where(eq(triggerExecutions.triggerId, triggerId)) as any;
+    conditions.push(eq(triggerExecutions.triggerId, triggerId));
+  }
+  if (userId) {
+    conditions.push(eq(triggerExecutions.userId, userId));
+  }
+  if (status) {
+    conditions.push(eq(triggerExecutions.status, status));
+  }
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
   }
   
   return await query
     .orderBy(desc(triggerExecutions.executedAt))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 }
 
 export async function recordTriggerExecution(data: {
@@ -3429,4 +3449,40 @@ export async function recordTriggerExecution(data: {
   }
   
   return { success: true };
+}
+
+
+/**
+ * 获取触发器执行统计
+ */
+export async function getTriggerExecutionStats(triggerId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const executions = await db
+    .select()
+    .from(triggerExecutions)
+    .where(eq(triggerExecutions.triggerId, triggerId));
+
+  const total = executions.length;
+  const successful = executions.filter(e => e.status === 'success').length;
+  const failed = executions.filter(e => e.status === 'failed').length;
+  const successRate = total > 0 ? (successful / total) * 100 : 0;
+
+  // 获取最近7天的执行趋势
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const recentExecutions = executions.filter(e => 
+    new Date(e.executedAt) >= sevenDaysAgo
+  );
+
+  return {
+    total,
+    successful,
+    failed,
+    successRate: Math.round(successRate * 100) / 100,
+    recentExecutions: recentExecutions.length,
+    lastExecutedAt: executions.length > 0 ? executions[0].executedAt : null,
+  };
 }

@@ -1381,10 +1381,21 @@ export const appRouter = router({
     getExecutions: adminProcedure
       .input(z.object({
         triggerId: z.number().optional(),
+        userId: z.number().optional(),
+        status: z.enum(['success', 'failed']).optional(),
         limit: z.number().optional(),
+        offset: z.number().optional(),
       }).optional())
       .query(async ({ input }) => {
-        return await db.getTriggerExecutions(input?.triggerId, input?.limit);
+        return await db.getTriggerExecutions(input || {});
+      }),
+    
+    getExecutionStats: adminProcedure
+      .input(z.object({
+        triggerId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getTriggerExecutionStats(input.triggerId);
       }),
   }),
 });

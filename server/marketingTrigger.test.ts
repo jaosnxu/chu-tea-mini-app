@@ -120,7 +120,7 @@ describe('Marketing Trigger System', () => {
     });
 
     it('should get trigger executions', async () => {
-      const executions = await db.getTriggerExecutions(undefined, 10);
+      const executions = await db.getTriggerExecutions({ limit: 10 });
       expect(Array.isArray(executions)).toBe(true);
     });
   });
