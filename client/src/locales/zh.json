@@ -412,6 +412,7 @@
       "points": "积分管理",
       "members": "会员管理",
       "marketing": "营销自动化",
+      "marketingDashboard": "营销效果",
       "orders": "订单管理",
       "stores": "门店管理",
       "reports": "数据报表",
@@ -873,6 +874,30 @@
     "success": "成功",
     "failed": "失败",
     "noExecutions": "暂无执行记录",
-    "userId": "用户ID"
+    "userId": "用户ID",
+    "marketingDashboard": {
+      "title": "营销效果仪表盘",
+      "description": "查看触发器的营销效果和 ROI 分析",
+      "last7Days": "最近 7 天",
+      "last30Days": "最近 30 天",
+      "allTime": "全部时间",
+      "topTriggers": "Top 5 触发器排名",
+      "triggerLabel": "触发器",
+      "orders": "订单数",
+      "revenue": "总收入",
+      "avgOrderValue": "客单价",
+      "noData": "暂无数据"
+    },
+    "performanceStats": {
+      "title": "效果统计",
+      "totalOrders": "总订单数",
+      "completedOrders": "已完成",
+      "totalRevenue": "总收入",
+      "avgOrderValue": "客单价",
+      "couponsIssued": "发放优惠券",
+      "couponsUsed": "已使用",
+      "conversionRate": "转化率",
+      "usageRate": "使用率"
+    }
   }
 }

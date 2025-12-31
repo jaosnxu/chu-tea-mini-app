@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { handleTelegramWebhook } from "../telegram";
 import { startScheduler } from "../iiko-scheduler.js";
+import { CronScheduler } from "../cronScheduler.js";
 import { handleWebhookNotification } from "../yookassa";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -91,6 +92,11 @@ async function startServer() {
     
     // 启动 IIKO 订单同步调度器
     startScheduler();
+    
+    // 启动营销自动化定时任务调度器
+    const cronScheduler = CronScheduler.getInstance();
+    cronScheduler.start();
+    console.log('[CronScheduler] Marketing automation scheduler started');
   });
 }
 

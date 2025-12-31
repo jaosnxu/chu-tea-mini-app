@@ -33,10 +33,11 @@ import {
   Search,
   Globe,
   AlertTriangle,
-  BarChart3,
   Plug,
   Cpu,
   CreditCard,
+  TrendingUp,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NotificationBell from "@/components/NotificationBell";
@@ -61,6 +62,7 @@ const navItems: NavItem[] = [
   { icon: Ticket, labelKey: "admin.nav.coupons", path: "/admin/coupons" },
   { icon: ShoppingCart, labelKey: "admin.nav.orders", path: "/admin/orders" },
   { icon: Megaphone, labelKey: "admin.nav.marketing", path: "/admin/marketing" },
+  { icon: TrendingUp, labelKey: "admin.nav.marketingDashboard", path: "/admin/marketing-dashboard" },
   { icon: Store, labelKey: "admin.nav.stores", path: "/admin/stores" },
   { icon: Users, labelKey: "admin.nav.users", path: "/admin/users" },
   { icon: Bell, labelKey: "admin.nav.notifications", path: "/admin/notifications" },

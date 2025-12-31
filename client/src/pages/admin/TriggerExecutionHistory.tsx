@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, CheckCircle, XCircle, TrendingUp, Activity } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, TrendingUp, Activity, Package, DollarSign, Percent, Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function TriggerExecutionHistory() {
@@ -26,8 +26,14 @@ export default function TriggerExecutionHistory() {
     offset: page * pageSize,
   });
 
-  // 获取统计数据
+  // 获取执行统计数据
   const { data: stats } = trpc.marketingTrigger.getExecutionStats.useQuery(
+    { triggerId: triggerId! },
+    { enabled: !!triggerId }
+  );
+
+  // 获取效果统计数据
+  const { data: performance } = trpc.marketingTrigger.getPerformance.useQuery(
     { triggerId: triggerId! },
     { enabled: !!triggerId }
   );
@@ -68,7 +74,7 @@ export default function TriggerExecutionHistory() {
         </div>
       </div>
 
-      {/* 统计卡片 */}
+      {/* 执行统计卡片 */}
       {stats && (
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -78,6 +84,9 @@ export default function TriggerExecutionHistory() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('admin.executionHistory')}
+              </p>
             </CardContent>
           </Card>
 
@@ -110,6 +119,70 @@ export default function TriggerExecutionHistory() {
               <div className="text-2xl font-bold text-blue-600">{stats.successRate}%</div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* 效果统计卡片 */}
+      {performance && (
+        <div>
+          <h2 className="text-lg font-semibold mb-4">{t('admin.performanceStats.title')}</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* 订单统计 */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.performanceStats.totalOrders')}</CardTitle>
+                <Package className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{performance.orderStats.totalOrders}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('admin.performanceStats.completedOrders')}: {performance.orderStats.completedOrders}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.performanceStats.totalRevenue')}</CardTitle>
+                <DollarSign className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  ₽{Number(performance.orderStats.totalRevenue).toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('admin.performanceStats.avgOrderValue')}: ₽{Number(performance.orderStats.avgOrderValue).toFixed(2)}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* 优惠券统计 */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.performanceStats.couponsIssued')}</CardTitle>
+                <Gift className="h-4 w-4 text-purple-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{performance.couponStats.totalIssued}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('admin.performanceStats.couponsUsed')}: {performance.couponStats.totalUsed}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('admin.performanceStats.conversionRate')}</CardTitle>
+                <Percent className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{performance.conversionRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('admin.performanceStats.usageRate')}: {performance.couponStats.usageRate}%
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
