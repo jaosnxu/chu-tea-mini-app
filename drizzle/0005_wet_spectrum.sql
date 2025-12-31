@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `orderSource` enum('delivery','store','telegram') DEFAULT 'telegram' NOT NULL;

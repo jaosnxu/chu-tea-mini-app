@@ -29,6 +29,7 @@ async function getUserTelegramChatId(userId: number): Promise<string | null> {
 export async function sendOrderConfirmationToUser(params: {
   userId: number;
   orderNo: string;
+  pickupCode: string;
   orderType: 'tea' | 'mall';
   deliveryType: 'delivery' | 'pickup';
   totalAmount: string;
@@ -62,6 +63,7 @@ export async function sendOrderConfirmationToUser(params: {
     zh: `✅ <b>订单确认</b>
 
 订单号：<code>${params.orderNo}</code>
+🎫 <b>取件码：${params.pickupCode}</b>
 订单类型：${params.orderType === 'tea' ? '茶饮' : '商城'}
 配送方式：${params.deliveryType === 'delivery' ? '配送' : '自提'}
 
@@ -70,11 +72,13 @@ ${itemsList}
 <b>订单总额：₽${params.totalAmount}</b>
 
 ${params.storeName ? `📍 门店：${params.storeName}\n` : ''}${params.address ? `📍 配送地址：${params.address}\n` : ''}${params.estimatedDeliveryTime ? `⏰ 预计送达：${params.estimatedDeliveryTime}\n` : ''}
+${params.deliveryType === 'pickup' ? '\n<b>请凭取件码到店取餐</b>' : ''}
 感谢您的订单！我们会尽快为您处理。`,
     
     ru: `✅ <b>Подтверждение заказа</b>
 
 Номер заказа: <code>${params.orderNo}</code>
+🎫 <b>Код получения: ${params.pickupCode}</b>
 Тип заказа: ${params.orderType === 'tea' ? 'Напитки' : 'Магазин'}
 Способ доставки: ${params.deliveryType === 'delivery' ? 'Доставка' : 'Самовывоз'}
 
@@ -83,11 +87,13 @@ ${itemsList}
 <b>Сумма заказа: ₽${params.totalAmount}</b>
 
 ${params.storeName ? `📍 Магазин: ${params.storeName}\n` : ''}${params.address ? `📍 Адрес доставки: ${params.address}\n` : ''}${params.estimatedDeliveryTime ? `⏰ Ожидаемое время: ${params.estimatedDeliveryTime}\n` : ''}
+${params.deliveryType === 'pickup' ? '\n<b>Покажите код получения в магазине</b>' : ''}
 Спасибо за ваш заказ! Мы обработаем его как можно скорее.`,
     
     en: `✅ <b>Order Confirmation</b>
 
 Order #: <code>${params.orderNo}</code>
+🎫 <b>Pickup Code: ${params.pickupCode}</b>
 Order Type: ${params.orderType === 'tea' ? 'Beverages' : 'Mall'}
 Delivery Method: ${params.deliveryType === 'delivery' ? 'Delivery' : 'Pickup'}
 
@@ -96,6 +102,7 @@ ${itemsList}
 <b>Total Amount: ₽${params.totalAmount}</b>
 
 ${params.storeName ? `📍 Store: ${params.storeName}\n` : ''}${params.address ? `📍 Delivery Address: ${params.address}\n` : ''}${params.estimatedDeliveryTime ? `⏰ Estimated Time: ${params.estimatedDeliveryTime}\n` : ''}
+${params.deliveryType === 'pickup' ? '\n<b>Show pickup code at the store</b>' : ''}
 Thank you for your order! We will process it as soon as possible.`,
   };
   

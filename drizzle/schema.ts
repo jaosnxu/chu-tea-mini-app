@@ -212,6 +212,8 @@ export type InsertAddress = typeof addresses.$inferInsert;
 export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
   orderNo: varchar("orderNo", { length: 64 }).notNull().unique(),
+  pickupCode: varchar("pickupCode", { length: 5 }),
+  orderSource: mysqlEnum("orderSource", ["delivery", "store", "telegram"]).default("telegram").notNull(),
   iikoOrderId: varchar("iikoOrderId", { length: 64 }),
   userId: int("userId").notNull(),
   storeId: int("storeId"),

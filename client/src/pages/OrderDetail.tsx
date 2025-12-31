@@ -86,6 +86,24 @@ export default function OrderDetail() {
               {t(`order.status.${order.status}`)}
             </Badge>
           </div>
+          
+          {/* 取件码显示 */}
+          {order.pickupCode && (
+            <div className="mt-3 pt-3 border-t">
+              <p className="text-sm text-gray-500 mb-2">{t('order.pickupCode')}</p>
+              <div className="flex items-center justify-center bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 border-2 border-teal-200">
+                <div className="text-center">
+                  <div className="text-5xl font-bold text-teal-600 tracking-widest font-mono">
+                    {order.pickupCode}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {order.deliveryType === 'pickup' ? t('order.showCodeAtStore') : t('order.showCodeToCourier')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="mt-3 pt-3 border-t">
             <p className="text-sm text-gray-500">{t('order.orderTime')}</p>
             <p>{new Date(order.createdAt).toLocaleString()}</p>

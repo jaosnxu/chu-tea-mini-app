@@ -28,6 +28,7 @@ import Points from "./pages/Points";
 import Addresses from "./pages/Addresses";
 import InfluencerCenter from "./pages/InfluencerCenter";
 import Settings from "./pages/Settings";
+import DisplayScreen from "./pages/DisplayScreen";
 import StoreSelector from "./pages/StoreSelector";
 
 // 后台管理页面
@@ -67,6 +68,9 @@ function Router() {
       <Route path="/mall/product/:id" component={MallProductDetail} />
       <Route path="/mall/cart" component={MallCart} />
       <Route path="/mall/checkout" component={MallCheckout} />
+      
+      {/* 显示屏 */}
+      <Route path="/display" component={DisplayScreen} />
       
       {/* 个人中心 */}
       <Route path="/profile" component={Profile} />

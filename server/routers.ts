@@ -220,6 +220,7 @@ export const appRouter = router({
     create: protectedProcedure
       .input(z.object({
         orderType: z.enum(['tea', 'mall']),
+        orderSource: z.enum(['delivery', 'store', 'telegram']).optional(),
         deliveryType: z.enum(['delivery', 'pickup']),
         storeId: z.number().optional(),
         addressId: z.number().optional(),
@@ -249,6 +250,20 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         return await db.cancelOrder(ctx.user.id, input.id, input.reason);
+      }),
+  }),
+
+  // 显示屏订单展示接口（公开访问）
+  display: router({
+    orders: publicProcedure
+      .input(z.object({
+        storeId: z.number().optional(),
+        status: z.array(z.enum(['paid', 'preparing', 'ready'])).optional(),
+        limit: z.number().optional().default(20),
+      }).optional())
+      .query(async ({ input }) => {
+        const db = await import('./db');
+        return await db.getDisplayOrders(input);
       }),
   }),
 

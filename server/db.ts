@@ -377,11 +377,19 @@ export async function setDefaultAddress(userId: number, id: number) {
 
 // ==================== 订单相关 ====================
 
-function generateOrderNo(): string {
+function generateOrderNo(orderSource: 'delivery' | 'store' | 'telegram' = 'telegram'): string {
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const random = nanoid(8).toUpperCase();
-  return `CHU${dateStr}${random}`;
+  const random = nanoid(6).toUpperCase();
+  
+  // 根据订单来源添加前缀
+  const prefix = {
+    delivery: 'D',   // 外卖订单
+    store: 'S',      // 线下订单
+    telegram: 'T',   // 电报订单
+  }[orderSource];
+  
+  return `${prefix}${dateStr}${random}`;
 }
 
 export async function getUserOrders(userId: number, params?: {
@@ -450,6 +458,7 @@ export async function getOrderByOrderNo(userId: number, orderNo: string) {
 
 export async function createOrder(userId: number, data: {
   orderType: 'tea' | 'mall';
+  orderSource?: 'delivery' | 'store' | 'telegram';
   deliveryType: 'delivery' | 'pickup';
   storeId?: number;
   addressId?: number;
@@ -468,7 +477,18 @@ export async function createOrder(userId: number, data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  const orderNo = generateOrderNo();
+  // 默认为 telegram 订单（电报小程序订单）
+  const orderSource = data.orderSource || 'telegram';
+  const orderNo = generateOrderNo(orderSource);
+  
+  // 生成带前缀的取件码：S+4位数字（线下）、T+4位数字（电报）、A+4位数字（外卖）
+  const pickupCodePrefix = {
+    store: 'S',      // 线下订单
+    telegram: 'T',   // 电报订单
+    delivery: 'A',   // 外卖订单（App）
+  }[orderSource];
+  const pickupCodeNumber = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  const pickupCode = `${pickupCodePrefix}${pickupCodeNumber}`;
   
   // 计算订单金额
   let subtotal = 0;
@@ -504,6 +524,8 @@ export async function createOrder(userId: number, data: {
   // 创建订单
   const result = await db.insert(orders).values({
     orderNo,
+    pickupCode,
+    orderSource,
     userId,
     storeId: data.storeId,
     orderType: data.orderType,
@@ -584,6 +606,7 @@ export async function createOrder(userId: number, data: {
     await sendOrderConfirmationToUser({
       userId,
       orderNo,
+      pickupCode,
       orderType: data.orderType,
       deliveryType: data.deliveryType,
       totalAmount: totalAmount.toFixed(2),
@@ -598,6 +621,47 @@ export async function createOrder(userId: number, data: {
   }
   
   return { success: true, orderId, orderNo };
+}
+
+// ==================== 显示屏订单展示 ====================
+
+export async function getDisplayOrders(params?: {
+  storeId?: number;
+  status?: Array<'paid' | 'preparing' | 'ready'>;
+  limit?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  // 默认只显示已支付、制作中、待取餐的订单
+  const statusFilter = params?.status || ['paid', 'preparing', 'ready'];
+  conditions.push(inArray(orders.status, statusFilter));
+  
+  if (params?.storeId) {
+    conditions.push(eq(orders.storeId, params.storeId));
+  }
+  
+  const result = await db.select({
+    id: orders.id,
+    orderNo: orders.orderNo,
+    pickupCode: orders.pickupCode,
+    orderSource: orders.orderSource,
+    orderType: orders.orderType,
+    deliveryType: orders.deliveryType,
+    status: orders.status,
+    totalAmount: orders.totalAmount,
+    createdAt: orders.createdAt,
+    userName: users.name,
+  })
+    .from(orders)
+    .leftJoin(users, eq(orders.userId, users.id))
+    .where(and(...conditions))
+    .orderBy(desc(orders.createdAt))
+    .limit(params?.limit || 20);
+  
+  return result;
 }
 
 // ==================== 物流信息相关 ====================
