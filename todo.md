@@ -460,3 +460,12 @@
 - [x] 提取关键路径 CSS
 - [x] 内联首屏 CSS 到 HTML
 - [x] 测试性能提升效果
+
+## PWA 支持
+
+- [x] 创建 manifest.json 配置文件
+- [x] 生成 PWA 应用图标（多尺寸）
+- [x] 升级 Service Worker（离线缓存、后台同步）
+- [x] 添加 PWA 安装提示组件
+- [x] 创建离线页面
+- [x] 测试 PWA 功能

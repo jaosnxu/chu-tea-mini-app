@@ -8,6 +8,7 @@ import { StoreProvider } from "./contexts/StoreContext";
 import { CartProvider } from "./contexts/CartContext";
 import { useTelegramTheme } from "./hooks/useTelegramTheme";
 import PageSkeleton from "./components/PageSkeleton";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 // 首屏页面（不懒加载）
 import Home from "./pages/Home";
@@ -137,6 +138,9 @@ function App() {
           </StoreProvider>
         </TelegramProvider>
       </ThemeProvider>
+      
+      {/* PWA 安装提示 */}
+      <PWAInstallPrompt />
     </ErrorBoundary>
   );
 }
