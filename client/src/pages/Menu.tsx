@@ -17,6 +17,7 @@ import {
   Search,
   Flame
 } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 
 export default function Menu() {
   const { t } = useTranslation();
@@ -47,6 +48,8 @@ export default function Menu() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* 底部固定导航栏 */}
+      <BottomNav />
       {/* 头部 */}
       <header className="bg-white sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between p-4">

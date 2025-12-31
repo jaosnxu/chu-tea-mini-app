@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Card } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc';
 import { ChevronLeft, ArrowUp, ArrowDown } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 
 export default function Points() {
   const { t } = useTranslation();
@@ -11,7 +12,8 @@ export default function Points() {
   const { data: history = [], isLoading } = trpc.points.history.useQuery();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <BottomNav />
       <header className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
         <div className="flex items-center justify-between p-4">
           <button onClick={() => navigate('/profile')} className="p-1"><ChevronLeft className="w-6 h-6" /></button>

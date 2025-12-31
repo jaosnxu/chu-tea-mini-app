@@ -5,6 +5,7 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
 import { useTelegramContext } from '@/contexts/TelegramContext';
 import { User, Star, Gift, MapPin, Share2, Settings, ChevronRight, Crown } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 
 const memberLevelColors: Record<string, string> = {
   normal: 'from-gray-400 to-gray-500',
@@ -35,6 +36,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      <BottomNav />
       <div className={`bg-gradient-to-r ${memberLevelColors[memberLevel]} text-white px-4 pt-6 pb-8 rounded-b-3xl`}>
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">

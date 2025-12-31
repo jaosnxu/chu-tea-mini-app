@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc';
 import { ChevronLeft, Plus, MapPin, Trash2, Check } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 import { toast } from 'sonner';
 
 export default function Addresses() {
@@ -40,7 +41,8 @@ export default function Addresses() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <BottomNav />
       <header className="bg-white sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between p-4">
           <button onClick={() => navigate('/profile')} className="p-1"><ChevronLeft className="w-6 h-6" /></button>

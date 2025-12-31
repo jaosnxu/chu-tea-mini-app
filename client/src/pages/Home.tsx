@@ -13,6 +13,7 @@ import {
   Play,
   Pause
 } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 
 // 广告轮播项类型
 interface CarouselItem {
@@ -112,7 +113,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-black flex flex-col pb-16">
       {/* 上部轮播区域 */}
       <div className="flex-1">
         <MediaCarousel 
@@ -160,7 +161,7 @@ export default function Home() {
         />
       </div>
 
-      {/* 底部导航 */}
+      {/* 底部导航 - 固定在屏幕底部 */}
       <BottomNav />
     </div>
   );
@@ -290,40 +291,4 @@ function MediaCarousel({
   );
 }
 
-// 底部导航组件
-function BottomNav() {
-  const { t } = useTranslation();
-  const [location, navigate] = useLocation();
 
-  const navItems = [
-    { path: '/', icon: <Coffee className="w-5 h-5" />, label: t('nav.home') },
-    { path: '/menu', icon: <Coffee className="w-5 h-5" />, label: t('nav.order') },
-    { path: '/mall', icon: <ShoppingBag className="w-5 h-5" />, label: t('nav.mall') },
-    { path: '/orders', icon: <ShoppingBag className="w-5 h-5" />, label: t('nav.orders') },
-    { path: '/profile', icon: <Sparkles className="w-5 h-5" />, label: t('nav.profile') },
-  ];
-
-  return (
-    <nav className="bg-black/90 border-t border-gray-800 px-2 py-2 safe-area-pb">
-      <div className="flex justify-around items-center">
-        {navItems.map((item) => {
-          const isActive = location === item.path;
-          return (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center px-3 py-1 rounded-lg transition-colors ${
-                isActive 
-                  ? 'text-teal-400' 
-                  : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              {item.icon}
-              <span className="text-xs mt-1">{item.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
-  );
-}

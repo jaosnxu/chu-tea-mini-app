@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { trpc } from '@/lib/trpc';
 import { ChevronLeft, Crown, Gift, Star, Zap } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 
 export default function MemberCenter() {
   const { t } = useTranslation();
@@ -18,7 +19,8 @@ export default function MemberCenter() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <BottomNav />
       <header className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
         <div className="flex items-center justify-between p-4">
           <button onClick={() => navigate('/profile')} className="p-1"><ChevronLeft className="w-6 h-6" /></button>

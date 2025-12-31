@@ -6,7 +6,10 @@ import {
   productSkus, cartItems, addresses, orders, orderItems, shipments,
   couponTemplates, userCoupons, pointsHistory, influencers, influencerLinks,
   influencerCommissions, payments, landingPages, systemConfigs,
-  operationLogs, homeEntries, apiConfigs, marketingCampaigns, adMaterials
+  operationLogs, homeEntries, apiConfigs, marketingCampaigns, adMaterials,
+  notifications, notificationTemplates, notificationRules,
+  telegramBotConfigs, adminTelegramBindings,
+  InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -1590,4 +1593,356 @@ export async function updateOrderStatus(data: { orderId: number; status: 'pendin
   });
   
   return { success: true };
+}
+
+// ==================== 通知系统 ====================
+
+// 获取通知模板列表
+export async function getNotificationTemplates(params?: { category?: string; isActive?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  if (params?.category) conditions.push(eq(notificationTemplates.category, params.category as any));
+  if (params?.isActive !== undefined) conditions.push(eq(notificationTemplates.isActive, params.isActive));
+  
+  return await db.select().from(notificationTemplates)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(notificationTemplates.category);
+}
+
+// 创建通知模板
+export async function createNotificationTemplate(data: any, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(notificationTemplates).values(data);
+  await logOperation(operatorId, 'notification_templates', 'create', result[0].insertId.toString(), data);
+  
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+// 更新通知模板
+export async function updateNotificationTemplate(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(notificationTemplates).set(updateData).where(eq(notificationTemplates.id, id));
+  await logOperation(operatorId, 'notification_templates', 'update', id.toString(), updateData);
+  
+  return { success: true };
+}
+
+// 获取通知规则列表
+export async function getNotificationRules(params?: { triggerEvent?: string; isActive?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  if (params?.triggerEvent) conditions.push(eq(notificationRules.triggerEvent, params.triggerEvent as any));
+  if (params?.isActive !== undefined) conditions.push(eq(notificationRules.isActive, params.isActive));
+  
+  return await db.select().from(notificationRules)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(notificationRules.priority));
+}
+
+// 创建通知规则
+export async function createNotificationRule(data: any, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(notificationRules).values(data);
+  await logOperation(operatorId, 'notification_rules', 'create', result[0].insertId.toString(), data);
+  
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+// 更新通知规则
+export async function updateNotificationRule(data: { id: number; [key: string]: any }, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { id, ...updateData } = data;
+  await db.update(notificationRules).set(updateData).where(eq(notificationRules.id, id));
+  await logOperation(operatorId, 'notification_rules', 'update', id.toString(), updateData);
+  
+  return { success: true };
+}
+
+// 删除通知规则
+export async function deleteNotificationRule(id: number, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(notificationRules).where(eq(notificationRules.id, id));
+  await logOperation(operatorId, 'notification_rules', 'delete', id.toString(), {});
+  
+  return { success: true };
+}
+
+// 创建通知记录
+export async function createNotification(data: InsertNotification) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(notifications).values(data);
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+// 批量创建通知
+export async function createNotifications(dataList: InsertNotification[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  if (dataList.length === 0) return { success: true, count: 0 };
+  
+  await db.insert(notifications).values(dataList);
+  return { success: true, count: dataList.length };
+}
+
+// 获取用户通知列表
+export async function getUserNotifications(userId: number, params?: {
+  channel?: 'system' | 'telegram' | 'email' | 'sms';
+  status?: 'pending' | 'sent' | 'delivered' | 'failed' | 'read';
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [
+    eq(notifications.recipientId, userId),
+    eq(notifications.recipientType, 'admin'),
+  ];
+  
+  if (params?.channel) conditions.push(eq(notifications.channel, params.channel));
+  if (params?.status) conditions.push(eq(notifications.status, params.status));
+  
+  let query = db.select().from(notifications)
+    .where(and(...conditions))
+    .orderBy(desc(notifications.createdAt));
+  
+  if (params?.limit) query = query.limit(params.limit) as typeof query;
+  if (params?.offset) query = query.offset(params.offset) as typeof query;
+  
+  return await query;
+}
+
+// 获取未读通知数量
+export async function getUnreadNotificationCount(userId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(notifications)
+    .where(and(
+      eq(notifications.recipientId, userId),
+      eq(notifications.recipientType, 'admin'),
+      eq(notifications.channel, 'system'),
+      or(eq(notifications.status, 'sent'), eq(notifications.status, 'delivered'))
+    ));
+  
+  return result[0]?.count || 0;
+}
+
+// 标记通知为已读
+export async function markNotificationAsRead(notificationId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(notifications)
+    .set({ status: 'read', readAt: new Date() })
+    .where(and(
+      eq(notifications.id, notificationId),
+      eq(notifications.recipientId, userId)
+    ));
+  
+  return { success: true };
+}
+
+// 标记所有通知为已读
+export async function markAllNotificationsAsRead(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(notifications)
+    .set({ status: 'read', readAt: new Date() })
+    .where(and(
+      eq(notifications.recipientId, userId),
+      eq(notifications.recipientType, 'admin'),
+      eq(notifications.channel, 'system'),
+      or(eq(notifications.status, 'sent'), eq(notifications.status, 'delivered'))
+    ));
+  
+  return { success: true };
+}
+
+// 更新通知状态
+export async function updateNotificationStatus(notificationId: number, status: 'sent' | 'delivered' | 'failed', errorMessage?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: any = { status };
+  if (status === 'sent' || status === 'delivered') {
+    updateData.sentAt = new Date();
+  }
+  if (errorMessage) {
+    updateData.errorMessage = errorMessage;
+  }
+  
+  await db.update(notifications).set(updateData).where(eq(notifications.id, notificationId));
+  return { success: true };
+}
+
+// 获取 Telegram Bot 配置
+export async function getTelegramBotConfig() {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(telegramBotConfigs).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+// 更新 Telegram Bot 配置
+export async function updateTelegramBotConfig(data: any, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getTelegramBotConfig();
+  
+  if (existing) {
+    await db.update(telegramBotConfigs).set(data).where(eq(telegramBotConfigs.id, existing.id));
+  } else {
+    await db.insert(telegramBotConfigs).values(data);
+  }
+  
+  await logOperation(operatorId, 'telegram_bot', 'update', '1', data);
+  return { success: true };
+}
+
+// 获取管理员 Telegram 绑定
+export async function getAdminTelegramBinding(adminUserId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(adminTelegramBindings)
+    .where(eq(adminTelegramBindings.adminUserId, adminUserId))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+// 获取所有管理员 Telegram 绑定
+export async function getAllAdminTelegramBindings() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(adminTelegramBindings)
+    .where(eq(adminTelegramBindings.isVerified, true));
+}
+
+// 创建或更新管理员 Telegram 绑定
+export async function upsertAdminTelegramBinding(data: {
+  adminUserId: number;
+  telegramChatId: string;
+  telegramUsername?: string;
+  notifyNewOrder?: boolean;
+  notifyPaymentFailed?: boolean;
+  notifyLowStock?: boolean;
+  notifySystemAlert?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getAdminTelegramBinding(data.adminUserId);
+  
+  if (existing) {
+    await db.update(adminTelegramBindings)
+      .set({
+        telegramChatId: data.telegramChatId,
+        telegramUsername: data.telegramUsername,
+        notifyNewOrder: data.notifyNewOrder ?? existing.notifyNewOrder,
+        notifyPaymentFailed: data.notifyPaymentFailed ?? existing.notifyPaymentFailed,
+        notifyLowStock: data.notifyLowStock ?? existing.notifyLowStock,
+        notifySystemAlert: data.notifySystemAlert ?? existing.notifySystemAlert,
+      })
+      .where(eq(adminTelegramBindings.adminUserId, data.adminUserId));
+  } else {
+    const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    await db.insert(adminTelegramBindings).values({
+      ...data,
+      verificationCode,
+      isVerified: false,
+    });
+  }
+  
+  return { success: true };
+}
+
+// 验证管理员 Telegram 绑定
+export async function verifyAdminTelegramBinding(adminUserId: number, code: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const binding = await getAdminTelegramBinding(adminUserId);
+  if (!binding) throw new Error("Binding not found");
+  if (binding.verificationCode !== code) throw new Error("Invalid verification code");
+  
+  await db.update(adminTelegramBindings)
+    .set({ isVerified: true, verifiedAt: new Date() })
+    .where(eq(adminTelegramBindings.adminUserId, adminUserId));
+  
+  return { success: true };
+}
+
+// 获取需要接收特定通知的管理员
+export async function getAdminsForNotification(notificationType: 'newOrder' | 'paymentFailed' | 'lowStock' | 'systemAlert') {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const columnMap = {
+    newOrder: adminTelegramBindings.notifyNewOrder,
+    paymentFailed: adminTelegramBindings.notifyPaymentFailed,
+    lowStock: adminTelegramBindings.notifyLowStock,
+    systemAlert: adminTelegramBindings.notifySystemAlert,
+  };
+  
+  return await db.select().from(adminTelegramBindings)
+    .where(and(
+      eq(adminTelegramBindings.isVerified, true),
+      eq(columnMap[notificationType], true)
+    ));
+}
+
+// 获取通知历史（后台管理用）
+export async function getNotificationHistory(params?: {
+  channel?: 'system' | 'telegram' | 'email' | 'sms';
+  status?: 'pending' | 'sent' | 'delivered' | 'failed' | 'read';
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  startDate?: Date;
+  endDate?: Date;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  
+  if (params?.channel) conditions.push(eq(notifications.channel, params.channel));
+  if (params?.status) conditions.push(eq(notifications.status, params.status));
+  if (params?.priority) conditions.push(eq(notifications.priority, params.priority));
+  if (params?.startDate) conditions.push(gte(notifications.createdAt, params.startDate));
+  if (params?.endDate) conditions.push(lte(notifications.createdAt, params.endDate));
+  
+  let query = db.select().from(notifications)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(notifications.createdAt));
+  
+  if (params?.limit) query = query.limit(params.limit) as typeof query;
+  if (params?.offset) query = query.offset(params.offset) as typeof query;
+  
+  return await query;
 }

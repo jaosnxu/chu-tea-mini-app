@@ -9,6 +9,7 @@ import { trpc } from '@/lib/trpc';
 import { useCart } from '@/contexts/CartContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, ShoppingCart, Search, Flame } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 
 export default function Mall() {
   const { t } = useTranslation();
@@ -30,6 +31,7 @@ export default function Mall() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      <BottomNav />
       <header className="bg-white sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between p-4">
           <button onClick={() => navigate('/')} className="p-1">

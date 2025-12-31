@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { trpc } from '@/lib/trpc';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, ShoppingBag, ChevronRight } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -27,6 +28,7 @@ export default function Orders() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      <BottomNav />
       <header className="bg-white sticky top-0 z-10 shadow-sm">
         <div className="flex items-center justify-between p-4">
           <button onClick={() => navigate('/')} className="p-1">

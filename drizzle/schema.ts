@@ -799,3 +799,130 @@ export const userTagAssignments = mysqlTable("userTagAssignments", {
 
 export type UserTagAssignment = typeof userTagAssignments.$inferSelect;
 export type InsertUserTagAssignment = typeof userTagAssignments.$inferInsert;
+
+// ==================== 通知系统 ====================
+
+// 通知模板
+export const notificationTemplates = mysqlTable("notificationTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 64 }).notNull().unique(),
+  nameZh: varchar("nameZh", { length: 128 }).notNull(),
+  nameRu: varchar("nameRu", { length: 128 }).notNull(),
+  nameEn: varchar("nameEn", { length: 128 }).notNull(),
+  category: mysqlEnum("category", ["order", "payment", "inventory", "user", "marketing", "system"]).notNull(),
+  titleZh: varchar("titleZh", { length: 256 }).notNull(),
+  titleRu: varchar("titleRu", { length: 256 }).notNull(),
+  titleEn: varchar("titleEn", { length: 256 }).notNull(),
+  contentZh: text("contentZh").notNull(),
+  contentRu: text("contentRu").notNull(),
+  contentEn: text("contentEn").notNull(),
+  variables: json("variables").$type<string[]>(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
+export type InsertNotificationTemplate = typeof notificationTemplates.$inferInsert;
+
+// 通知规则
+export const notificationRules = mysqlTable("notificationRules", {
+  id: int("id").autoincrement().primaryKey(),
+  templateId: int("templateId").notNull(),
+  nameZh: varchar("nameZh", { length: 128 }).notNull(),
+  nameRu: varchar("nameRu", { length: 128 }).notNull(),
+  nameEn: varchar("nameEn", { length: 128 }).notNull(),
+  triggerEvent: mysqlEnum("triggerEvent", [
+    "new_order", "order_paid", "order_shipped", "order_completed", "order_cancelled",
+    "payment_failed", "payment_refunded",
+    "low_stock", "out_of_stock",
+    "new_user", "user_birthday",
+    "coupon_expiring", "points_expiring",
+    "system_alert"
+  ]).notNull(),
+  channels: json("channels").$type<Array<"system" | "telegram" | "email" | "sms">>().notNull(),
+  recipientType: mysqlEnum("recipientType", ["admin", "store_manager", "user", "custom"]).notNull(),
+  recipientConfig: json("recipientConfig").$type<{
+    roleIds?: number[];
+    userIds?: number[];
+    storeIds?: number[];
+    telegramChatIds?: string[];
+  }>(),
+  conditions: json("conditions").$type<Array<{
+    field: string;
+    operator: string;
+    value: any;
+  }>>(),
+  priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default("normal").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type NotificationRule = typeof notificationRules.$inferSelect;
+export type InsertNotificationRule = typeof notificationRules.$inferInsert;
+
+// 通知记录
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  templateId: int("templateId"),
+  ruleId: int("ruleId"),
+  recipientType: mysqlEnum("recipientType", ["admin", "user"]).notNull(),
+  recipientId: int("recipientId").notNull(),
+  channel: mysqlEnum("channel", ["system", "telegram", "email", "sms"]).notNull(),
+  titleZh: varchar("titleZh", { length: 256 }).notNull(),
+  titleRu: varchar("titleRu", { length: 256 }).notNull(),
+  titleEn: varchar("titleEn", { length: 256 }).notNull(),
+  contentZh: text("contentZh").notNull(),
+  contentRu: text("contentRu").notNull(),
+  contentEn: text("contentEn").notNull(),
+  priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default("normal").notNull(),
+  relatedType: varchar("relatedType", { length: 32 }),
+  relatedId: int("relatedId"),
+  metadata: json("metadata"),
+  status: mysqlEnum("status", ["pending", "sent", "delivered", "failed", "read"]).default("pending").notNull(),
+  sentAt: timestamp("sentAt"),
+  readAt: timestamp("readAt"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+// Telegram Bot 配置
+export const telegramBotConfigs = mysqlTable("telegramBotConfigs", {
+  id: int("id").autoincrement().primaryKey(),
+  botToken: varchar("botToken", { length: 128 }),
+  botUsername: varchar("botUsername", { length: 64 }),
+  webhookUrl: text("webhookUrl"),
+  adminChatId: varchar("adminChatId", { length: 64 }),
+  isActive: boolean("isActive").default(false).notNull(),
+  lastTestAt: timestamp("lastTestAt"),
+  lastTestResult: mysqlEnum("lastTestResult", ["success", "failed"]),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TelegramBotConfig = typeof telegramBotConfigs.$inferSelect;
+export type InsertTelegramBotConfig = typeof telegramBotConfigs.$inferInsert;
+
+// 管理员 Telegram 绑定
+export const adminTelegramBindings = mysqlTable("adminTelegramBindings", {
+  id: int("id").autoincrement().primaryKey(),
+  adminUserId: int("adminUserId").notNull().unique(),
+  telegramChatId: varchar("telegramChatId", { length: 64 }).notNull(),
+  telegramUsername: varchar("telegramUsername", { length: 64 }),
+  notifyNewOrder: boolean("notifyNewOrder").default(true).notNull(),
+  notifyPaymentFailed: boolean("notifyPaymentFailed").default(true).notNull(),
+  notifyLowStock: boolean("notifyLowStock").default(true).notNull(),
+  notifySystemAlert: boolean("notifySystemAlert").default(true).notNull(),
+  isVerified: boolean("isVerified").default(false).notNull(),
+  verificationCode: varchar("verificationCode", { length: 16 }),
+  verifiedAt: timestamp("verifiedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdminTelegramBinding = typeof adminTelegramBindings.$inferSelect;
+export type InsertAdminTelegramBinding = typeof adminTelegramBindings.$inferInsert;

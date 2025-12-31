@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { trpc } from '@/lib/trpc';
 import { ChevronLeft, Share2, Users, ShoppingBag, DollarSign, Copy, Check } from 'lucide-react';
+import { BottomNav } from '@/components/BottomNav';
 import { toast } from 'sonner';
 
 export default function InfluencerCenter() {
@@ -30,7 +31,8 @@ export default function InfluencerCenter() {
 
   if (!influencer?.status || influencer.status !== 'active') {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <BottomNav />
         <header className="bg-white sticky top-0 z-10 shadow-sm">
           <div className="flex items-center justify-between p-4">
             <button onClick={() => navigate('/profile')} className="p-1"><ChevronLeft className="w-6 h-6" /></button>
@@ -49,7 +51,8 @@ export default function InfluencerCenter() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <BottomNav />
       <header className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
         <div className="flex items-center justify-between p-4">
           <button onClick={() => navigate('/profile')} className="p-1"><ChevronLeft className="w-6 h-6" /></button>
