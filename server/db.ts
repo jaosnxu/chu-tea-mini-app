@@ -10,6 +10,7 @@ import {
   notifications, notificationTemplates, notificationRules,
   telegramBotConfigs, adminTelegramBindings, yookassaConfig,
   productConfig, productOptionConfig, userNotificationPreferences,
+  marketingTriggers, triggerExecutions,
   InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -677,6 +678,27 @@ export async function createOrder(userId: number, data: {
       console.error('[Order] Failed to add order to IIKO queue:', error);
       // 不影响订单创建，只记录错误
     }
+  }
+  
+  // 触发营销自动化（异步执行，不阻塞订单创建）
+  try {
+    const { triggerOrderCompleted } = await import('./triggerEngine');
+    
+    // 获取用户订单总数
+    const userOrders = await db.select({ count: sql<number>`count(*)` })
+      .from(orders)
+      .where(eq(orders.userId, userId));
+    const userOrderCount = Number(userOrders[0]?.count || 0);
+    
+    // 异步触发
+    triggerOrderCompleted(userId, {
+      orderAmount: totalAmount,
+      userOrderCount,
+    }).catch(err => {
+      console.error('[Order] Failed to trigger marketing automation:', err);
+    });
+  } catch (error) {
+    console.error('[Order] Failed to load trigger engine:', error);
   }
   
   return { success: true, orderId, orderNo };
@@ -3279,4 +3301,132 @@ export async function isInQuietHours(userId: number): Promise<boolean> {
   } else {
     return currentTime >= startTime && currentTime < endTime;
   }
+}
+
+// ==================== 营销触发器管理 ====================
+
+export async function getMarketingTriggers(filters?: {
+  isActive?: boolean;
+  triggerType?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  let query = db.select().from(marketingTriggers);
+  
+  const conditions = [];
+  if (filters?.isActive !== undefined) {
+    conditions.push(eq(marketingTriggers.isActive, filters.isActive));
+  }
+  if (filters?.triggerType) {
+    conditions.push(eq(marketingTriggers.triggerType, filters.triggerType as any));
+  }
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  return await query.orderBy(desc(marketingTriggers.createdAt));
+}
+
+export async function getMarketingTriggerById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(marketingTriggers)
+    .where(eq(marketingTriggers.id, id))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function createMarketingTrigger(data: {
+  name: string;
+  triggerType: 'user_register' | 'first_order' | 'order_amount' | 'user_inactive' | 'birthday' | 'time_based';
+  conditions: any;
+  action: 'send_coupon' | 'send_notification' | 'add_points';
+  actionConfig: any;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(marketingTriggers).values({
+    name: data.name,
+    triggerType: data.triggerType,
+    conditions: data.conditions,
+    action: data.action,
+    actionConfig: data.actionConfig,
+    isActive: data.isActive ?? true,
+  });
+  
+  return { success: true, id: Number(result[0].insertId) };
+}
+
+export async function updateMarketingTrigger(id: number, data: Partial<{
+  name: string;
+  triggerType: 'user_register' | 'first_order' | 'order_amount' | 'user_inactive' | 'birthday' | 'time_based';
+  conditions: any;
+  action: 'send_coupon' | 'send_notification' | 'add_points';
+  actionConfig: any;
+  isActive: boolean;
+}>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(marketingTriggers)
+    .set(data)
+    .where(eq(marketingTriggers.id, id));
+  
+  return { success: true };
+}
+
+export async function deleteMarketingTrigger(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(marketingTriggers)
+    .where(eq(marketingTriggers.id, id));
+  
+  return { success: true };
+}
+
+export async function getTriggerExecutions(triggerId?: number, limit = 50) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  let query = db.select().from(triggerExecutions);
+  
+  if (triggerId) {
+    query = query.where(eq(triggerExecutions.triggerId, triggerId)) as any;
+  }
+  
+  return await query
+    .orderBy(desc(triggerExecutions.executedAt))
+    .limit(limit);
+}
+
+export async function recordTriggerExecution(data: {
+  triggerId: number;
+  userId: number;
+  status: 'success' | 'failed';
+  result?: any;
+  errorMessage?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(triggerExecutions).values(data);
+  
+  // 更新触发器执行次数
+  if (data.status === 'success') {
+    await db.update(marketingTriggers)
+      .set({
+        executionCount: sql`${marketingTriggers.executionCount} + 1`,
+        lastExecutedAt: new Date(),
+      })
+      .where(eq(marketingTriggers.id, data.triggerId));
+  }
+  
+  return { success: true };
 }

@@ -1260,3 +1260,48 @@ export const userNotificationPreferences = mysqlTable('user_notification_prefere
 
 export type UserNotificationPreference = typeof userNotificationPreferences.$inferSelect;
 export type InsertUserNotificationPreference = typeof userNotificationPreferences.$inferInsert;
+
+// ==================== 营销自动化触发器 ====================
+
+export const marketingTriggers = mysqlTable("marketingTriggers", {
+  id: int("id").autoincrement().primaryKey(),
+  name: text("name").notNull(), // 触发器名称
+  triggerType: mysqlEnum("triggerType", [
+    "user_register",      // 用户注册
+    "first_order",        // 首单完成
+    "order_amount",       // 消费金额达标
+    "user_inactive",      // 用户流失（N天未购买）
+    "birthday",           // 用户生日
+    "time_based",         // 基于时间（特定时段）
+  ]).notNull(),
+  conditions: json("conditions").notNull(), // 触发条件（JSON格式）
+  // 示例：{ "minAmount": 100, "daysInactive": 30, "timeRange": "09:00-12:00", "userSegment": "new" }
+  action: mysqlEnum("action", [
+    "send_coupon",        // 发放优惠券
+    "send_notification",  // 发送通知
+    "add_points",         // 赠送积分
+  ]).notNull(),
+  actionConfig: json("actionConfig").notNull(), // 动作配置（JSON格式）
+  // 示例：{ "couponTemplateId": 123, "points": 100, "message": "欢迎新用户" }
+  isActive: boolean("isActive").default(true).notNull(),
+  executionCount: int("executionCount").default(0).notNull(), // 执行次数
+  lastExecutedAt: timestamp("lastExecutedAt"), // 最后执行时间
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MarketingTrigger = typeof marketingTriggers.$inferSelect;
+export type InsertMarketingTrigger = typeof marketingTriggers.$inferInsert;
+
+export const triggerExecutions = mysqlTable("triggerExecutions", {
+  id: int("id").autoincrement().primaryKey(),
+  triggerId: int("triggerId").notNull(),
+  userId: int("userId").notNull(),
+  status: mysqlEnum("status", ["success", "failed"]).notNull(),
+  result: json("result"), // 执行结果（JSON格式）
+  errorMessage: text("errorMessage"), // 错误信息
+  executedAt: timestamp("executedAt").defaultNow().notNull(),
+});
+
+export type TriggerExecution = typeof triggerExecutions.$inferSelect;
+export type InsertTriggerExecution = typeof triggerExecutions.$inferInsert;

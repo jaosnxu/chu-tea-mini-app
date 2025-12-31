@@ -1320,6 +1320,73 @@ export const appRouter = router({
         return await db.batchSendCoupons(input, ctx.user.id);
       }),
   }),
+
+  // ==================== 营销触发器管理 ====================
+  marketingTrigger: router({
+    // 获取触发器列表
+    list: adminProcedure
+      .input(z.object({
+        isActive: z.boolean().optional(),
+        triggerType: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getMarketingTriggers(input);
+      }),
+
+    // 获取触发器详情
+    getById: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMarketingTriggerById(input.id);
+      }),
+
+    // 创建触发器
+    create: adminProcedure
+      .input(z.object({
+        name: z.string(),
+        triggerType: z.enum(['user_register', 'first_order', 'order_amount', 'user_inactive', 'birthday', 'time_based']),
+        conditions: z.any(),
+        action: z.enum(['send_coupon', 'send_notification', 'add_points']),
+        actionConfig: z.any(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createMarketingTrigger(input);
+      }),
+
+    // 更新触发器
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        triggerType: z.enum(['user_register', 'first_order', 'order_amount', 'user_inactive', 'birthday', 'time_based']).optional(),
+        conditions: z.any().optional(),
+        action: z.enum(['send_coupon', 'send_notification', 'add_points']).optional(),
+        actionConfig: z.any().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await db.updateMarketingTrigger(id, data);
+      }),
+
+    // 删除触发器
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteMarketingTrigger(input.id);
+      }),
+
+    // 获取执行历史
+    getExecutions: adminProcedure
+      .input(z.object({
+        triggerId: z.number().optional(),
+        limit: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getTriggerExecutions(input?.triggerId, input?.limit);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
