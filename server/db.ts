@@ -516,6 +516,25 @@ export async function createOrder(userId: number, data: {
   let couponDiscount = 0;
   let pointsDiscount = 0;
   
+  // 处理优惠券
+  if (data.couponId) {
+    try {
+      const discountResult = await calculateCouponDiscount({
+        couponId: data.couponId,
+        orderAmount: subtotal,
+        items: data.items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: parseFloat(item.unitPrice),
+        })),
+      });
+      couponDiscount = discountResult.discount;
+    } catch (error) {
+      console.error('Failed to calculate coupon discount:', error);
+      throw new Error('优惠券使用失败');
+    }
+  }
+  
   if (data.pointsUsed && data.pointsUsed > 0) {
     pointsDiscount = data.pointsUsed / 100; // 100积分 = 1元
   }
@@ -567,6 +586,21 @@ export async function createOrder(userId: number, data: {
   
   // 清空购物车
   await clearCart(userId, data.orderType);
+  
+  // 标记优惠券为已使用
+  if (data.couponId && couponDiscount > 0) {
+    try {
+      await db.update(userCoupons)
+        .set({ 
+          status: 'used',
+          usedAt: new Date(),
+        })
+        .where(eq(userCoupons.id, data.couponId));
+    } catch (error) {
+      console.error('Failed to mark coupon as used:', error);
+      // 不影响订单创建，只记录错误
+    }
+  }
   
   // 发送订单确认通知到用户 Telegram
   try {
@@ -905,18 +939,20 @@ export async function claimCoupon(userId: number, templateId: number) {
   }
   
   // 创建用户优惠券
-  await db.insert(userCoupons).values({
+  const result = await db.insert(userCoupons).values({
     userId,
     templateId,
     expireAt,
   });
+  
+  const couponId = Number(result[0].insertId);
   
   // 更新已领取数量
   await db.update(couponTemplates)
     .set({ usedQuantity: sql`${couponTemplates.usedQuantity} + 1` })
     .where(eq(couponTemplates.id, templateId));
   
-  return { success: true };
+  return { success: true, couponId };
 }
 
 // ==================== 积分相关 ====================

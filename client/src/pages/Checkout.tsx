@@ -49,6 +49,7 @@ export default function Checkout() {
         orderSource: 'telegram',
         deliveryType,
         storeId: currentStore?.id,
+        couponId: selectedCouponId || undefined,
         remark,
         items: teaCartItems.map(item => ({
           productId: item.productId,
