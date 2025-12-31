@@ -1,12 +1,8 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { trpc } from '@/lib/trpc';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -14,588 +10,688 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Search,
-  Ticket,
-  Gift,
-  Percent,
-  DollarSign,
-  Clock,
-  Users,
-  CheckCircle,
-  XCircle,
-  Send,
-} from "lucide-react";
-import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Ticket, Plus, Edit, Trash2, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
-export default function CouponsManagement() {
+type CouponType = 'fixed' | 'percent' | 'product' | 'gift' | 'buy_one_get_one' | 'free_product';
+
+interface CouponTemplate {
+  id: number;
+  code: string;
+  nameZh: string;
+  nameRu: string;
+  nameEn: string;
+  descriptionZh?: string | null;
+  descriptionRu?: string | null;
+  descriptionEn?: string | null;
+  type: CouponType;
+  value: string;
+  minOrderAmount?: string | null;
+  maxDiscount?: string | null;
+  applicableProducts?: number[] | null;
+  applicableCategories?: number[] | null;
+  applicableStores?: number[] | null;
+  excludeProducts?: number[] | null;
+  stackable: boolean;
+  totalQuantity?: number | null;
+  usedQuantity: number;
+  perUserLimit?: number | null;
+  validDays?: number | null;
+  startAt?: Date | null;
+  endAt?: Date | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface CouponFormData {
+  code: string;
+  nameZh: string;
+  nameRu: string;
+  nameEn: string;
+  descriptionZh: string;
+  descriptionRu: string;
+  descriptionEn: string;
+  type: CouponType;
+  value: string;
+  minOrderAmount: string;
+  maxDiscount: string;
+  stackable: boolean;
+  totalQuantity: string;
+  perUserLimit: string;
+  validDays: string;
+  isActive: boolean;
+}
+
+export default function AdminCouponManagement() {
   const { t } = useTranslation();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
+  // toast 已从 sonner 导入
+  const utils = trpc.useUtils();
 
-  // Fetch coupon templates
-  const { data: templates, isLoading } = trpc.adminCoupons.listTemplates.useQuery();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showBatchSendDialog, setShowBatchSendDialog] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<CouponTemplate | null>(null);
 
-  // Mock approval data
-  const pendingApprovals = [
-    {
-      id: 1,
-      templateName: "新年满100减20",
-      requestedBy: "Marketing Team",
-      quantity: 1000,
-      reason: "新年促销活动",
-      requestedAt: "2025-12-30",
+  const [formData, setFormData] = useState<CouponFormData>({
+    code: '',
+    nameZh: '',
+    nameRu: '',
+    nameEn: '',
+    descriptionZh: '',
+    descriptionRu: '',
+    descriptionEn: '',
+    type: 'fixed',
+    value: '',
+    minOrderAmount: '0',
+    maxDiscount: '',
+    stackable: false,
+    totalQuantity: '-1',
+    perUserLimit: '1',
+    validDays: '30',
+    isActive: true,
+  });
+
+  const [batchSendData, setBatchSendData] = useState({
+    templateId: 0,
+    targetType: 'all' as 'all' | 'new' | 'vip' | 'inactive' | 'specific',
+    reason: '',
+  });
+
+  // 查询优惠券模板列表
+  const { data: templates, isLoading } = trpc.adminCoupon.listTemplates.useQuery();
+
+  // 创建优惠券模板
+  const createMutation = trpc.adminCoupon.createTemplate.useMutation({
+    onSuccess: () => {
+      toast.success(t('admin.coupon.createSuccess'));
+      setShowCreateDialog(false);
+      resetForm();
+      utils.adminCoupon.listTemplates.invalidate();
     },
-    {
-      id: 2,
-      templateName: "VIP专属9折券",
-      requestedBy: "VIP Manager",
-      quantity: 500,
-      reason: "VIP会员回馈",
-      requestedAt: "2025-12-29",
+    onError: (error) => {
+      toast.error(error.message);
     },
-  ];
+  });
 
-  const couponTypeOptions = [
-    { value: "discount", label: t("admin.coupons.types.discount"), icon: Percent },
-    { value: "fixed", label: t("admin.coupons.types.fixed"), icon: DollarSign },
-    { value: "gift", label: t("admin.coupons.types.gift"), icon: Gift },
-    { value: "shipping", label: t("admin.coupons.types.shipping"), icon: Ticket },
-  ];
+  // 更新优惠券模板
+  const updateMutation = trpc.adminCoupon.updateTemplate.useMutation({
+    onSuccess: () => {
+      toast.success(t('admin.coupon.updateSuccess'));
+      setShowEditDialog(false);
+      setSelectedTemplate(null);
+      resetForm();
+      utils.adminCoupon.listTemplates.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // 删除优惠券模板
+  const deleteMutation = trpc.adminCoupon.deleteTemplate.useMutation({
+    onSuccess: () => {
+      toast.success(t('admin.coupon.deleteSuccess'));
+      utils.adminCoupon.listTemplates.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // 批量发放优惠券
+  const batchSendMutation = trpc.adminCoupon.batchSend.useMutation({
+    onSuccess: (data) => {
+      toast.success(t('admin.coupon.batchSendSuccess', { count: data.sentCount }));
+      setShowBatchSendDialog(false);
+      utils.adminCoupon.listTemplates.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      code: '',
+      nameZh: '',
+      nameRu: '',
+      nameEn: '',
+      descriptionZh: '',
+      descriptionRu: '',
+      descriptionEn: '',
+      type: 'fixed',
+      value: '',
+      minOrderAmount: '0',
+      maxDiscount: '',
+      stackable: false,
+      totalQuantity: '-1',
+      perUserLimit: '1',
+      validDays: '30',
+      isActive: true,
+    });
+  };
+
+  const handleCreate = () => {
+    createMutation.mutate({
+      ...formData,
+      totalQuantity: parseInt(formData.totalQuantity),
+      perUserLimit: parseInt(formData.perUserLimit),
+      validDays: parseInt(formData.validDays),
+    });
+  };
+
+  const handleUpdate = () => {
+    if (!selectedTemplate) return;
+    updateMutation.mutate({
+      id: selectedTemplate.id,
+      ...formData,
+      totalQuantity: parseInt(formData.totalQuantity),
+      perUserLimit: parseInt(formData.perUserLimit),
+      validDays: parseInt(formData.validDays),
+    });
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm(t('admin.coupon.deleteConfirm'))) {
+      deleteMutation.mutate({ id });
+    }
+  };
+
+  const handleEdit = (template: CouponTemplate) => {
+    setSelectedTemplate(template);
+    setFormData({
+      code: template.code,
+      nameZh: template.nameZh,
+      nameRu: template.nameRu,
+      nameEn: template.nameEn,
+      descriptionZh: template.descriptionZh || '',
+      descriptionRu: template.descriptionRu || '',
+      descriptionEn: template.descriptionEn || '',
+      type: template.type,
+      value: template.value,
+      minOrderAmount: template.minOrderAmount || '0',
+      maxDiscount: template.maxDiscount || '',
+      stackable: template.stackable,
+      totalQuantity: template.totalQuantity?.toString() || '-1',
+      perUserLimit: template.perUserLimit?.toString() || '1',
+      validDays: template.validDays?.toString() || '30',
+      isActive: template.isActive,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleBatchSend = (templateId: number) => {
+    setBatchSendData({ ...batchSendData, templateId });
+    setShowBatchSendDialog(true);
+  };
+
+  const handleBatchSendSubmit = () => {
+    batchSendMutation.mutate(batchSendData);
+  };
+
+  const getCouponTypeLabel = (type: CouponType) => {
+    const labels = {
+      fixed: t('admin.coupon.type.fixed'),
+      percent: t('admin.coupon.type.percent'),
+      product: t('admin.coupon.type.product'),
+      gift: t('admin.coupon.type.gift'),
+      buy_one_get_one: t('admin.coupon.type.buyOneGetOne'),
+      free_product: t('admin.coupon.type.freeProduct'),
+    };
+    return labels[type] || type;
+  };
+
+  const getCouponValueDisplay = (template: CouponTemplate) => {
+    switch (template.type) {
+      case 'fixed':
+        return `¥${template.value}`;
+      case 'percent':
+        return `${template.value}%`;
+      case 'buy_one_get_one':
+        return t('admin.coupon.buyOneGetOne');
+      case 'free_product':
+        return t('admin.coupon.freeProduct');
+      default:
+        return template.value;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-muted-foreground">{t('common.loading')}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{t("admin.coupons.title")}</h1>
-          <p className="text-gray-500">{t("admin.coupons.subtitle")}</p>
+    <div className="container mx-auto py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Ticket className="w-8 h-8 text-primary" />
+          <h1 className="text-3xl font-bold">{t('admin.coupon.title')}</h1>
         </div>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          {t('admin.coupon.create')}
+        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Ticket className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{templates?.length || 0}</p>
-                <p className="text-xs text-gray-500">{t("admin.coupons.stats.templates")}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">12,580</p>
-                <p className="text-xs text-gray-500">{t("admin.coupons.stats.issued")}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">8,234</p>
-                <p className="text-xs text-gray-500">{t("admin.coupons.stats.used")}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Clock className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingApprovals.length}</p>
-                <p className="text-xs text-gray-500">{t("admin.coupons.stats.pending")}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="templates" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="templates">{t("admin.coupons.tabs.templates")}</TabsTrigger>
-          <TabsTrigger value="issued">{t("admin.coupons.tabs.issued")}</TabsTrigger>
-          <TabsTrigger value="approvals">
-            {t("admin.coupons.tabs.approvals")}
-            {pendingApprovals.length > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {pendingApprovals.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="rules">{t("admin.coupons.tabs.rules")}</TabsTrigger>
-        </TabsList>
-
-        {/* Templates Tab */}
-        <TabsContent value="templates" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{t("admin.coupons.templatesTitle")}</CardTitle>
-                <CardDescription>{t("admin.coupons.templatesDesc")}</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <Send className="h-4 w-4 mr-2" />
-                      {t("admin.coupons.batchSend")}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{t("admin.coupons.batchSend")}</DialogTitle>
-                      <DialogDescription>{t("admin.coupons.batchSendDesc")}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="space-y-2">
-                        <Label>{t("admin.coupons.form.selectTemplate")}</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("admin.coupons.form.selectTemplatePlaceholder")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {templates?.map((tpl: any) => (
-                              <SelectItem key={tpl.id} value={tpl.id.toString()}>
-                                {tpl.nameZh}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>{t("admin.coupons.form.targetUsers")}</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("admin.coupons.form.selectUsers")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">{t("admin.coupons.targets.all")}</SelectItem>
-                            <SelectItem value="new">{t("admin.coupons.targets.new")}</SelectItem>
-                            <SelectItem value="vip">{t("admin.coupons.targets.vip")}</SelectItem>
-                            <SelectItem value="inactive">{t("admin.coupons.targets.inactive")}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>{t("admin.coupons.form.reason")}</Label>
-                        <Textarea placeholder={t("admin.coupons.form.reasonPlaceholder")} />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsSendDialogOpen(false)}>
-                        {t("common.cancel")}
-                      </Button>
-                      <Button onClick={() => {
-                        toast.success(t("admin.coupons.sendSuccess"));
-                        setIsSendDialogOpen(false);
-                      }}>
-                        {t("admin.coupons.send")}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      {t("admin.coupons.addTemplate")}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle>{t("admin.coupons.addTemplate")}</DialogTitle>
-                      <DialogDescription>{t("admin.coupons.addTemplateDesc")}</DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-                      {/* Basic Info */}
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.nameZh")}</Label>
-                          <Input placeholder="新用户9折券" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.nameRu")}</Label>
-                          <Input placeholder="Скидка 10% для новых" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.nameEn")}</Label>
-                          <Input placeholder="10% Off for New Users" />
-                        </div>
-                      </div>
-
-                      {/* Type and Value */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.type")}</Label>
-                          <Select defaultValue="discount">
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {couponTypeOptions.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>
-                                  <div className="flex items-center gap-2">
-                                    <opt.icon className="h-4 w-4" />
-                                    {opt.label}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.value")}</Label>
-                          <Input type="number" placeholder="10" />
-                        </div>
-                      </div>
-
-                      {/* Conditions */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.minAmount")}</Label>
-                          <Input type="number" placeholder="0" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.maxDiscount")}</Label>
-                          <Input type="number" placeholder="100" />
-                        </div>
-                      </div>
-
-                      {/* Validity */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.validFrom")}</Label>
-                          <Input type="datetime-local" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.validTo")}</Label>
-                          <Input type="datetime-local" />
-                        </div>
-                      </div>
-
-                      {/* Limits */}
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.totalLimit")}</Label>
-                          <Input type="number" placeholder="1000" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.perUserLimit")}</Label>
-                          <Input type="number" placeholder="1" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>{t("admin.coupons.form.dailyLimit")}</Label>
-                          <Input type="number" placeholder="100" />
-                        </div>
-                      </div>
-
-                      {/* Applicable Scope */}
-                      <div className="space-y-2">
-                        <Label>{t("admin.coupons.form.scope")}</Label>
-                        <Select defaultValue="all">
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">{t("admin.coupons.scopes.all")}</SelectItem>
-                            <SelectItem value="teabot">{t("admin.coupons.scopes.teabot")}</SelectItem>
-                            <SelectItem value="mall">{t("admin.coupons.scopes.mall")}</SelectItem>
-                            <SelectItem value="category">{t("admin.coupons.scopes.category")}</SelectItem>
-                            <SelectItem value="product">{t("admin.coupons.scopes.product")}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                        {t("common.cancel")}
-                      </Button>
-                      <Button onClick={() => {
-                        toast.success(t("admin.coupons.templateAdded"));
-                        setIsAddDialogOpen(false);
-                      }}>
-                        {t("common.save")}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("admin.coupons.table.name")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.type")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.value")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.minAmount")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.validity")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.issued")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.status")}</TableHead>
-                    <TableHead className="text-right">{t("admin.coupons.table.actions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        {t("common.loading")}
-                      </TableCell>
-                    </TableRow>
-                  ) : templates?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        {t("admin.coupons.noTemplates")}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    templates?.map((tpl: any) => (
-                      <TableRow key={tpl.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{tpl.nameZh}</p>
-                            <p className="text-xs text-gray-500">{tpl.nameRu}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {t(`admin.coupons.types.${tpl.type}`)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {tpl.type === "discount" ? `${tpl.discountValue}%` : `₽${tpl.discountValue}`}
-                        </TableCell>
-                        <TableCell>₽{tpl.minOrderAmount || 0}</TableCell>
-                        <TableCell>
-                          <span className="text-xs">
-                            {tpl.validFrom ? new Date(tpl.validFrom).toLocaleDateString() : "-"} ~{" "}
-                            {tpl.validTo ? new Date(tpl.validTo).toLocaleDateString() : "-"}
-                          </span>
-                        </TableCell>
-                        <TableCell>{tpl.issuedCount || 0} / {tpl.totalLimit || "∞"}</TableCell>
-                        <TableCell>
-                          <Switch checked={tpl.isActive} />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="icon">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Approvals Tab */}
-        <TabsContent value="approvals" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("admin.coupons.approvalsTitle")}</CardTitle>
-              <CardDescription>{t("admin.coupons.approvalsDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("admin.coupons.table.template")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.requestedBy")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.quantity")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.reason")}</TableHead>
-                    <TableHead>{t("admin.coupons.table.requestedAt")}</TableHead>
-                    <TableHead className="text-right">{t("admin.coupons.table.actions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingApprovals.map((approval) => (
-                    <TableRow key={approval.id}>
-                      <TableCell className="font-medium">{approval.templateName}</TableCell>
-                      <TableCell>{approval.requestedBy}</TableCell>
-                      <TableCell>{approval.quantity.toLocaleString()}</TableCell>
-                      <TableCell>{approval.reason}</TableCell>
-                      <TableCell>{approval.requestedAt}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600"
-                            onClick={() => toast.success(t("admin.coupons.approved"))}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            {t("admin.coupons.approve")}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600"
-                            onClick={() => toast.error(t("admin.coupons.rejected"))}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            {t("admin.coupons.reject")}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Auto Rules Tab */}
-        <TabsContent value="rules" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>{t("admin.coupons.rulesTitle")}</CardTitle>
-                <CardDescription>{t("admin.coupons.rulesDesc")}</CardDescription>
-              </div>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                {t("admin.coupons.addRule")}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* New User Rule */}
-                <Card className="border-l-4 border-l-green-500">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{t("admin.coupons.rules.newUser")}</h4>
-                        <p className="text-sm text-gray-500">{t("admin.coupons.rules.newUserDesc")}</p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
-                      <span>{t("admin.coupons.rules.trigger")}: {t("admin.coupons.triggers.register")}</span>
-                      <span>{t("admin.coupons.rules.coupon")}: 新用户9折券</span>
-                      <span>{t("admin.coupons.rules.triggered")}: 1,234</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Birthday Rule */}
-                <Card className="border-l-4 border-l-yellow-500">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{t("admin.coupons.rules.birthday")}</h4>
-                        <p className="text-sm text-gray-500">{t("admin.coupons.rules.birthdayDesc")}</p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
-                      <span>{t("admin.coupons.rules.trigger")}: {t("admin.coupons.triggers.birthday")}</span>
-                      <span>{t("admin.coupons.rules.coupon")}: 生日免费饮品券</span>
-                      <span>{t("admin.coupons.rules.triggered")}: 567</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Inactive User Rule */}
-                <Card className="border-l-4 border-l-blue-500">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{t("admin.coupons.rules.inactive")}</h4>
-                        <p className="text-sm text-gray-500">{t("admin.coupons.rules.inactiveDesc")}</p>
-                      </div>
-                      <Switch />
-                    </div>
-                    <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
-                      <span>{t("admin.coupons.rules.trigger")}: {t("admin.coupons.triggers.inactive30")}</span>
-                      <span>{t("admin.coupons.rules.coupon")}: 回归专属8折券</span>
-                      <span>{t("admin.coupons.rules.triggered")}: 89</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Issued Tab */}
-        <TabsContent value="issued" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("admin.coupons.issuedTitle")}</CardTitle>
-              <CardDescription>{t("admin.coupons.issuedDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input placeholder={t("admin.coupons.searchUser")} className="pl-10" />
+      <div className="grid gap-4">
+        {templates?.map((template) => (
+          <Card key={template.id} className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-xl font-bold">{template.nameZh}</h3>
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    template.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {template.isActive ? t('common.active') : t('common.inactive')}
+                  </span>
+                  <span className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-700">
+                    {getCouponTypeLabel(template.type)}
+                  </span>
                 </div>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-48">
+                <p className="text-sm text-muted-foreground mb-3">{template.descriptionZh}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">{t('admin.coupon.code')}:</span>
+                    <span className="ml-2 font-mono">{template.code}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">{t('admin.coupon.value')}:</span>
+                    <span className="ml-2 font-bold text-primary">{getCouponValueDisplay(template)}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">{t('admin.coupon.minOrder')}:</span>
+                    <span className="ml-2">¥{template.minOrderAmount || '0'}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">{t('admin.coupon.usage')}:</span>
+                    <span className="ml-2">
+                      {template.usedQuantity} / {template.totalQuantity === -1 ? '∞' : template.totalQuantity}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 ml-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBatchSend(template.id)}
+                >
+                  <Send className="w-4 h-4 mr-1" />
+                  {t('admin.coupon.batchSend')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(template)}
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDelete(template.id)}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+
+        {templates?.length === 0 && (
+          <Card className="p-12 text-center">
+            <Ticket className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground mb-4">{t('admin.coupon.empty')}</p>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              {t('admin.coupon.createFirst')}
+            </Button>
+          </Card>
+        )}
+      </div>
+
+      {/* 创建优惠券对话框 */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('admin.coupon.create')}</DialogTitle>
+            <DialogDescription>{t('admin.coupon.createDescription')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="code">{t('admin.coupon.code')}</Label>
+                <Input
+                  id="code"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  placeholder="SUMMER2024"
+                />
+              </div>
+              <div>
+                <Label htmlFor="type">{t('admin.coupon.type.label')}</Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value: CouponType) => setFormData({ ...formData, type: value })}
+                >
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t("admin.coupons.status.all")}</SelectItem>
-                    <SelectItem value="unused">{t("admin.coupons.status.unused")}</SelectItem>
-                    <SelectItem value="used">{t("admin.coupons.status.used")}</SelectItem>
-                    <SelectItem value="expired">{t("admin.coupons.status.expired")}</SelectItem>
+                    <SelectItem value="fixed">{t('admin.coupon.type.fixed')}</SelectItem>
+                    <SelectItem value="percent">{t('admin.coupon.type.percent')}</SelectItem>
+                    <SelectItem value="buy_one_get_one">{t('admin.coupon.type.buyOneGetOne')}</SelectItem>
+                    <SelectItem value="free_product">{t('admin.coupon.type.freeProduct')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-center py-8 text-gray-500">{t("admin.coupons.noIssuedCoupons")}</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+
+            <div>
+              <Label htmlFor="nameZh">{t('admin.coupon.nameZh')}</Label>
+              <Input
+                id="nameZh"
+                value={formData.nameZh}
+                onChange={(e) => setFormData({ ...formData, nameZh: e.target.value })}
+                placeholder="夏季满减券"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="nameRu">{t('admin.coupon.nameRu')}</Label>
+                <Input
+                  id="nameRu"
+                  value={formData.nameRu}
+                  onChange={(e) => setFormData({ ...formData, nameRu: e.target.value })}
+                  placeholder="Летняя скидка"
+                />
+              </div>
+              <div>
+                <Label htmlFor="nameEn">{t('admin.coupon.nameEn')}</Label>
+                <Input
+                  id="nameEn"
+                  value={formData.nameEn}
+                  onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
+                  placeholder="Summer Discount"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="descriptionZh">{t('admin.coupon.descriptionZh')}</Label>
+              <Textarea
+                id="descriptionZh"
+                value={formData.descriptionZh}
+                onChange={(e) => setFormData({ ...formData, descriptionZh: e.target.value })}
+                placeholder="满100元减20元"
+                rows={2}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="value">{t('admin.coupon.value')}</Label>
+                <Input
+                  id="value"
+                  type="number"
+                  value={formData.value}
+                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                  placeholder="20"
+                />
+              </div>
+              <div>
+                <Label htmlFor="minOrderAmount">{t('admin.coupon.minOrder')}</Label>
+                <Input
+                  id="minOrderAmount"
+                  type="number"
+                  value={formData.minOrderAmount}
+                  onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxDiscount">{t('admin.coupon.maxDiscount')}</Label>
+                <Input
+                  id="maxDiscount"
+                  type="number"
+                  value={formData.maxDiscount}
+                  onChange={(e) => setFormData({ ...formData, maxDiscount: e.target.value })}
+                  placeholder="100"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="totalQuantity">{t('admin.coupon.totalQuantity')}</Label>
+                <Input
+                  id="totalQuantity"
+                  type="number"
+                  value={formData.totalQuantity}
+                  onChange={(e) => setFormData({ ...formData, totalQuantity: e.target.value })}
+                  placeholder="-1 (无限制)"
+                />
+              </div>
+              <div>
+                <Label htmlFor="perUserLimit">{t('admin.coupon.perUserLimit')}</Label>
+                <Input
+                  id="perUserLimit"
+                  type="number"
+                  value={formData.perUserLimit}
+                  onChange={(e) => setFormData({ ...formData, perUserLimit: e.target.value })}
+                  placeholder="1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="validDays">{t('admin.coupon.validDays')}</Label>
+                <Input
+                  id="validDays"
+                  type="number"
+                  value={formData.validDays}
+                  onChange={(e) => setFormData({ ...formData, validDays: e.target.value })}
+                  placeholder="30"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="stackable"
+                checked={formData.stackable}
+                onCheckedChange={(checked) => setFormData({ ...formData, stackable: checked })}
+              />
+              <Label htmlFor="stackable">{t('admin.coupon.stackable')}</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+              />
+              <Label htmlFor="isActive">{t('admin.coupon.isActive')}</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleCreate} disabled={createMutation.isPending}>
+              {createMutation.isPending ? t('common.creating') : t('common.create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 编辑优惠券对话框 */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('admin.coupon.edit')}</DialogTitle>
+            <DialogDescription>{t('admin.coupon.editDescription')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            {/* 与创建表单相同的字段 */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-code">{t('admin.coupon.code')}</Label>
+                <Input
+                  id="edit-code"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-type">{t('admin.coupon.type.label')}</Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value: CouponType) => setFormData({ ...formData, type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">{t('admin.coupon.type.fixed')}</SelectItem>
+                    <SelectItem value="percent">{t('admin.coupon.type.percent')}</SelectItem>
+                    <SelectItem value="buy_one_get_one">{t('admin.coupon.type.buyOneGetOne')}</SelectItem>
+                    <SelectItem value="free_product">{t('admin.coupon.type.freeProduct')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-nameZh">{t('admin.coupon.nameZh')}</Label>
+              <Input
+                id="edit-nameZh"
+                value={formData.nameZh}
+                onChange={(e) => setFormData({ ...formData, nameZh: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="edit-value">{t('admin.coupon.value')}</Label>
+                <Input
+                  id="edit-value"
+                  type="number"
+                  value={formData.value}
+                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-minOrderAmount">{t('admin.coupon.minOrder')}</Label>
+                <Input
+                  id="edit-minOrderAmount"
+                  type="number"
+                  value={formData.minOrderAmount}
+                  onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-validDays">{t('admin.coupon.validDays')}</Label>
+                <Input
+                  id="edit-validDays"
+                  type="number"
+                  value={formData.validDays}
+                  onChange={(e) => setFormData({ ...formData, validDays: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="edit-isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+              />
+              <Label htmlFor="edit-isActive">{t('admin.coupon.isActive')}</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? t('common.updating') : t('common.update')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批量发放对话框 */}
+      <Dialog open={showBatchSendDialog} onOpenChange={setShowBatchSendDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('admin.coupon.batchSend')}</DialogTitle>
+            <DialogDescription>{t('admin.coupon.batchSendDescription')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="targetType">{t('admin.coupon.targetType')}</Label>
+              <Select
+                value={batchSendData.targetType}
+                onValueChange={(value: any) => setBatchSendData({ ...batchSendData, targetType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('admin.coupon.target.all')}</SelectItem>
+                  <SelectItem value="new">{t('admin.coupon.target.new')}</SelectItem>
+                  <SelectItem value="vip">{t('admin.coupon.target.vip')}</SelectItem>
+                  <SelectItem value="inactive">{t('admin.coupon.target.inactive')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="reason">{t('admin.coupon.reason')}</Label>
+              <Textarea
+                id="reason"
+                value={batchSendData.reason}
+                onChange={(e) => setBatchSendData({ ...batchSendData, reason: e.target.value })}
+                placeholder={t('admin.coupon.reasonPlaceholder')}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBatchSendDialog(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleBatchSendSubmit} disabled={batchSendMutation.isPending}>
+              {batchSendMutation.isPending ? t('common.sending') : t('common.send')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

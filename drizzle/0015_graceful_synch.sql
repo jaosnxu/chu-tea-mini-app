@@ -1,0 +1,1 @@
+ALTER TABLE `couponTemplates` MODIFY COLUMN `type` enum('fixed','percent','product','gift','buy_one_get_one','free_product') NOT NULL;

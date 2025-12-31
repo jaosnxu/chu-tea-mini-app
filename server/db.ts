@@ -1391,6 +1391,126 @@ export async function updateCouponTemplate(data: { id: number; [key: string]: an
   return { success: true };
 }
 
+export async function deleteCouponTemplate(id: number, operatorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // 检查是否有用户已领取
+  const usedCoupons = await db.select().from(userCoupons).where(eq(userCoupons.templateId, id)).limit(1);
+  if (usedCoupons.length > 0) {
+    throw new Error("该优惠券模板已有用户领取，无法删除");
+  }
+  
+  await db.delete(couponTemplates).where(eq(couponTemplates.id, id));
+  await logOperation(operatorId, 'coupon_templates', 'delete', id.toString(), {});
+  
+  return { success: true };
+}
+
+export async function calculateCouponDiscount(params: {
+  couponId: number;
+  orderAmount: number;
+  items: Array<{ productId: number; quantity: number; price: number }>;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // 获取用户优惠券和模板
+  const userCoupon = await db.select()
+    .from(userCoupons)
+    .where(eq(userCoupons.id, params.couponId))
+    .limit(1);
+  
+  if (userCoupon.length === 0) {
+    throw new Error("优惠券不存在");
+  }
+  
+  if (userCoupon[0].status !== 'available') {
+    throw new Error("优惠券不可用");
+  }
+  
+  const template = await db.select()
+    .from(couponTemplates)
+    .where(eq(couponTemplates.id, userCoupon[0].templateId))
+    .limit(1);
+  
+  if (template.length === 0) {
+    throw new Error("优惠券模板不存在");
+  }
+  
+  const tpl = template[0];
+  
+  // 检查最低订单金额
+  if (tpl.minOrderAmount && params.orderAmount < Number(tpl.minOrderAmount)) {
+    throw new Error(`订单金额不足，最低需要 ${tpl.minOrderAmount} 元`);
+  }
+  
+  let discount = 0;
+  let freeItems: Array<{ productId: number; quantity: number }> = [];
+  
+  switch (tpl.type) {
+    case 'fixed':
+      // 满减券：直接减少固定金额
+      discount = Number(tpl.value);
+      if (tpl.maxDiscount && discount > Number(tpl.maxDiscount)) {
+        discount = Number(tpl.maxDiscount);
+      }
+      break;
+    
+    case 'percent':
+      // 折扣券：按百分比计算折扣
+      discount = params.orderAmount * (Number(tpl.value) / 100);
+      if (tpl.maxDiscount && discount > Number(tpl.maxDiscount)) {
+        discount = Number(tpl.maxDiscount);
+      }
+      break;
+    
+    case 'buy_one_get_one':
+      // 买一送一券：指定商品买一送一
+      if (tpl.applicableProducts && tpl.applicableProducts.length > 0) {
+        for (const item of params.items) {
+          if (tpl.applicableProducts.includes(item.productId)) {
+            // 送相同数量的商品
+            freeItems.push({
+              productId: item.productId,
+              quantity: item.quantity,
+            });
+            // 折扣金额 = 商品价格 * 数量
+            discount += item.price * item.quantity;
+          }
+        }
+      }
+      break;
+    
+    case 'free_product':
+      // 免费券：指定商品免费
+      if (tpl.applicableProducts && tpl.applicableProducts.length > 0) {
+        for (const item of params.items) {
+          if (tpl.applicableProducts.includes(item.productId)) {
+            freeItems.push({
+              productId: item.productId,
+              quantity: Math.min(item.quantity, Number(tpl.value) || 1), // value 表示免费数量
+            });
+            discount += item.price * Math.min(item.quantity, Number(tpl.value) || 1);
+          }
+        }
+      }
+      break;
+    
+    default:
+      throw new Error("不支持的优惠券类型");
+  }
+  
+  // 确保折扣不超过订单金额
+  discount = Math.min(discount, params.orderAmount);
+  
+  return {
+    discount: Number(discount.toFixed(2)),
+    freeItems,
+    finalAmount: Number((params.orderAmount - discount).toFixed(2)),
+  };
+}
+
 export async function batchSendCoupons(data: {
   templateId: number;
   targetType: 'all' | 'new' | 'vip' | 'inactive' | 'specific';

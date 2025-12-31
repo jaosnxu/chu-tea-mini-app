@@ -793,5 +793,59 @@
     "failed": "同步失败",
     "syncNow": "立即同步",
     "noOrders": "暂无离线订单"
+  },
+  "admin": {
+    "coupon": {
+      "title": "优惠券管理",
+      "create": "创建优惠券",
+      "edit": "编辑优惠券",
+      "createDescription": "创建新的优惠券模板",
+      "editDescription": "编辑优惠券模板信息",
+      "createSuccess": "优惠券创建成功",
+      "updateSuccess": "优惠券更新成功",
+      "deleteSuccess": "优惠券删除成功",
+      "deleteConfirm": "确定要删除该优惠券吗？",
+      "empty": "暂无优惠券模板",
+      "createFirst": "创建第一个优惠券",
+      "code": "优惠券码",
+      "nameZh": "中文名称",
+      "nameRu": "俄文名称",
+      "nameEn": "英文名称",
+      "descriptionZh": "中文描述",
+      "descriptionRu": "俄文描述",
+      "descriptionEn": "英文描述",
+      "value": "优惠值",
+      "minOrder": "最低订单",
+      "maxDiscount": "最大折扣",
+      "totalQuantity": "总数量",
+      "perUserLimit": "每人限领",
+      "validDays": "有效天数",
+      "stackable": "可叠加",
+      "isActive": "启用",
+      "usage": "使用情况",
+      "batchSend": "批量发放",
+      "batchSendDescription": "选择目标用户群体批量发放优惠券",
+      "batchSendSuccess": "成功发放 {{count}} 张优惠券",
+      "targetType": "目标用户",
+      "reason": "发放原因",
+      "reasonPlaceholder": "例如：新年活动福利",
+      "buyOneGetOne": "买一送一",
+      "freeProduct": "免费商品",
+      "type": {
+        "label": "优惠券类型",
+        "fixed": "满减券",
+        "percent": "折扣券",
+        "product": "商品券",
+        "gift": "赠品券",
+        "buyOneGetOne": "买一送一券",
+        "freeProduct": "免费券"
+      },
+      "target": {
+        "all": "所有用户",
+        "new": "新用户（30天内）",
+        "vip": "VIP 用户",
+        "inactive": "流失用户"
+      }
+    }
   }
 }

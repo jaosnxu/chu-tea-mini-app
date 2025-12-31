@@ -1213,6 +1213,95 @@ export const appRouter = router({
         return await db.updateUserNotificationPreferences(ctx.user.id, input);
       }),
   }),
+
+  // ==================== 管理员 - 优惠券管理 ====================
+  adminCoupon: router({
+    // 获取所有优惠券模板
+    listTemplates: adminProcedure
+      .query(async () => {
+        return await db.getAllCouponTemplates();
+      }),
+
+    // 创建优惠券模板
+    createTemplate: adminProcedure
+      .input(z.object({
+        code: z.string(),
+        nameZh: z.string(),
+        nameRu: z.string(),
+        nameEn: z.string(),
+        descriptionZh: z.string().optional(),
+        descriptionRu: z.string().optional(),
+        descriptionEn: z.string().optional(),
+        type: z.enum(['fixed', 'percent', 'product', 'gift', 'buy_one_get_one', 'free_product']),
+        value: z.string(),
+        minOrderAmount: z.string().optional(),
+        maxDiscount: z.string().optional(),
+        applicableProducts: z.array(z.number()).optional(),
+        applicableCategories: z.array(z.number()).optional(),
+        applicableStores: z.array(z.number()).optional(),
+        excludeProducts: z.array(z.number()).optional(),
+        stackable: z.boolean().optional(),
+        totalQuantity: z.number().optional(),
+        perUserLimit: z.number().optional(),
+        validDays: z.number().optional(),
+        startAt: z.string().optional(),
+        endAt: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.createCouponTemplate(input, ctx.user.id);
+      }),
+
+    // 更新优惠券模板
+    updateTemplate: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        code: z.string().optional(),
+        nameZh: z.string().optional(),
+        nameRu: z.string().optional(),
+        nameEn: z.string().optional(),
+        descriptionZh: z.string().optional(),
+        descriptionRu: z.string().optional(),
+        descriptionEn: z.string().optional(),
+        type: z.enum(['fixed', 'percent', 'product', 'gift', 'buy_one_get_one', 'free_product']).optional(),
+        value: z.string().optional(),
+        minOrderAmount: z.string().optional(),
+        maxDiscount: z.string().optional(),
+        applicableProducts: z.array(z.number()).optional(),
+        applicableCategories: z.array(z.number()).optional(),
+        applicableStores: z.array(z.number()).optional(),
+        excludeProducts: z.array(z.number()).optional(),
+        stackable: z.boolean().optional(),
+        totalQuantity: z.number().optional(),
+        perUserLimit: z.number().optional(),
+        validDays: z.number().optional(),
+        startAt: z.string().optional(),
+        endAt: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.updateCouponTemplate(input, ctx.user.id);
+      }),
+
+    // 删除优惠券模板
+    deleteTemplate: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.deleteCouponTemplate(input.id, ctx.user.id);
+      }),
+
+    // 批量发放优惠券
+    batchSend: adminProcedure
+      .input(z.object({
+        templateId: z.number(),
+        targetType: z.enum(['all', 'new', 'vip', 'inactive', 'specific']),
+        userIds: z.array(z.number()).optional(),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.batchSendCoupons(input, ctx.user.id);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

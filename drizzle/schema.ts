@@ -309,7 +309,7 @@ export const couponTemplates = mysqlTable("couponTemplates", {
   descriptionZh: text("descriptionZh"),
   descriptionRu: text("descriptionRu"),
   descriptionEn: text("descriptionEn"),
-  type: mysqlEnum("type", ["fixed", "percent", "product", "gift"]).notNull(),
+  type: mysqlEnum("type", ["fixed", "percent", "product", "gift", "buy_one_get_one", "free_product"]).notNull(),
   value: decimal("value", { precision: 10, scale: 2 }).notNull(),
   minOrderAmount: decimal("minOrderAmount", { precision: 10, scale: 2 }).default("0.00"),
   maxDiscount: decimal("maxDiscount", { precision: 10, scale: 2 }),
