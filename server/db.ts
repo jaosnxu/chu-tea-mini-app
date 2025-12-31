@@ -620,6 +620,30 @@ export async function createOrder(userId: number, data: {
     console.error('[Order] Failed to send order confirmation:', error);
   }
   
+  // 将订单添加到 IIKO 同步队列（只有指定了 storeId 的订单才同步）
+  if (data.storeId) {
+    try {
+      const { addOrderToQueue } = await import('./iiko-db.js');
+      await addOrderToQueue({
+        orderId,
+        orderNo,
+        storeId: data.storeId,
+        orderData: JSON.stringify({
+          orderType: data.orderType,
+          deliveryType: data.deliveryType,
+          items: data.items,
+          addressSnapshot,
+          totalAmount,
+        }),
+        priority: 1, // 普通优先级
+      });
+      console.log(`[Order] Order ${orderNo} added to IIKO sync queue`);
+    } catch (error) {
+      console.error('[Order] Failed to add order to IIKO queue:', error);
+      // 不影响订单创建，只记录错误
+    }
+  }
+  
   return { success: true, orderId, orderNo };
 }
 

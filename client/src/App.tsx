@@ -45,6 +45,7 @@ import AdminApiConfig from "./pages/admin/ApiConfigManagement";
 import AdminLogs from "./pages/admin/LogsManagement";
 import AdminNotifications from "./pages/admin/NotificationsManagement";
 import AdminIikoConfig from "./pages/admin/IikoConfig";
+import AdminIikoMonitor from "./pages/admin/IikoMonitor";
 
 function Router() {
   return (
@@ -95,6 +96,7 @@ function Router() {
       <Route path="/admin/logs" component={() => <AdminLayout><AdminLogs /></AdminLayout>} />
       <Route path="/admin/notifications" component={AdminNotifications} />
       <Route path="/admin/iiko" component={() => <AdminLayout><AdminIikoConfig /></AdminLayout>} />
+      <Route path="/admin/iiko-monitor" component={() => <AdminLayout><AdminIikoMonitor /></AdminLayout>} />
       
       {/* 404 */}
       <Route path="/404" component={NotFound} />

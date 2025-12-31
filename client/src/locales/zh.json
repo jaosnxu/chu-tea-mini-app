@@ -348,7 +348,8 @@
       "permissions": "权限管理",
       "settings": "系统设置",
       "users": "用户管理",
-      "notifications": "通知管理"
+      "notifications": "通知管理",
+      "iikoMonitor": "IIKO 监控"
     },
     "notifications": {
       "title": "通知",

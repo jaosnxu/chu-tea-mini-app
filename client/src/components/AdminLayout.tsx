@@ -65,6 +65,7 @@ const navItems: NavItem[] = [
   { icon: Bell, labelKey: "admin.nav.notifications", path: "/admin/notifications" },
   { icon: Plug, labelKey: "admin.nav.api", path: "/admin/api" },
   { icon: Cpu, labelKey: "admin.nav.iiko", path: "/admin/iiko" },
+  { icon: BarChart3, labelKey: "admin.nav.iikoMonitor", path: "/admin/iiko-monitor" },
   { icon: FileText, labelKey: "admin.nav.logs", path: "/admin/logs" },
 ];
 
