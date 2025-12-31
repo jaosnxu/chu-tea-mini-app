@@ -308,6 +308,14 @@
     "viewMenu": "View Menu",
     "hotProducts": "Hot Products"
   },
+  "settings": {
+    "settings": "Settings",
+    "language": "Language",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "help": "Help & Support",
+    "about": "About CHU TEA"
+  },
   "error": {
     "networkError": "Network error, please try again",
     "serverError": "Server error",

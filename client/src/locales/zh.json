@@ -308,6 +308,14 @@
     "viewMenu": "查看菜单",
     "hotProducts": "热销商品"
   },
+  "settings": {
+    "settings": "设置",
+    "language": "语言",
+    "notifications": "通知设置",
+    "privacy": "隐私设置",
+    "help": "帮助与反馈",
+    "about": "关于 CHU TEA"
+  },
   "error": {
     "networkError": "网络错误，请稍后重试",
     "serverError": "服务器错误",

@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO categories (type, nameZh, nameRu, nameEn, sortOrder, isActive) VALUES\n('tea', '招牌奶茶', 'Фирменный молочный чай', 'Signature Milk Tea', 1, true),\n('tea', '鲜果茶', 'Фруктовый чай', 'Fresh Fruit Tea', 2, true),\n('tea', '纯茶系列', 'Чистый чай', 'Pure Tea', 3, true),\n('tea', '芝士奶盖', 'Сырный топпинг', 'Cheese Foam', 4, true),\n('tea', '季节限定', 'Сезонное меню', 'Seasonal Special', 5, true),\n('mall', '茶叶礼盒', 'Подарочные наборы чая', 'Tea Gift Sets', 1, true),\n('mall', '周边商品', 'Сувениры', 'Merchandise', 2, true),\n('mall', '茶具器皿', 'Чайная посуда', 'Tea Accessories', 3, true);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute INSERT INTO categories (type, nameZh, nameRu, nameEn, sortOrder, isActive) VALUES\n('tea', '招牌奶茶', 'Фирменный молочный чай', 'Signature Milk Tea', 1, true),\n('tea', '鲜果茶', 'Фруктовый чай', 'Fresh Fruit Tea', 2, true),\n('tea', '纯茶系列', 'Чистый чай', 'Pure Tea', 3, true),\n('tea', '芝士奶盖', 'Сырный топпинг', 'Cheese Foam', 4, true),\n('tea', '季节限定', 'Сезонное меню', 'Seasonal Special', 5, true),\n('mall', '茶叶礼盒', 'Подарочные наборы чая', 'Tea Gift Sets', 1, true),\n('mall', '周边商品', 'Сувениры', 'Merchandise', 2, true),\n('mall', '茶具器皿', 'Чайная посуда', 'Tea Accessories', 3, true);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1529
+}

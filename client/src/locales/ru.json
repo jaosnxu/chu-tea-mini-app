@@ -308,6 +308,14 @@
     "viewMenu": "Меню",
     "hotProducts": "Хиты продаж"
   },
+  "settings": {
+    "settings": "Настройки",
+    "language": "Язык",
+    "notifications": "Уведомления",
+    "privacy": "Конфиденциальность",
+    "help": "Помощь",
+    "about": "О CHU TEA"
+  },
   "error": {
     "networkError": "Ошибка сети, попробуйте позже",
     "serverError": "Ошибка сервера",
