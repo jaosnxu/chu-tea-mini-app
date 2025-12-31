@@ -2,6 +2,8 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { iikoRouter } from "./routers/iiko.js";
+import { paymentRouter } from "./routers/payment.js";
+import { analyticsRouter } from "./routers/analytics.js";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
@@ -9,6 +11,8 @@ import * as db from "./db";
 export const appRouter = router({
   system: systemRouter,
   iiko: iikoRouter,
+  payment: paymentRouter,
+  analytics: analyticsRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -518,83 +522,6 @@ export const appRouter = router({
           }
           return { success: false, message: `连接失败: ${error.message}` };
         }
-      }),
-  }),
-
-  // 支付路由
-  payment: router({
-    create: protectedProcedure
-      .input(z.object({
-        orderId: z.number(),
-        amount: z.string(),
-        currency: z.string().optional().default('RUB'),
-        description: z.string(),
-        returnUrl: z.string(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const yookassa = await import('./yookassa');
-        return await yookassa.createPayment({
-          orderId: input.orderId,
-          amount: input.amount,
-          currency: input.currency,
-          description: input.description,
-          returnUrl: input.returnUrl,
-          metadata: {
-            userId: ctx.user.id,
-            orderId: input.orderId,
-          },
-        });
-      }),
-    getStatus: protectedProcedure
-      .input(z.object({ paymentId: z.string() }))
-      .query(async ({ input }) => {
-        const yookassa = await import('./yookassa');
-        return await yookassa.getPaymentStatus(input.paymentId);
-      }),
-    getByOrderId: protectedProcedure
-      .input(z.object({ orderId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getPaymentByOrderId(input.orderId);
-      }),
-    createRefund: adminProcedure
-      .input(z.object({
-        paymentId: z.string(),
-        amount: z.string(),
-        currency: z.string().optional().default('RUB'),
-        description: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const yookassa = await import('./yookassa');
-        return await yookassa.createRefund({
-          paymentId: input.paymentId,
-          amount: input.amount,
-          currency: input.currency,
-          description: input.description,
-        });
-      }),
-    getRefundStatus: adminProcedure
-      .input(z.object({ refundId: z.string() }))
-      .query(async ({ input }) => {
-        const yookassa = await import('./yookassa');
-        return await yookassa.getRefundStatus(input.refundId);
-      }),
-    list: adminProcedure
-      .input(z.object({
-        status: z.string().optional(),
-        search: z.string().optional(),
-      }))
-      .query(async ({ input }) => {
-        return await db.getAllPayments(input.status, input.search);
-      }),
-    getRefundsByPaymentId: adminProcedure
-      .input(z.object({ paymentId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getRefundsByPaymentId(input.paymentId);
-      }),
-    getStatistics: adminProcedure
-      .input(z.object({ period: z.enum(['today', 'week', 'month']) }))
-      .query(async ({ input }) => {
-        return await db.getPaymentStatistics(input.period);
       }),
   }),
 

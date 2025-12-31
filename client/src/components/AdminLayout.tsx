@@ -76,6 +76,7 @@ const navItems: NavItem[] = [
   { icon: Settings, labelKey: "admin.nav.productConfig", path: "/admin/product-config" },
   { icon: Settings, labelKey: "admin.nav.deliverySettings", path: "/admin/delivery-settings" },
   { icon: Coins, labelKey: "admin.nav.pointsRules", path: "/admin/points-rules" },
+  { icon: BarChart3, labelKey: "admin.nav.analytics", path: "/admin/analytics" },
   { icon: FileText, labelKey: "admin.nav.logs", path: "/admin/logs" },
 ];
 

@@ -436,7 +436,8 @@
       "payments": "支付记录",
       "productConfig": "商品配置",
       "deliverySettings": "配送设置",
-      "pointsRules": "积分规则"
+      "pointsRules": "积分规则",
+      "analytics": "数据分析"
     },
     "notifications": {
       "title": "通知",

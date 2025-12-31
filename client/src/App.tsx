@@ -48,6 +48,7 @@ const AdminCoupons = lazy(() => import("./pages/admin/CouponsManagement"));
 const AdminOrders = lazy(() => import("./pages/admin/OrdersManagement"));
 const AdminMarketing = lazy(() => import("./pages/admin/MarketingManagement"));
 const AdminStores = lazy(() => import("./pages/admin/StoresManagement"));
+const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 const AdminUsers = lazy(() => import("./pages/admin/UsersManagement"));
 const AdminApiConfig = lazy(() => import("./pages/admin/ApiConfigManagement"));
 const AdminLogs = lazy(() => import("./pages/admin/LogsManagement"));
@@ -125,6 +126,7 @@ function Router() {
       <Route path="/admin/payments" component={() => <AdminLayout><AdminPaymentHistory /></AdminLayout>} />
       <Route path="/admin/product-config" component={() => <AdminLayout><AdminProductConfig /></AdminLayout>} />
       <Route path="/admin/delivery-settings" component={() => <AdminLayout><AdminDeliverySettings /></AdminLayout>} />
+      <Route path="/admin/analytics" component={() => <AdminLayout><AdminAnalytics /></AdminLayout>} />
       <Route path="/admin/points-rules" component={() => <AdminLayout><AdminPointsRules /></AdminLayout>} />
       <Route path="/admin/marketing-triggers" component={() => <AdminLayout><AdminMarketingTriggers /></AdminLayout>} />
       <Route path="/admin/trigger-executions/:id" component={() => <AdminLayout><AdminTriggerExecutionHistory /></AdminLayout>} />
