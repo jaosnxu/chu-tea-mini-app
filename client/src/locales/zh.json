@@ -154,7 +154,12 @@
       "exceedsMax": "退款金额不能超过订单总额",
       "success": "退款成功",
       "failed": "退款失败",
-      "noPayment": "未找到支付记录"
+      "noPayment": "未找到支付记录",
+      "status": {
+        "pending": "处理中",
+        "succeeded": "成功",
+        "failed": "失败"
+      }
     },
     "cancelReason": "取消原因",
     "confirmCancel": "确认取消",
@@ -509,6 +514,16 @@
       "logout": "退出登录"
     },
     "dashboard": {
+      "paymentStats": "支付统计",
+      "totalAmount": "总金额",
+      "successCount": "成功笔数",
+      "successRate": "成功率",
+      "refundRate": "退款率",
+      "period": {
+        "today": "今日",
+        "week": "本周",
+        "month": "本月"
+      },
       "title": "仪表盘",
       "todayOrders": "今日订单",
       "todayRevenue": "今日营收",

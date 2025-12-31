@@ -5,7 +5,7 @@ import {
   InsertUser, users, stores, categories, products, productOptions, productOptionItems,
   productSkus, cartItems, addresses, orders, orderItems, shipments,
   couponTemplates, userCoupons, pointsHistory, influencers, influencerLinks,
-  influencerCommissions, payments, landingPages, systemConfigs,
+  influencerCommissions, payments, refunds, landingPages, systemConfigs,
   operationLogs, homeEntries, apiConfigs, marketingCampaigns, adMaterials,
   notifications, notificationTemplates, notificationRules,
   telegramBotConfigs, adminTelegramBindings, yookassaConfig,
@@ -2592,4 +2592,153 @@ export async function getAllPayments(status?: string, search?: string) {
 
   const results = await query.orderBy(desc(payments.createdAt));
   return results;
+}
+
+/**
+ * 创建退款记录
+ */
+export async function createRefund(data: {
+  paymentId: number;
+  refundNo: string;
+  gatewayRefundId?: string;
+  amount: string;
+  currency: string;
+  reason?: string;
+  status?: 'pending' | 'succeeded' | 'failed';
+}) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  const [refund] = await database.insert(refunds).values({
+    paymentId: data.paymentId,
+    refundNo: data.refundNo,
+    gatewayRefundId: data.gatewayRefundId,
+    amount: data.amount,
+    currency: data.currency,
+    reason: data.reason,
+    status: data.status || 'pending',
+  });
+
+  return await database.select().from(refunds).where(eq(refunds.id, refund.insertId)).limit(1).then(r => r[0]);
+}
+
+/**
+ * 更新退款状态
+ */
+export async function updateRefundStatus(refundId: number, status: 'pending' | 'succeeded' | 'failed', errorMessage?: string) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  await database.update(refunds)
+    .set({
+      status,
+      errorMessage,
+      refundedAt: status === 'succeeded' ? new Date() : undefined,
+      updatedAt: new Date(),
+    })
+    .where(eq(refunds.id, refundId));
+
+  return await database.select().from(refunds).where(eq(refunds.id, refundId)).limit(1).then(r => r[0]);
+}
+
+/**
+ * 根据支付ID获取退款记录
+ */
+export async function getRefundsByPaymentId(paymentId: number) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  return await database.select().from(refunds).where(eq(refunds.paymentId, paymentId)).orderBy(desc(refunds.createdAt));
+}
+
+/**
+ * 获取所有退款记录（支持筛选）
+ */
+export async function getAllRefunds(status?: string, search?: string) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  const conditions = [];
+  
+  if (status) {
+    conditions.push(eq(refunds.status, status as any));
+  }
+  
+  if (search) {
+    const searchNumber = parseInt(search);
+    if (!isNaN(searchNumber)) {
+      conditions.push(
+        or(
+          eq(refunds.refundNo, search),
+          eq(refunds.paymentId, searchNumber)
+        )
+      );
+    } else {
+      conditions.push(eq(refunds.refundNo, search));
+    }
+  }
+
+  const query = conditions.length > 0
+    ? database.select().from(refunds).where(and(...conditions))
+    : database.select().from(refunds);
+
+  return await query.orderBy(desc(refunds.createdAt));
+}
+
+/**
+ * 获取支付统计数据
+ */
+export async function getPaymentStatistics(period: 'today' | 'week' | 'month') {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  const now = new Date();
+  let startDate: Date;
+
+  switch (period) {
+    case 'today':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      break;
+    case 'week':
+      const dayOfWeek = now.getDay();
+      const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // 周一为起始
+      startDate = new Date(now.getFullYear(), now.getMonth(), diff);
+      startDate.setHours(0, 0, 0, 0);
+      break;
+    case 'month':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+  }
+
+  // 获取所有支付记录
+  const allPayments = await database
+    .select()
+    .from(payments)
+    .where(gte(payments.createdAt, startDate));
+
+  // 计算统计数据
+  const totalAmount = allPayments.reduce((sum, p) => {
+    if (p.status === 'succeeded') {
+      return sum + parseFloat(p.amount);
+    }
+    return sum;
+  }, 0);
+
+  const successCount = allPayments.filter(p => p.status === 'succeeded').length;
+  const failedCount = allPayments.filter(p => p.status === 'failed').length;
+  const refundedCount = allPayments.filter(p => p.status === 'refunded').length;
+  const totalCount = allPayments.length;
+
+  const successRate = totalCount > 0 ? (successCount / totalCount) * 100 : 0;
+  const refundRate = successCount > 0 ? (refundedCount / successCount) * 100 : 0;
+
+  return {
+    totalAmount: totalAmount.toFixed(2),
+    totalCount,
+    successCount,
+    failedCount,
+    refundedCount,
+    successRate: successRate.toFixed(2),
+    refundRate: refundRate.toFixed(2),
+  };
 }

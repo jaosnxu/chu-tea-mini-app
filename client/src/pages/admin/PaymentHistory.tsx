@@ -26,11 +26,18 @@ export default function PaymentHistory() {
   const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedPaymentId, setExpandedPaymentId] = useState<number | null>(null);
 
   const { data: payments, isLoading } = trpc.payment.list.useQuery({
     status: statusFilter === 'all' ? undefined : statusFilter,
     search: searchQuery || undefined,
   });
+
+  // 获取退款记录
+  const { data: refunds } = trpc.payment.getRefundsByPaymentId.useQuery(
+    { paymentId: expandedPaymentId! },
+    { enabled: expandedPaymentId !== null }
+  );
 
   const handleExport = () => {
     if (!payments || payments.length === 0) {
@@ -172,6 +179,68 @@ export default function PaymentHistory() {
                       </div>
                     )}
                   </div>
+
+                  {/* 显示退款记录按钮 */}
+                  {payment.status === 'refunded' && (
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedPaymentId(
+                          expandedPaymentId === payment.id ? null : payment.id
+                        )}
+                      >
+                        {expandedPaymentId === payment.id ? '隐藏' : '查看'}退款记录
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* 退款记录列表 */}
+                  {expandedPaymentId === payment.id && refunds && refunds.length > 0 && (
+                    <div className="mt-4 pl-4 border-l-2 border-gray-200 space-y-2">
+                      <h4 className="text-sm font-medium text-gray-700">退款记录</h4>
+                      {refunds.map((refund: any) => (
+                        <div key={refund.id} className="bg-gray-50 p-3 rounded text-sm">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <span className="text-gray-500">退款编号:</span>{' '}
+                              <span className="font-mono">{refund.refundNo}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">状态:</span>{' '}
+                              <Badge className={statusColors[refund.status] || 'bg-gray-100'}>
+                                {t(`payment.refund.status.${refund.status}`)}
+                              </Badge>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">退款金额:</span>{' '}
+                              <span className="font-medium">₽{refund.amount} {refund.currency}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">退款时间:</span>{' '}
+                              <span>
+                                {refund.refundedAt
+                                  ? new Date(refund.refundedAt).toLocaleString()
+                                  : '-'}
+                              </span>
+                            </div>
+                            {refund.reason && (
+                              <div className="col-span-2">
+                                <span className="text-gray-500">退款原因:</span>{' '}
+                                <span>{refund.reason}</span>
+                              </div>
+                            )}
+                            {refund.errorMessage && (
+                              <div className="col-span-2">
+                                <span className="text-gray-500">错误信息:</span>{' '}
+                                <span className="text-red-600">{refund.errorMessage}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>

@@ -516,6 +516,16 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getAllPayments(input.status, input.search);
       }),
+    getRefundsByPaymentId: adminProcedure
+      .input(z.object({ paymentId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getRefundsByPaymentId(input.paymentId);
+      }),
+    getStatistics: adminProcedure
+      .input(z.object({ period: z.enum(['today', 'week', 'month']) }))
+      .query(async ({ input }) => {
+        return await db.getPaymentStatistics(input.period);
+      }),
   }),
 
   // Telegram 用户同步

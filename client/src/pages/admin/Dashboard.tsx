@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { trpc } from '@/lib/trpc';
+import { useState } from 'react';
 import {
   ShoppingCart,
   Users,
@@ -11,10 +13,17 @@ import {
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
+  CreditCard,
 } from "lucide-react";
 
 export default function AdminDashboard() {
   const { t } = useTranslation();
+  const [paymentPeriod, setPaymentPeriod] = useState<'today' | 'week' | 'month'>('today');
+
+  // 获取支付统计数据
+  const { data: paymentStats, isLoading: paymentStatsLoading } = trpc.payment.getStatistics.useQuery({
+    period: paymentPeriod,
+  });
 
   // Mock data - 实际应从 API 获取
   const stats = {
@@ -90,6 +99,53 @@ export default function AdminDashboard() {
         <h1 className="text-2xl font-bold">{t("admin.dashboard.title")}</h1>
         <p className="text-gray-500">{t("admin.dashboard.subtitle")}</p>
       </div>
+
+      {/* 支付统计卡片 */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              {t('admin.dashboard.paymentStats')}
+            </CardTitle>
+            <select
+              value={paymentPeriod}
+              onChange={(e) => setPaymentPeriod(e.target.value as any)}
+              className="text-sm border rounded px-2 py-1"
+            >
+              <option value="today">{t('admin.dashboard.period.today')}</option>
+              <option value="week">{t('admin.dashboard.period.week')}</option>
+              <option value="month">{t('admin.dashboard.period.month')}</option>
+            </select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {paymentStatsLoading ? (
+            <div className="text-center py-4 text-gray-500">加载中...</div>
+          ) : paymentStats ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <p className="text-2xl font-bold text-green-600">₽{paymentStats.totalAmount}</p>
+                <p className="text-xs text-gray-500">{t('admin.dashboard.totalAmount')}</p>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">{paymentStats.successCount}</p>
+                <p className="text-xs text-gray-500">{t('admin.dashboard.successCount')}</p>
+              </div>
+              <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                <p className="text-2xl font-bold text-yellow-600">{paymentStats.successRate}%</p>
+                <p className="text-xs text-gray-500">{t('admin.dashboard.successRate')}</p>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <p className="text-2xl font-bold text-red-600">{paymentStats.refundRate}%</p>
+                <p className="text-xs text-gray-500">{t('admin.dashboard.refundRate')}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-500">无数据</div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

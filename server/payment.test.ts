@@ -201,6 +201,55 @@ describe('Payment Integration Tests', () => {
     });
   });
 
+  describe('Refund History', () => {
+    it('should get refunds by payment ID', async () => {
+      const caller = appRouter.createCaller(adminContext);
+      // 注意：需要真实的支付 ID
+      // 这里只测试 API 可用性
+      expect(caller.payment.getRefundsByPaymentId).toBeDefined();
+    });
+
+    it('should not allow non-admin to get refunds', async () => {
+      const caller = appRouter.createCaller(userContext);
+      await expect(
+        caller.payment.getRefundsByPaymentId({ paymentId: 1 })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('Payment Statistics', () => {
+    it('should allow admin to get payment statistics for today', async () => {
+      const caller = appRouter.createCaller(adminContext);
+      const stats = await caller.payment.getStatistics({ period: 'today' });
+      expect(stats).toHaveProperty('totalAmount');
+      expect(stats).toHaveProperty('totalCount');
+      expect(stats).toHaveProperty('successCount');
+      expect(stats).toHaveProperty('successRate');
+      expect(stats).toHaveProperty('refundRate');
+    });
+
+    it('should allow admin to get payment statistics for week', async () => {
+      const caller = appRouter.createCaller(adminContext);
+      const stats = await caller.payment.getStatistics({ period: 'week' });
+      expect(stats).toHaveProperty('totalAmount');
+      expect(stats).toHaveProperty('totalCount');
+    });
+
+    it('should allow admin to get payment statistics for month', async () => {
+      const caller = appRouter.createCaller(adminContext);
+      const stats = await caller.payment.getStatistics({ period: 'month' });
+      expect(stats).toHaveProperty('totalAmount');
+      expect(stats).toHaveProperty('totalCount');
+    });
+
+    it('should not allow non-admin to get payment statistics', async () => {
+      const caller = appRouter.createCaller(userContext);
+      await expect(
+        caller.payment.getStatistics({ period: 'today' })
+      ).rejects.toThrow();
+    });
+  });
+
   afterAll(async () => {
     // 清理测试数据
     try {

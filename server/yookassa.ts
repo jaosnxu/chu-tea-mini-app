@@ -169,6 +169,19 @@ export async function handleWebhookNotification(notification: any) {
     await updateOrderStatus({ orderId: paymentRecord.orderId, status: 'paid' }, 0); // operatorId=0 for system operation
   }
 
+  // 如果支付失败，发送通知给管理员
+  if (newStatus === 'failed') {
+    try {
+      const { notifyOwner } = await import('./_core/notification');
+      await notifyOwner({
+        title: '支付失败通知',
+        content: `订单 #${paymentRecord.orderId} 的支付失败。\n支付编号: ${paymentRecord.paymentNo}\n金额: ₽${paymentRecord.amount}\n错误原因: ${paymentData.cancellation_details?.reason || '未知'}`,
+      });
+    } catch (error) {
+      console.error('[YooKassa] Failed to send payment failure notification:', error);
+    }
+  }
+
   return {
     paymentId: paymentData.id,
     status: newStatus,
@@ -186,10 +199,24 @@ export async function createRefund(params: {
   description?: string;
 }) {
   const client = await createYooKassaClient();
-  const db = await getDb();
+  const dbModule = await import('./db');
+  const db = await dbModule.getDb();
   if (!db) throw new Error('Database not available');
 
   try {
+    // 查找支付记录
+    const paymentRecords = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.gatewayPaymentId, params.paymentId))
+      .limit(1);
+
+    if (paymentRecords.length === 0) {
+      throw new Error('Payment not found');
+    }
+
+    const paymentRecord = paymentRecords[0];
+
     // 创建退款
     const refund = await client.createRefund({
       payment_id: params.paymentId,
@@ -198,6 +225,17 @@ export async function createRefund(params: {
         currency: params.currency || 'RUB',
       },
       description: params.description,
+    });
+
+    // 创建退款记录
+    await dbModule.createRefund({
+      paymentId: paymentRecord.id,
+      refundNo: `REF-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+      gatewayRefundId: refund.id,
+      amount: refund.amount.value,
+      currency: refund.amount.currency,
+      reason: params.description,
+      status: refund.status === 'succeeded' ? 'succeeded' : 'pending',
     });
 
     // 更新支付记录状态
