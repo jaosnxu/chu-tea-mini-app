@@ -8,6 +8,10 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 import "./lib/i18n"; // 初始化 i18n
+import { initTelegramSDK } from "./lib/telegram"; // 初始化 Telegram SDK
+
+// 初始化 Telegram Web App
+initTelegramSDK();
 
 const queryClient = new QueryClient();
 

@@ -289,3 +289,10 @@
 - [x] 配置 Bot 菜单按钮和 Web App URL
 - [x] 更新 Bot 欢迎消息添加入口按钮
 - [x] 测试从 Bot 进入 Mini App
+
+## Telegram Mini App SDK 集成
+- [x] 安装 @twa-dev/sdk 并初始化
+- [x] 实现 Telegram 用户自动登录
+- [ ] 适配 Telegram 主题颜色
+- [ ] 添加返回按钮和关闭确认
+- [ ] 测试 SDK 功能

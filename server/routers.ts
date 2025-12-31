@@ -15,6 +15,40 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+    telegramLogin: publicProcedure
+      .input(z.object({ initData: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        // TODO: 验证 Telegram initData 的签名
+        // 解析 initData
+        const params = new URLSearchParams(input.initData);
+        const userStr = params.get('user');
+        if (!userStr) {
+          throw new Error('Invalid Telegram data');
+        }
+        
+        const telegramUser = JSON.parse(userStr);
+        const telegramId = telegramUser.id.toString();
+        
+        // 查找或创建用户
+        let user = await db.getUserByTelegramId(telegramId);
+        if (!user) {
+          // 创建新用户
+          const openId = `telegram_${telegramId}`;
+          user = await db.createUser({
+            openId,
+            telegramId,
+            name: telegramUser.first_name + (telegramUser.last_name ? ' ' + telegramUser.last_name : ''),
+            username: telegramUser.username || undefined,
+            languageCode: telegramUser.language_code || 'zh',
+          });
+        }
+        
+        // 设置 session cookie
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, user.openId, cookieOptions);
+        
+        return { success: true, user };
+      }),
   }),
 
   // 门店路由

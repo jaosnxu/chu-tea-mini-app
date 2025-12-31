@@ -2117,3 +2117,52 @@ export async function sendSystemAlertNotification(title: string, content: string
     }
   }
 }
+
+// Telegram 用户相关函数
+export async function getUserByTelegramId(telegramId: string) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.telegramId, telegramId))
+    .limit(1);
+  return result[0] || null;
+}
+
+export async function createUser(data: {
+  openId: string;
+  telegramId?: string;
+  name: string;
+  username?: string;
+  languageCode?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const now = new Date();
+  const result = await db
+    .insert(users)
+    .values({
+      openId: data.openId,
+      telegramId: data.telegramId || null,
+      telegramUsername: data.username || null,
+      name: data.name,
+      language: data.languageCode || 'zh',
+      role: 'user',
+      totalPoints: 0,
+      availablePoints: 0,
+      totalSpent: '0.00',
+      createdAt: now,
+      updatedAt: now,
+      lastSignedIn: now,
+    });
+  
+  // 获取新创建的用户
+  const newUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, data.openId))
+    .limit(1);
+  
+  return newUser[0];
+}
