@@ -40,8 +40,10 @@ export default function Checkout() {
 
     setIsSubmitting(true);
     try {
+      // 1. 创建订单
       const result = await createOrderMutation.mutateAsync({
         orderType: 'tea',
+        orderSource: 'telegram',
         deliveryType,
         storeId: currentStore?.id,
         remark,
@@ -59,7 +61,9 @@ export default function Checkout() {
       });
 
       toast.success(t('order.createOrder'));
-      navigate(`/order/${result.orderId}`);
+      
+      // 2. 跳转到支付页面（带上订单 ID）
+      navigate(`/payment/${result.orderId}`);
     } catch (error) {
       toast.error(t('common.error'));
     } finally {

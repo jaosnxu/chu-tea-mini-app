@@ -29,12 +29,19 @@ export default function MallCheckout() {
     if (!defaultAddress) { toast.error(t('address.noAddress')); navigate('/addresses'); return; }
     setIsSubmitting(true);
     try {
+      // 1. 创建订单
       const result = await createOrderMutation.mutateAsync({
-        orderType: 'mall', deliveryType: 'delivery', addressId: defaultAddress.id, remark,
+        orderType: 'mall',
+        orderSource: 'telegram',
+        deliveryType: 'delivery',
+        addressId: defaultAddress.id,
+        remark,
         items: mallCartItems.map(item => ({ productId: item.productId, skuId: item.skuId || undefined, quantity: item.quantity, unitPrice: item.unitPrice })),
       });
       toast.success(t('order.createOrder'));
-      navigate(`/order/${result.orderId}`);
+      
+      // 2. 跳转到支付页面（带上订单 ID）
+      navigate(`/payment/${result.orderId}`);
     } catch { toast.error(t('common.error')); }
     finally { setIsSubmitting(false); }
   };

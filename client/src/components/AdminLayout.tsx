@@ -36,6 +36,7 @@ import {
   BarChart3,
   Plug,
   Cpu,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import NotificationBell from "@/components/NotificationBell";
@@ -66,6 +67,7 @@ const navItems: NavItem[] = [
   { icon: Plug, labelKey: "admin.nav.api", path: "/admin/api" },
   { icon: Cpu, labelKey: "admin.nav.iiko", path: "/admin/iiko" },
   { icon: BarChart3, labelKey: "admin.nav.iikoMonitor", path: "/admin/iiko-monitor" },
+  { icon: CreditCard, labelKey: "admin.nav.yookassa", path: "/admin/yookassa" },
   { icon: FileText, labelKey: "admin.nav.logs", path: "/admin/logs" },
 ];
 

@@ -8,7 +8,7 @@ import {
   influencerCommissions, payments, landingPages, systemConfigs,
   operationLogs, homeEntries, apiConfigs, marketingCampaigns, adMaterials,
   notifications, notificationTemplates, notificationRules,
-  telegramBotConfigs, adminTelegramBindings,
+  telegramBotConfigs, adminTelegramBindings, yookassaConfig,
   InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -2460,4 +2460,99 @@ export async function createUser(data: {
     .limit(1);
   
   return newUser[0];
+}
+
+// ==================== 支付相关 ====================
+
+/**
+ * 根据订单 ID 获取支付记录
+ */
+export async function getPaymentByOrderId(orderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  const paymentRecords = await db
+    .select()
+    .from(payments)
+    .where(eq(payments.orderId, orderId))
+    .orderBy(desc(payments.createdAt))
+    .limit(1);
+  
+  return paymentRecords[0] || null;
+}
+
+/**
+ * 获取所有 YooKassa 配置
+ */
+export async function getAllYooKassaConfigs() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  return await db.select().from(yookassaConfig).orderBy(desc(yookassaConfig.createdAt));
+}
+
+/**
+ * 创建 YooKassa 配置
+ */
+export async function createYooKassaConfig(data: {
+  shopId: string;
+  secretKey: string;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  // 如果新配置设为活跃，先将其他配置设为非活跃
+  if (data.isActive !== false) {
+    await db.update(yookassaConfig).set({ isActive: false });
+  }
+  
+  await db.insert(yookassaConfig).values({
+    shopId: data.shopId,
+    secretKey: data.secretKey,
+    isActive: data.isActive !== false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  
+  return { success: true };
+}
+
+/**
+ * 更新 YooKassa 配置
+ */
+export async function updateYooKassaConfig(data: {
+  id: number;
+  shopId?: string;
+  secretKey?: string;
+  isActive?: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  // 如果设为活跃，先将其他配置设为非活跃
+  if (data.isActive === true) {
+    await db.update(yookassaConfig).set({ isActive: false }).where(ne(yookassaConfig.id, data.id));
+  }
+  
+  const updateData: any = { updatedAt: new Date() };
+  if (data.shopId !== undefined) updateData.shopId = data.shopId;
+  if (data.secretKey !== undefined) updateData.secretKey = data.secretKey;
+  if (data.isActive !== undefined) updateData.isActive = data.isActive;
+  
+  await db.update(yookassaConfig).set(updateData).where(eq(yookassaConfig.id, data.id));
+  
+  return { success: true };
+}
+
+/**
+ * 删除 YooKassa 配置
+ */
+export async function deleteYooKassaConfig(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  await db.delete(yookassaConfig).where(eq(yookassaConfig.id, id));
+  
+  return { success: true };
 }

@@ -151,6 +151,7 @@
     "trackOrder": "追踪订单"
   },
   "payment": {
+    "title": "支付",
     "selectMethod": "选择支付方式",
     "yukassa": "ЮKassa",
     "qiwi": "QIWI",
@@ -158,7 +159,27 @@
     "paying": "支付中...",
     "paySuccess": "支付成功",
     "payFailed": "支付失败",
-    "retryPay": "重新支付"
+    "retryPay": "重新支付",
+    "payNow": "立即支付",
+    "creating": "创建支付中...",
+    "status": "支付状态",
+    "pending": "待支付",
+    "pendingDesc": "请点击下方按钮完成支付",
+    "processing": "处理中",
+    "processingDesc": "支付正在处理，请稍候...",
+    "succeeded": "支付成功",
+    "succeededDesc": "您的订单已成功支付，我们将尽快处理您的订单",
+    "failed": "支付失败",
+    "failedDesc": "支付未成功，请重试或选择其他支付方式",
+    "retry": "重试支付",
+    "viewOrder": "查看订单",
+    "checking": "正在验证支付状态",
+    "checkingDesc": "请稍候，我们正在确认您的支付状态...",
+    "methods": "支持的支付方式",
+    "methodCard": "银行卡（Visa、Mastercard、Мир）",
+    "methodSberPay": "СберPay",
+    "methodYooMoney": "YooMoney 电子钱包",
+    "methodSBP": "快速支付系统 (SBP)"
   },
   "coupon": {
     "myCoupons": "我的优惠券",
@@ -349,7 +370,8 @@
       "settings": "系统设置",
       "users": "用户管理",
       "notifications": "通知管理",
-      "iikoMonitor": "IIKO 监控"
+      "iikoMonitor": "IIKO 监控",
+      "yookassa": "YooKassa 支付"
     },
     "notifications": {
       "title": "通知",

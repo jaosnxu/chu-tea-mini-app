@@ -370,6 +370,103 @@ export const appRouter = router({
       }),
   }),
 
+  // YooKassa 配置管理路由
+  yookassa: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+      const db = await import('./db');
+      return await db.getAllYooKassaConfigs();
+    }),
+    create: protectedProcedure
+      .input(z.object({
+        shopId: z.string(),
+        secretKey: z.string(),
+        isActive: z.boolean().optional().default(true),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        const db = await import('./db');
+        return await db.createYooKassaConfig(input);
+      }),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        shopId: z.string().optional(),
+        secretKey: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        const db = await import('./db');
+        return await db.updateYooKassaConfig(input);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        const db = await import('./db');
+        return await db.deleteYooKassaConfig(input.id);
+      }),
+    testConnection: protectedProcedure
+      .input(z.object({
+        shopId: z.string(),
+        secretKey: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new Error('Unauthorized');
+        try {
+          const { YooCheckout } = await import('@a2seven/yoo-checkout');
+          const client = new YooCheckout({ shopId: input.shopId, secretKey: input.secretKey });
+          // 尝试获取商店信息来验证连接
+          await client.getPayment('test');
+          return { success: true, message: 'YooKassa 连接成功' };
+        } catch (error: any) {
+          // 如果是 404 错误，说明连接成功但支付 ID 不存在
+          if (error.message?.includes('404') || error.message?.includes('not found')) {
+            return { success: true, message: 'YooKassa 连接成功' };
+          }
+          return { success: false, message: `连接失败: ${error.message}` };
+        }
+      }),
+  }),
+
+  // 支付路由
+  payment: router({
+    create: protectedProcedure
+      .input(z.object({
+        orderId: z.number(),
+        amount: z.string(),
+        currency: z.string().optional().default('RUB'),
+        description: z.string(),
+        returnUrl: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const yookassa = await import('./yookassa');
+        return await yookassa.createPayment({
+          orderId: input.orderId,
+          amount: input.amount,
+          currency: input.currency,
+          description: input.description,
+          returnUrl: input.returnUrl,
+          metadata: {
+            userId: ctx.user.id,
+            orderId: input.orderId,
+          },
+        });
+      }),
+    getStatus: protectedProcedure
+      .input(z.object({ paymentId: z.string() }))
+      .query(async ({ input }) => {
+        const yookassa = await import('./yookassa');
+        return await yookassa.getPaymentStatus(input.paymentId);
+      }),
+    getByOrderId: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getPaymentByOrderId(input.orderId);
+      }),
+  }),
+
   // Telegram 用户同步
   telegram: router({
     sync: publicProcedure

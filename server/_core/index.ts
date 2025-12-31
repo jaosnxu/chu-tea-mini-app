@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { handleTelegramWebhook } from "../telegram";
 import { startScheduler } from "../iiko-scheduler.js";
+import { handleWebhookNotification } from "../yookassa";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -47,6 +48,19 @@ async function startServer() {
       res.json(result);
     } catch (error) {
       console.error('[Telegram Webhook] Error:', error);
+      res.status(500).json({ success: false, message: 'Internal error' });
+    }
+  });
+
+  // YooKassa Webhook
+  app.post("/api/yookassa/webhook", async (req, res) => {
+    try {
+      console.log('[YooKassa Webhook] Received:', JSON.stringify(req.body, null, 2));
+      const result = await handleWebhookNotification(req.body);
+      console.log('[YooKassa Webhook] Result:', result);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[YooKassa Webhook] Error:', error);
       res.status(500).json({ success: false, message: 'Internal error' });
     }
   });

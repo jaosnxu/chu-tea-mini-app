@@ -30,6 +30,8 @@ import InfluencerCenter from "./pages/InfluencerCenter";
 import Settings from "./pages/Settings";
 import DisplayScreen from "./pages/DisplayScreen";
 import StoreSelector from "./pages/StoreSelector";
+import Payment from "./pages/Payment";
+import PaymentCallback from "./pages/PaymentCallback";
 
 // 后台管理页面
 import AdminLayout from "./components/AdminLayout";
@@ -46,6 +48,7 @@ import AdminLogs from "./pages/admin/LogsManagement";
 import AdminNotifications from "./pages/admin/NotificationsManagement";
 import AdminIikoConfig from "./pages/admin/IikoConfig";
 import AdminIikoMonitor from "./pages/admin/IikoMonitor";
+import AdminYooKassaConfig from "./pages/admin/YooKassaConfig";
 
 function Router() {
   return (
@@ -64,6 +67,10 @@ function Router() {
       {/* 订单 */}
       <Route path="/orders" component={Orders} />
       <Route path="/order/:id" component={OrderDetail} />
+      
+      {/* 支付 */}
+      <Route path="/payment/:orderId" component={Payment} />
+      <Route path="/payment/callback/:orderId" component={PaymentCallback} />
       
       {/* 商城 */}
       <Route path="/mall" component={Mall} />
@@ -97,6 +104,7 @@ function Router() {
       <Route path="/admin/notifications" component={AdminNotifications} />
       <Route path="/admin/iiko" component={() => <AdminLayout><AdminIikoConfig /></AdminLayout>} />
       <Route path="/admin/iiko-monitor" component={() => <AdminLayout><AdminIikoMonitor /></AdminLayout>} />
+      <Route path="/admin/yookassa" component={() => <AdminLayout><AdminYooKassaConfig /></AdminLayout>} />
       
       {/* 404 */}
       <Route path="/404" component={NotFound} />
