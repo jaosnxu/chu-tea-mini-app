@@ -949,5 +949,22 @@
       "conversionRate": "转化率",
       "usageRate": "使用率"
     }
+  },
+  "review": {
+    "writeReview": "写评价",
+    "selectTags": "选择标签",
+    "writeComment": "写评价",
+    "commentPlaceholder": "分享你的用餐体验，帮助其他用户做出更好的选择...",
+    "uploadImages": "上传图片",
+    "addImage": "添加图片",
+    "imageLimit": "已上传 {{count}}/{{max}} 张",
+    "anonymous": "匿名评价",
+    "submitSuccess": "评价提交成功！",
+    "pleaseRate": "请先进行评分",
+    "imageUploadSuccess": "图片上传成功",
+    "imageUploadError": "图片上传失败，请重试"
+  },
+  "order": {
+    "writeReview": "写评价"
   }
 }

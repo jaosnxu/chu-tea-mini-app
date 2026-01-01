@@ -3994,6 +3994,20 @@ export async function checkAndUpgradeMemberLevel(userId: number) {
       createdAt: new Date(),
     } as any);
 
+    // 发送 Telegram 通知
+    try {
+      const { sendMemberUpgradeNotification } = await import('./telegram');
+      await sendMemberUpgradeNotification(
+        userId,
+        user.name || 'User',
+        user.memberLevel,
+        newLevel,
+        (user.language as 'zh' | 'ru' | 'en') || 'ru'
+      );
+    } catch (error) {
+      console.error('Failed to send Telegram notification:', error);
+    }
+
     return { upgraded: true, oldLevel: user.memberLevel, newLevel };
   }
 

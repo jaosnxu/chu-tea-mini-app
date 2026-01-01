@@ -369,3 +369,161 @@ export async function getTelegramBotInfo(): Promise<{
   }
 }
 
+
+/**
+ * 发送会员升级通知
+ */
+export async function sendMemberUpgradeNotification(
+  userId: number,
+  userName: string,
+  oldLevel: string,
+  newLevel: string,
+  language: 'zh' | 'ru' | 'en' = 'ru'
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  try {
+    // 获取管理员绑定
+    const bindings = await db.select()
+      .from(adminTelegramBindings)
+      .where(eq(adminTelegramBindings.isVerified, true));
+
+    if (bindings.length === 0) {
+      return false;
+    }
+
+    const levelNames = {
+      normal: { zh: '普通会员', ru: 'Обычный', en: 'Normal' },
+      silver: { zh: '银卡会员', ru: 'Серебряный', en: 'Silver' },
+      gold: { zh: '金卡会员', ru: 'Золотой', en: 'Gold' },
+      diamond: { zh: '钻石会员', ru: 'Бриллиантовый', en: 'Diamond' },
+    };
+
+    const messages = {
+      zh: `🎉 <b>会员升级通知</b>\n\n用户：${userName} (ID: ${userId})\n从 ${levelNames[oldLevel as keyof typeof levelNames]?.zh || oldLevel} 升级到 ${levelNames[newLevel as keyof typeof levelNames]?.zh || newLevel}\n\n恭喜该用户获得更多专属权益！`,
+      ru: `🎉 <b>Уведомление о повышении уровня</b>\n\nПользователь: ${userName} (ID: ${userId})\nПовышен с ${levelNames[oldLevel as keyof typeof levelNames]?.ru || oldLevel} до ${levelNames[newLevel as keyof typeof levelNames]?.ru || newLevel}\n\nПоздравляем пользователя с получением дополнительных привилегий!`,
+      en: `🎉 <b>Member Upgrade Notification</b>\n\nUser: ${userName} (ID: ${userId})\nUpgraded from ${levelNames[oldLevel as keyof typeof levelNames]?.en || oldLevel} to ${levelNames[newLevel as keyof typeof levelNames]?.en || newLevel}\n\nCongratulations on unlocking more exclusive benefits!`,
+    };
+
+    let success = false;
+    for (const binding of bindings) {
+      const sent = await sendTelegramMessage(
+        binding.telegramChatId,
+        messages[language],
+        { parseMode: 'HTML' }
+      );
+      if (sent) success = true;
+    }
+
+    return success;
+  } catch (error) {
+    console.error('[Telegram] Send member upgrade notification error:', error);
+    return false;
+  }
+}
+
+/**
+ * 发送评价回复通知给用户
+ */
+export async function sendReviewReplyNotification(
+  userId: number,
+  orderNo: string,
+  replyContent: string,
+  language: 'zh' | 'ru' | 'en' = 'ru'
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  try {
+    // 获取用户的 Telegram ID
+    const { users } = await import('../drizzle/schema');
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user?.telegramId) {
+      return false;
+    }
+
+    const messages = {
+      zh: `💬 <b>商家回复了您的评价</b>\n\n订单号：${orderNo}\n\n商家回复：\n${replyContent}\n\n感谢您的反馈！`,
+      ru: `💬 <b>Продавец ответил на ваш отзыв</b>\n\nНомер заказа: ${orderNo}\n\nОтвет продавца:\n${replyContent}\n\nСпасибо за ваш отзыв!`,
+      en: `💬 <b>Merchant replied to your review</b>\n\nOrder No.: ${orderNo}\n\nMerchant's reply:\n${replyContent}\n\nThank you for your feedback!`,
+    };
+
+    return sendTelegramMessage(
+      user.telegramId,
+      messages[language],
+      { parseMode: 'HTML' }
+    );
+  } catch (error) {
+    console.error('[Telegram] Send review reply notification error:', error);
+    return false;
+  }
+}
+
+/**
+ * 发送订单状态变更通知给用户
+ */
+export async function sendOrderStatusNotification(
+  userId: number,
+  orderNo: string,
+  status: string,
+  language: 'zh' | 'ru' | 'en' = 'ru'
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  try {
+    // 获取用户的 Telegram ID
+    const { users } = await import('../drizzle/schema');
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user?.telegramId) {
+      return false;
+    }
+
+    const statusNames = {
+      pending: { zh: '待支付', ru: 'Ожидание оплаты', en: 'Pending Payment' },
+      paid: { zh: '已支付', ru: 'Оплачено', en: 'Paid' },
+      preparing: { zh: '制作中', ru: 'Готовится', en: 'Preparing' },
+      ready: { zh: '待取餐', ru: 'Готов к выдаче', en: 'Ready' },
+      delivering: { zh: '配送中', ru: 'Доставляется', en: 'Delivering' },
+      completed: { zh: '已完成', ru: 'Завершен', en: 'Completed' },
+      cancelled: { zh: '已取消', ru: 'Отменен', en: 'Cancelled' },
+    };
+
+    const statusEmojis = {
+      pending: '⏳',
+      paid: '✅',
+      preparing: '👨‍🍳',
+      ready: '🎉',
+      delivering: '🚚',
+      completed: '✨',
+      cancelled: '❌',
+    };
+
+    const emoji = statusEmojis[status as keyof typeof statusEmojis] || '📦';
+    const statusName = statusNames[status as keyof typeof statusNames]?.[language] || status;
+
+    const messages = {
+      zh: `${emoji} <b>订单状态更新</b>\n\n订单号：${orderNo}\n当前状态：${statusName}\n\n${status === 'completed' ? '感谢您的惠顾，欢迎再次光临！' : ''}`,
+      ru: `${emoji} <b>Обновление статуса заказа</b>\n\nНомер заказа: ${orderNo}\nТекущий статус: ${statusName}\n\n${status === 'completed' ? 'Спасибо за ваш заказ, приходите снова!' : ''}`,
+      en: `${emoji} <b>Order Status Update</b>\n\nOrder No.: ${orderNo}\nCurrent Status: ${statusName}\n\n${status === 'completed' ? 'Thank you for your order, welcome back!' : ''}`,
+    };
+
+    return sendTelegramMessage(
+      user.telegramId,
+      messages[language],
+      { parseMode: 'HTML' }
+    );
+  } catch (error) {
+    console.error('[Telegram] Send order status notification error:', error);
+    return false;
+  }
+}

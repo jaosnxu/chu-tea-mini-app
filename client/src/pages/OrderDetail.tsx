@@ -5,11 +5,12 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { trpc } from '@/lib/trpc';
 import { getLocalizedText } from '@/lib/i18n';
-import { ChevronLeft, MapPin, Clock, Phone, RefreshCw } from 'lucide-react';
+import { ChevronLeft, MapPin, Clock, Phone, RefreshCw, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { useState } from 'react';
+import { OrderReviewDialog } from '@/components/OrderReviewDialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -47,8 +48,15 @@ export default function OrderDetail() {
     { enabled: !!params.id }
   );
 
+  // 获取订单评价
+  const { data: review } = trpc.review.getByOrderId.useQuery(
+    { orderId: parseInt(params.id || '0') },
+    { enabled: !!params.id && order?.status === 'completed' }
+  );
+
   const { user } = useAuth();
-  const [refundAmount, setRefundAmount] = useState<string>('');
+  const [refundAmount, setRefundAmount] = useState('');
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
   const cancelMutation = trpc.order.cancel.useMutation();
   const refundMutation = trpc.payment.createRefund.useMutation();
@@ -245,6 +253,15 @@ export default function OrderDetail() {
                 {t('order.payNow')}
               </Button>
             )}
+            {order.status === 'completed' && !review && (
+              <Button 
+                className="flex-1 bg-teal-600 hover:bg-teal-700"
+                onClick={() => setShowReviewDialog(true)}
+              >
+                <Star className="w-4 h-4 mr-2" />
+                {t('order.writeReview')}
+              </Button>
+            )}
             {user?.role === 'admin' && payment?.status === 'succeeded' && (
               <AlertDialog open={isRefundDialogOpen} onOpenChange={setIsRefundDialogOpen}>
                 <AlertDialogTrigger asChild>
@@ -295,6 +312,19 @@ export default function OrderDetail() {
             )}
           </div>
         </div>
+      )}
+
+      {/* 评价对话框 */}
+      {order && order.storeId && (
+        <OrderReviewDialog
+          open={showReviewDialog}
+          onOpenChange={setShowReviewDialog}
+          orderId={order.id}
+          storeId={order.storeId}
+          onSuccess={() => {
+            refetch();
+          }}
+        />
       )}
     </div>
   );
