@@ -44,6 +44,7 @@ export default function MemberCenter() {
   const { data: member } = trpc.member.info.useQuery();
   const { data: levelProgress } = trpc.member.levelProgress.useQuery();
   const { data: benefits } = trpc.member.benefits.useQuery();
+  const { data: welcomeGiftStatus } = trpc.member.getWelcomeGiftStatus.useQuery();
   const checkUpgrade = trpc.member.checkUpgrade.useMutation({
     onSuccess: (result) => {
       if (result && result.upgraded && result.newLevel) {
@@ -178,6 +179,77 @@ export default function MemberCenter() {
       </header>
 
       <div className="p-4 space-y-4">
+        {/* 新人礼包卡片 */}
+        {welcomeGiftStatus && (
+          <Card className="p-4 bg-gradient-to-br from-pink-50 to-purple-50 border-pink-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
+                  <Gift className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-gray-800">新人大礼包</h3>
+                  <p className="text-xs text-gray-600">注册即送惊喜好礼</p>
+                </div>
+              </div>
+              {welcomeGiftStatus.hasReceived ? (
+                <Badge className="bg-green-500 text-white">
+                  <Check className="w-3 h-3 mr-1" />
+                  已领取
+                </Badge>
+              ) : (
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white"
+                  onClick={() => navigate('/membership/welcome')}
+                >
+                  立即领取
+                </Button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-orange-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Star className="w-4 h-4 text-orange-600" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">100 积分</p>
+                </div>
+                <p className="text-xs text-gray-600">立即到账，可用于兑换商品</p>
+                {welcomeGiftStatus.hasReceived && welcomeGiftStatus.pointsReceived > 0 && (
+                  <Badge variant="secondary" className="mt-2 text-xs">
+                    <Check className="w-3 h-3 mr-1" />
+                    已发放
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-purple-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Gift className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">2 张优惠券</p>
+                </div>
+                <p className="text-xs text-gray-600">满 300 减 50，全场通用</p>
+                {welcomeGiftStatus.hasReceived && welcomeGiftStatus.couponsReceived > 0 && (
+                  <Badge variant="secondary" className="mt-2 text-xs">
+                    <Check className="w-3 h-3 mr-1" />
+                    已发放 {welcomeGiftStatus.couponsReceived} 张
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            {welcomeGiftStatus.hasReceived && (
+              <div className="mt-3 text-center">
+                <p className="text-xs text-gray-500">更多会员权益就在下方 ↓</p>
+              </div>
+            )}
+          </Card>
+        )}
+
         {/* 当前权益 */}
         <Card className="p-4">
           <h3 className="font-bold text-lg mb-4 flex items-center gap-2">

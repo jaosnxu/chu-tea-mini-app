@@ -494,6 +494,72 @@ export const memberRouter = router({
     }),
 
   /**
+   * 获取新人礼包领取状态
+   */
+  getWelcomeGiftStatus: protectedProcedure.query(async ({ ctx }) => {
+    const database = await getDb();
+    if (!database) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Database not available',
+      });
+    }
+
+    const { users, userCoupons } = await import('../../drizzle/schema');
+    
+    // 获取用户信息
+    const user = await database
+      .select()
+      .from(users)
+      .where(eq(users.id, ctx.user.id))
+      .limit(1);
+
+    if (!user || user.length === 0) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'User not found',
+      });
+    }
+
+    const userData = user[0];
+
+    // 检查是否已完成注册（已领取礼包）
+    const hasCompletedRegistration = userData.profileCompleted;
+
+    // 如果已完成注册，检查积分和优惠券
+    let pointsReceived = 0;
+    let couponsReceived = 0;
+
+    if (hasCompletedRegistration) {
+      // 检查积分（假设注册时赠送 100 积分）
+      pointsReceived = userData.availablePoints >= 100 ? 100 : 0;
+
+      // 检查优惠券（查询用户是否有新人优惠券）
+      // 注册时发放的优惠券有 campaignId 或者创建时间接近注册时间
+      const coupons = await database
+        .select()
+        .from(userCoupons)
+        .where(eq(userCoupons.userId, ctx.user.id));
+
+      // 统计新人优惠券数量（根据 campaignId 或创建时间判断）
+      const registrationTime = userData.createdAt.getTime();
+      couponsReceived = coupons.filter(c => {
+        const couponTime = c.createdAt.getTime();
+        // 如果优惠券创建时间在注册后 5 分钟内，认为是新人优惠券
+        return Math.abs(couponTime - registrationTime) < 5 * 60 * 1000;
+      }).length;
+    }
+
+    return {
+      hasReceived: hasCompletedRegistration,
+      pointsReceived,
+      couponsReceived,
+      expectedPoints: 100,
+      expectedCoupons: 2,
+    };
+  }),
+
+  /**
    * 手动检查并升级等级
    */
   checkUpgrade: protectedProcedure.mutation(async ({ ctx }) => {
