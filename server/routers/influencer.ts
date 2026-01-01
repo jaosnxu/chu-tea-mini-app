@@ -429,6 +429,7 @@ export const influencerRouter = router({
     .input(
       z
         .object({
+          period: z.enum(["today", "week", "month", "all_time"]).optional(),
           limit: z.number().optional(),
         })
         .optional()

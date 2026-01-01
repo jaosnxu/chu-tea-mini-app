@@ -319,7 +319,17 @@ export const appRouter = router({
         })),
       }))
       .mutation(async ({ ctx, input }) => {
-        return await db.createOrder(ctx.user.id, input);
+        const order = await db.createOrder(ctx.user.id, input);
+        
+        // 达人链接归因
+        const { getInfluencerRefFromRequest } = await import('./middleware/trackInfluencerLink');
+        const linkCode = getInfluencerRefFromRequest(ctx.req);
+        if (linkCode && order.orderId) {
+          const { attributeOrderToInfluencer } = await import('./utils/influencerAttribution');
+          await attributeOrderToInfluencer(order.orderId, linkCode);
+        }
+        
+        return order;
       }),
     
     // 立即购买（直接创建订单，不经过购物车）
@@ -358,7 +368,7 @@ export const appRouter = router({
         }));
         
         // 创建订单
-        return await db.createOrder(ctx.user.id, {
+        const order = await db.createOrder(ctx.user.id, {
           orderType: input.orderType || 'tea',
           orderSource: 'telegram',
           deliveryType: input.deliveryType || 'delivery',
@@ -371,6 +381,16 @@ export const appRouter = router({
             selectedOptions,
           }],
         });
+        
+        // 达人链接归因
+        const { getInfluencerRefFromRequest } = await import('./middleware/trackInfluencerLink');
+        const linkCode = getInfluencerRefFromRequest(ctx.req);
+        if (linkCode && order.orderId) {
+          const { attributeOrderToInfluencer } = await import('./utils/influencerAttribution');
+          await attributeOrderToInfluencer(order.orderId, linkCode);
+        }
+        
+        return order;
       }),
     cancel: protectedProcedure
       .input(z.object({
@@ -413,6 +433,10 @@ export const appRouter = router({
             // 退款失败不影响订单取消
           }
         }
+        
+        // 取消达人收益
+        const { cancelOrderEarning } = await import('./utils/influencerAttribution');
+        await cancelOrderEarning(input.id);
         
         return result;
       }),

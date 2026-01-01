@@ -2023,6 +2023,16 @@ export async function updateOrderStatus(data: { orderId: number; status: 'pendin
     note: data.note,
   });
   
+  // 订单完成时确认达人收益
+  if (data.status === 'completed') {
+    try {
+      const { confirmOrderEarning } = await import('./utils/influencerAttribution');
+      await confirmOrderEarning(data.orderId);
+    } catch (error) {
+      console.error('[Order] Failed to confirm influencer earning:', error);
+    }
+  }
+  
   // 订单完成时发放积分并检查会员升级
   if (data.status === 'completed' && order.pointsUsed === 0) {
     try {

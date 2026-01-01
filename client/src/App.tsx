@@ -36,6 +36,7 @@ const Points = lazy(() => import("./pages/Points"));
 const Addresses = lazy(() => import("./pages/Addresses"));
 const InfluencerRegister = lazy(() => import("./pages/InfluencerRegister"));
 const InfluencerTasks = lazy(() => import("./pages/InfluencerTasks"));
+const InfluencerTaskSubmit = lazy(() => import("./pages/InfluencerTaskSubmit"));
 const InfluencerEarnings = lazy(() => import("./pages/InfluencerEarnings"));
 const InfluencerWithdraw = lazy(() => import("./pages/InfluencerWithdraw"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -75,6 +76,7 @@ const AdminProductManagement = lazy(() => import("./pages/admin/ProductManagemen
 const AdminMemberTagsManagement = lazy(() => import("./pages/admin/MemberTagsManagement"));
 const AdminInfluencerCampaigns = lazy(() => import("./pages/admin/InfluencerCampaigns"));
 const AdminInfluencerWithdrawals = lazy(() => import("./pages/admin/InfluencerWithdrawals"));
+const AdminInfluencerAnalytics = lazy(() => import("./pages/admin/InfluencerAnalytics"));
 
 function Router() {
   return (
@@ -107,6 +109,7 @@ function Router() {
       {/* 达人系统 */}
       <Route path="/influencer/register" component={InfluencerRegister} />
       <Route path="/influencer/tasks" component={InfluencerTasks} />
+      <Route path="/influencer/tasks/:id/submit" component={InfluencerTaskSubmit} />
       <Route path="/influencer/earnings" component={InfluencerEarnings} />
       <Route path="/influencer/withdraw" component={InfluencerWithdraw} />
       <Route path="/mall/checkout" component={MallCheckout} />
@@ -153,6 +156,7 @@ function Router() {
       <Route path="/admin/ab-test" component={() => <AdminLayout><AdminABTestComparison /></AdminLayout>} />
       <Route path="/admin/influencer-campaigns" component={() => <AdminLayout><AdminInfluencerCampaigns /></AdminLayout>} />
       <Route path="/admin/influencer-withdrawals" component={() => <AdminLayout><AdminInfluencerWithdrawals /></AdminLayout>} />
+      <Route path="/admin/influencer-analytics" component={() => <AdminLayout><AdminInfluencerAnalytics /></AdminLayout>} />
       
       {/* 404 */}
       <Route component={NotFound} />
