@@ -14,6 +14,7 @@ import { useAuth } from "./_core/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { usePreloadPages } from "./hooks/usePreloadPages";
 import ResourcePreloader from "./components/ResourcePreloader";
+import { OfflineIndicator } from "./components/OfflineIndicator";
 
 // 首屏页面（不懒加载）
 import Home from "./pages/Home";
@@ -198,6 +199,7 @@ function App() {
           <StoreProvider>
             <CartProvider>
               <ResourcePreloader />
+              <OfflineIndicator />
               <TooltipProvider>
                 <Router />
               </TooltipProvider>

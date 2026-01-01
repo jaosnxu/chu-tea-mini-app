@@ -8,6 +8,7 @@ import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
+import LazyImage from '@/components/LazyImage';
 
 export default function MallProductDetail() {
   const { t } = useTranslation();
@@ -52,7 +53,18 @@ export default function MallProductDetail() {
           </div>
         </div>
       </header>
-      <div className="bg-white">{product.image ? <img src={product.image} alt={name} className="w-full h-64 object-cover" /> : <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>}</div>
+      <div className="bg-white">
+        {product.image ? (
+          <LazyImage
+            src={product.image}
+            alt={name}
+            containerClassName="w-full h-64"
+            className="w-full h-64 object-cover"
+          />
+        ) : (
+          <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>
+        )}
+      </div>
       <div className="bg-white p-4 mt-2">
         <h2 className="text-xl font-bold">{name}</h2>
         <span className="text-2xl font-bold text-purple-600">₽{product.basePrice}</span>

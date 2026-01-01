@@ -1313,3 +1313,24 @@
 - [x] 使用 terser 压缩 JavaScript
 - [x] 生产环境移除 console 和 debugger
 - [x] Tailwind CSS 4 自动按需生成样式
+
+
+## LazyImage 应用和 PWA 离线功能增强 - 进行中
+
+### LazyImage 组件应用
+- [x] 在 Menu 页面应用 LazyImage 组件
+- [x] 在 Mall 页面应用 LazyImage 组件
+- [x] 在 MallProductDetail 页面应用 LazyImage 组件
+- [x] 在 ProductDetail 页面应用 LazyImage 组件
+- [x] 所有商品图片已启用懒加载
+
+### PWA 离线功能增强
+- [x] 创建 IndexedDB 工具（orderDrafts, menuCache, productsCache, syncQueue）
+- [x] 创建 useOnlineStatus Hook 监听网络状态
+- [x] 创建 useOfflineOrders Hook 管理离线订单草稿
+- [x] 实现订单草稿保存、更新、删除功能
+- [x] 实现网络恢复后自动同步草稿
+- [x] 创建 useOfflineMenu Hook 管理菜单缓存
+- [x] 实现分类和商品数据缓存
+- [x] 创建 OfflineIndicator 离线状态指示器
+- [x] 在 App.tsx 中集成离线指示器

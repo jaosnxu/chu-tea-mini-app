@@ -18,6 +18,7 @@ import {
   Flame
 } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
+import LazyImage from '@/components/LazyImage';
 
 export default function Menu() {
   const { t } = useTranslation();
@@ -204,9 +205,10 @@ function ProductCard({
         {/* 商品图片 */}
         <div className="relative w-20 h-20 flex-shrink-0">
           {product.image ? (
-            <img 
+            <LazyImage
               src={product.image} 
               alt={name}
+              containerClassName="w-full h-full rounded-lg"
               className="w-full h-full object-cover rounded-lg"
             />
           ) : (

@@ -10,6 +10,7 @@ import { useCart } from '@/contexts/CartContext';
 import { getLocalizedText } from '@/lib/i18n';
 import { ChevronLeft, ShoppingCart, Search, Flame } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
+import LazyImage from '@/components/LazyImage';
 
 export default function Mall() {
   const { t } = useTranslation();
@@ -78,7 +79,12 @@ export default function Mall() {
                 <Card key={product.id} className="overflow-hidden cursor-pointer hover:shadow-md" onClick={() => navigate(`/mall/product/${product.id}`)}>
                   <div className="relative aspect-square">
                     {product.image ? (
-                      <img src={product.image} alt="" className="w-full h-full object-cover" />
+                      <LazyImage
+                        src={product.image}
+                        alt={getLocalizedText({ zh: product.nameZh, ru: product.nameRu, en: product.nameEn })}
+                        containerClassName="w-full h-full"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No Image</div>
                     )}

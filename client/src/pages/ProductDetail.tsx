@@ -13,6 +13,7 @@ import { ChevronLeft, Minus, Plus, ShoppingCart, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
 import { ProductReviews } from '@/components/ProductReviews';
+import LazyImage from '@/components/LazyImage';
 
 export default function ProductDetail() {
   const { t } = useTranslation();
@@ -171,7 +172,12 @@ export default function ProductDetail() {
       {/* 商品图片 */}
       <div className="bg-white">
         {product.image ? (
-          <img src={product.image} alt={name} className="w-full h-64 object-cover" />
+          <LazyImage
+            src={product.image}
+            alt={name}
+            containerClassName="w-full h-64"
+            className="w-full h-64 object-cover"
+          />
         ) : (
           <div className="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-400">
             No Image
