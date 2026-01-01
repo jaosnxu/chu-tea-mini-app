@@ -41,7 +41,8 @@ const InfluencerRegister = lazy(() => import("./pages/InfluencerRegister"));
 const InfluencerTasks = lazy(() => import("./pages/InfluencerTasks"));
 const InfluencerTaskSubmit = lazy(() => import("./pages/InfluencerTaskSubmit"));
 const InfluencerEarnings = lazy(() => import("./pages/InfluencerEarnings"));
-const InfluencerWithdraw = lazy(() => import("./pages/InfluencerWithdraw"));
+const InfluencerWithdraw = lazy(() => import('@/pages/InfluencerWithdraw'));
+const OfflineDrafts = lazy(() => import('@/pages/OfflineDrafts'));
 const InfluencerProfile = lazy(() => import("./pages/InfluencerProfile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
@@ -118,7 +119,8 @@ function Router() {
       <Route path="/influencer/tasks" component={InfluencerTasks} />
       <Route path="/influencer/tasks/:id/submit" component={InfluencerTaskSubmit} />
       <Route path="/influencer/earnings" component={InfluencerEarnings} />
-      <Route path="/influencer/withdraw" component={InfluencerWithdraw} />
+        <Route path="/influencer/withdraw" component={InfluencerWithdraw} />
+        <Route path="/offline-drafts" component={OfflineDrafts} />
       <Route path="/influencer/profile" component={InfluencerProfile} />
       <Route path="/mall/checkout" component={MallCheckout} />
       

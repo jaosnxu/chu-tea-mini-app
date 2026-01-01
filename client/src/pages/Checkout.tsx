@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { useTelegramMainButton } from '@/hooks/useTelegramMainButton';
 import { isTelegramWebApp } from '@/lib/telegram';
 import { CouponSelector } from '@/components/CouponSelector';
+import { useOfflineOrders } from '@/hooks/useOfflineOrders';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export default function Checkout() {
   const { t } = useTranslation();
@@ -37,6 +39,8 @@ export default function Checkout() {
   const { data: deliverySettings } = trpc.system.getDeliverySettings.useQuery();
 
   const createOrderMutation = trpc.order.create.useMutation();
+  const { saveDraft } = useOfflineOrders();
+  const isOnline = useOnlineStatus();
 
   const storeName = currentStore 
     ? getLocalizedText({ zh: currentStore.nameZh, ru: currentStore.nameRu, en: currentStore.nameEn })
@@ -50,6 +54,28 @@ export default function Checkout() {
 
     setIsSubmitting(true);
     try {
+      // 检查网络状态
+      if (!isOnline) {
+        // 离线时保存草稿
+        await saveDraft({
+          type: 'tea',
+          items: teaCartItems.map(item => ({
+            productId: item.productId,
+            productName: item.product ? getLocalizedText({ zh: item.product.nameZh, ru: item.product.nameRu, en: item.product.nameEn }) : '商品',
+            quantity: item.quantity,
+            price: item.unitPrice,
+            options: item.selectedOptions ? item.selectedOptions as Record<string, any> : undefined,
+          })),
+          totalAmount: finalAmount.toString(),
+          storeId: currentStore?.id,
+        });
+        
+        toast.success('订单已保存为草稿，网络恢复后将自动提交');
+        clearCart();
+        navigate('/orders');
+        return;
+      }
+      
       // 1. 创建订单
       const result = await createOrderMutation.mutateAsync({
         orderType: 'tea',

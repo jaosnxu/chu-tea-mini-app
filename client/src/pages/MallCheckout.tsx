@@ -11,6 +11,8 @@ import { ChevronLeft, MapPin, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramMainButton } from '@/hooks/useTelegramMainButton';
 import { isTelegramWebApp } from '@/lib/telegram';
+import { useOfflineOrders } from '@/hooks/useOfflineOrders';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export default function MallCheckout() {
   const { t } = useTranslation();
@@ -23,12 +25,33 @@ export default function MallCheckout() {
   const { data: addresses = [] } = trpc.address.list.useQuery();
   const defaultAddress = addresses.find((a: { isDefault: boolean }) => a.isDefault) || addresses[0];
   const createOrderMutation = trpc.order.create.useMutation();
+  const { saveDraft } = useOfflineOrders();
+  const isOnline = useOnlineStatus();
 
   const handleSubmit = async () => {
     if (mallCartItems.length === 0) { toast.error(t('cart.empty')); return; }
     if (!defaultAddress) { toast.error(t('address.noAddress')); navigate('/addresses'); return; }
     setIsSubmitting(true);
     try {
+      // 检查网络状态
+      if (!isOnline) {
+        // 离线时保存草稿
+        await saveDraft({
+          type: 'mall',
+          items: mallCartItems.map(item => ({
+            productId: item.productId,
+            productName: item.product ? getLocalizedText({ zh: item.product.nameZh, ru: item.product.nameRu, en: item.product.nameEn }) : '商品',
+            quantity: item.quantity,
+            price: item.unitPrice,
+          })),
+          totalAmount: mallCartTotal.toString(),
+        });
+        
+        toast.success('订单已保存为草稿，网络恢复后将自动提交');
+        navigate('/orders');
+        return;
+      }
+      
       // 1. 创建订单
       const result = await createOrderMutation.mutateAsync({
         orderType: 'mall',
