@@ -492,6 +492,26 @@ export const appRouter = router({
     info: protectedProcedure.query(async ({ ctx }) => {
       return await db.getMemberInfo(ctx.user.id);
     }),
+    
+    // 获取会员等级进度
+    levelProgress: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getMemberLevelProgress(ctx.user.id);
+    }),
+    
+    // 获取会员等级权益
+    benefits: protectedProcedure
+      .input(z.object({
+        level: z.enum(['normal', 'silver', 'gold', 'diamond']).optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const level = input?.level || ctx.user.memberLevel;
+        return await db.getMemberLevelBenefits(level);
+      }),
+    
+    // 手动检查并升级等级
+    checkUpgrade: protectedProcedure.mutation(async ({ ctx }) => {
+      return await db.checkAndUpgradeMemberLevel(ctx.user.id);
+    }),
   }),
 
   // 达人推广路由

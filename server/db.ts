@@ -3903,3 +3903,199 @@ function calculateReviewStats(reviews: any[]) {
     ratingDistribution,
   };
 }
+
+
+// ==================== 会员等级系统 ====================
+
+/**
+ * 检查并升级会员等级
+ */
+export async function checkAndUpgradeMemberLevel(userId: number) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  // 获取用户信息
+  const [user] = await database
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) return;
+
+  // 会员等级规则（参考美团等级体系）
+  const levelRules = [
+    { level: 'diamond', minSpent: 10000, minOrders: 50 },
+    { level: 'gold', minSpent: 5000, minOrders: 20 },
+    { level: 'silver', minSpent: 1000, minOrders: 5 },
+    { level: 'normal', minSpent: 0, minOrders: 0 },
+  ];
+
+  // 获取用户订单数
+  const orderCount = await database
+    .select({ count: sql<number>`count(*)` })
+    .from(orders)
+    .where(and(
+      eq(orders.userId, userId),
+      eq(orders.status, 'completed')
+    ));
+
+  const totalOrders = orderCount[0]?.count || 0;
+  const totalSpent = parseFloat(user.totalSpent);
+
+  // 确定应该的等级
+  let newLevel: 'normal' | 'silver' | 'gold' | 'diamond' = 'normal';
+  for (const rule of levelRules) {
+    if (totalSpent >= rule.minSpent && totalOrders >= rule.minOrders) {
+      newLevel = rule.level as any;
+      break;
+    }
+  }
+
+  // 如果等级有变化，更新并记录
+  if (newLevel !== user.memberLevel) {
+    await database
+      .update(users)
+      .set({
+        memberLevel: newLevel,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    // 记录等级变更日志
+    await database.insert(operationLogs).values({
+      operatorId: userId,
+      operatorName: user.name || 'System',
+      action: 'member_level_upgrade',
+      targetType: 'user',
+      targetId: userId.toString(),
+      details: JSON.stringify({
+        oldLevel: user.memberLevel,
+        newLevel,
+        totalSpent,
+        totalOrders,
+      }),
+      createdAt: new Date(),
+    } as any);
+
+    // 发送升级通知
+    await database.insert(notifications).values({
+      userId,
+      type: 'system',
+      title: 'Member Level Upgraded',
+      titleZh: '会员等级提升',
+      titleRu: 'Уровень членства повышен',
+      titleEn: 'Member Level Upgraded',
+      content: `Congratulations! Your member level has been upgraded to ${newLevel}`,
+      contentZh: `恭喜！您的会员等级已升级至 ${newLevel}`,
+      contentRu: `Поздравляем! Ваш уровень членства повышен до ${newLevel}`,
+      contentEn: `Congratulations! Your member level has been upgraded to ${newLevel}`,
+      isRead: false,
+      createdAt: new Date(),
+    } as any);
+
+    return { upgraded: true, oldLevel: user.memberLevel, newLevel };
+  }
+
+  return { upgraded: false, currentLevel: user.memberLevel };
+}
+
+/**
+ * 获取会员等级权益
+ */
+export async function getMemberLevelBenefits(level: 'normal' | 'silver' | 'gold' | 'diamond') {
+  // 会员等级权益配置
+  const benefits = {
+    normal: {
+      pointsMultiplier: 1, // 积分倍率
+      discountRate: 0, // 折扣率
+      freeDeliveryThreshold: 500, // 免配送费门槛
+      birthdayCoupon: false, // 生日优惠券
+      prioritySupport: false, // 优先客服
+    },
+    silver: {
+      pointsMultiplier: 1.2,
+      discountRate: 0.05, // 5% 折扣
+      freeDeliveryThreshold: 300,
+      birthdayCoupon: true,
+      prioritySupport: false,
+    },
+    gold: {
+      pointsMultiplier: 1.5,
+      discountRate: 0.1, // 10% 折扣
+      freeDeliveryThreshold: 0, // 免配送费
+      birthdayCoupon: true,
+      prioritySupport: true,
+    },
+    diamond: {
+      pointsMultiplier: 2,
+      discountRate: 0.15, // 15% 折扣
+      freeDeliveryThreshold: 0,
+      birthdayCoupon: true,
+      prioritySupport: true,
+    },
+  };
+
+  return benefits[level];
+}
+
+/**
+ * 获取会员等级进度
+ */
+export async function getMemberLevelProgress(userId: number) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  // 获取用户信息
+  const [user] = await database
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) throw new Error('User not found');
+
+  // 获取订单数
+  const orderCount = await database
+    .select({ count: sql<number>`count(*)` })
+    .from(orders)
+    .where(and(
+      eq(orders.userId, userId),
+      eq(orders.status, 'completed')
+    ));
+
+  const totalOrders = orderCount[0]?.count || 0;
+  const totalSpent = parseFloat(user.totalSpent);
+
+  // 下一等级要求
+  const nextLevelRequirements = {
+    normal: { level: 'silver', minSpent: 1000, minOrders: 5 },
+    silver: { level: 'gold', minSpent: 5000, minOrders: 20 },
+    gold: { level: 'diamond', minSpent: 10000, minOrders: 50 },
+    diamond: null, // 已是最高等级
+  };
+
+  const currentLevel = user.memberLevel;
+  const nextLevel = nextLevelRequirements[currentLevel];
+
+  if (!nextLevel) {
+    return {
+      currentLevel,
+      isMaxLevel: true,
+      totalSpent,
+      totalOrders,
+    };
+  }
+
+  return {
+    currentLevel,
+    isMaxLevel: false,
+    totalSpent,
+    totalOrders,
+    nextLevel: nextLevel.level,
+    spentProgress: Math.min((totalSpent / nextLevel.minSpent) * 100, 100),
+    ordersProgress: Math.min((totalOrders / nextLevel.minOrders) * 100, 100),
+    spentRemaining: Math.max(nextLevel.minSpent - totalSpent, 0),
+    ordersRemaining: Math.max(nextLevel.minOrders - totalOrders, 0),
+  };
+}
