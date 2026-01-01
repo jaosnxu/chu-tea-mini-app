@@ -1,7 +1,7 @@
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -13,6 +13,7 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
   const utils = trpc.useUtils();
   const [isInitializing, setIsInitializing] = useState(true);
+  const hasAttemptedTelegramLogin = useRef(false);
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
@@ -32,36 +33,53 @@ export function useAuth(options?: UseAuthOptions) {
     },
   });
 
-  // Telegram 自动登录
+  // Telegram 自动登录 - 只执行一次
   useEffect(() => {
-    const autoLoginWithTelegram = async () => {
-      // 如果已经有用户或正在加载，跳过
-      if (meQuery.data || meQuery.isLoading) {
-        setIsInitializing(false);
+    // 如果已经尝试过登录，跳过
+    if (hasAttemptedTelegramLogin.current) {
+      return;
+    }
+
+    // 如果正在加载，等待
+    if (meQuery.isLoading) {
+      return;
+    }
+
+    // 如果已经有用户，不需要登录
+    if (meQuery.data) {
+      setIsInitializing(false);
+      return;
+    }
+
+    // 标记已尝试登录
+    hasAttemptedTelegramLogin.current = true;
+
+    // 检查是否在 Telegram 环境中
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+      const initData = tg.initData;
+      
+      if (initData) {
+        console.log('[Auth] Telegram environment detected, auto-logging in...');
+        telegramLoginMutation.mutate(
+          { initData },
+          {
+            onSuccess: () => {
+              console.log('[Auth] Telegram auto-login successful');
+              setIsInitializing(false);
+            },
+            onError: (error) => {
+              console.error('[Auth] Telegram auto-login failed:', error);
+              setIsInitializing(false);
+            },
+          }
+        );
         return;
       }
-
-      // 检查是否在 Telegram 环境中
-      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-        const tg = window.Telegram.WebApp;
-        const initData = tg.initData;
-        
-        if (initData) {
-          console.log('[Auth] Telegram environment detected, auto-logging in...');
-          try {
-            await telegramLoginMutation.mutateAsync({ initData });
-            console.log('[Auth] Telegram auto-login successful');
-          } catch (error) {
-            console.error('[Auth] Telegram auto-login failed:', error);
-          }
-        }
-      }
-      
-      setIsInitializing(false);
-    };
-
-    autoLoginWithTelegram();
-  }, [meQuery.data, meQuery.isLoading, telegramLoginMutation]);
+    }
+    
+    setIsInitializing(false);
+  }, [meQuery.isLoading, meQuery.data]); // 移除 telegramLoginMutation 依赖
 
   const logout = useCallback(async () => {
     try {
