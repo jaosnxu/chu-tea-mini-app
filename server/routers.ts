@@ -5,7 +5,8 @@ import { iikoRouter } from "./routers/iiko.js";
 import { paymentRouter } from "./routers/payment.js";
 import { analyticsRouter } from "./routers/analytics.js";
 import { reviewRouter } from './routers/review';
-import { memberRouter } from './routers/member';
+import { memberRouter } from "./routers/member";
+// import { influencerRouter } from "./routers/influencer";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
@@ -17,7 +18,7 @@ export const appRouter = router({
   analytics: analyticsRouter,
   review: reviewRouter,
   member: memberRouter,
-  
+  // influencer: influencerRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -491,45 +492,7 @@ export const appRouter = router({
 
   // 会员路由（已移至 memberRouter）
 
-  // 达人推广路由
-  influencer: router({
-    getProfile: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getInfluencerInfo(ctx.user.id);
-    }),
-    applyInfluencer: protectedProcedure
-      .input(z.object({
-        nameZh: z.string().optional(),
-        nameRu: z.string().optional(),
-        nameEn: z.string().optional(),
-        bio: z.string().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.applyAsInfluencer(ctx.user.id, input);
-      }),
-    links: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getInfluencerLinks(ctx.user.id);
-    }),
-    createLink: protectedProcedure
-      .input(z.object({
-        storeId: z.number().optional(),
-        campaignName: z.string().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        return await db.createInfluencerLink(ctx.user.id, input);
-      }),
-    statistics: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getInfluencerStatistics(ctx.user.id);
-    }),
-    commissions: protectedProcedure
-      .input(z.object({
-        status: z.enum(['pending', 'confirmed', 'paid', 'cancelled']).optional(),
-        limit: z.number().optional(),
-        offset: z.number().optional(),
-      }).optional())
-      .query(async ({ ctx, input }) => {
-        return await db.getInfluencerCommissions(ctx.user.id, input);
-      }),
-  }),
+  // 达人推广路由已移至 influencerRouter
 
   // 落地页路由
   landing: router({

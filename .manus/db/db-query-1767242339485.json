@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS withdrawal_requests (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  amount DECIMAL(10, 2) NOT NULL,\n  withdrawalMethod ENUM('bank_card', 'alipay', 'wechat', 'paypal') NOT NULL,\n  accountInfo JSON NOT NULL,\n  status ENUM('pending', 'processing', 'completed', 'rejected') DEFAULT 'pending' NOT NULL,\n  reviewedBy INT,\n  reviewedAt TIMESTAMP NULL,\n  reviewNotes TEXT,\n  transactionId VARCHAR(128),\n  paidAt TIMESTAMP NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute CREATE TABLE IF NOT EXISTS withdrawal_requests (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  amount DECIMAL(10, 2) NOT NULL,\n  withdrawalMethod ENUM('bank_card', 'alipay', 'wechat', 'paypal') NOT NULL,\n  accountInfo JSON NOT NULL,\n  status ENUM('pending', 'processing', 'completed', 'rejected') DEFAULT 'pending' NOT NULL,\n  reviewedBy INT,\n  reviewedAt TIMESTAMP NULL,\n  reviewNotes TEXT,\n  transactionId VARCHAR(128),\n  paidAt TIMESTAMP NULL,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 185
+}

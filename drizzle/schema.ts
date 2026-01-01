@@ -30,7 +30,17 @@ export const users = mysqlTable("users", {
   referrerCode: varchar("referrerCode", { length: 32 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  lastSignedIn: timestamp("lastSignedIn"),
+  
+  // 达人相关字段
+  isInfluencer: boolean("isInfluencer").default(false),
+  influencerLevel: mysqlEnum("influencerLevel", ["bronze", "silver", "gold", "diamond"]).default("bronze"),
+  influencerCode: varchar("influencerCode", { length: 32 }),
+  totalEarnings: decimal("totalEarnings", { precision: 10, scale: 2 }).default("0.00"),
+  availableBalance: decimal("availableBalance", { precision: 10, scale: 2 }).default("0.00"),
+  totalWithdrawn: decimal("totalWithdrawn", { precision: 10, scale: 2 }).default("0.00"),
+  followerCount: int("followerCount").default(0),
+  conversionRate: decimal("conversionRate", { precision: 5, scale: 2 }).default("0.00"),
 });
 
 export type User = typeof users.$inferSelect;
@@ -1417,3 +1427,259 @@ export const userMemberTags = mysqlTable("userMemberTags", {
 
 export type UserMemberTag = typeof userMemberTags.$inferSelect;
 export type InsertUserMemberTag = typeof userMemberTags.$inferInsert;
+
+
+// ==================== 达人营销系统 ====================
+
+/**
+ * 达人活动表
+ * 存储达人营销活动配置
+ */
+export const influencerCampaigns = mysqlTable("influencer_campaigns", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 活动基本信息
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  coverImage: text("coverImage"),
+  
+  // 活动时间
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  
+  // 活动状态
+  status: mysqlEnum("status", ["draft", "active", "paused", "ended"]).default("draft").notNull(),
+  
+  // 佣金配置（JSON）
+  // 例如：{"type": "percentage", "value": 10, "minOrder": 100}
+  commissionConfig: json("commissionConfig").$type<{
+    type: 'percentage' | 'fixed';
+    value: number;
+    minOrder?: number;
+    maxCommission?: number;
+  }>().notNull(),
+  
+  // 任务要求（JSON）
+  // 例如：{"minOrders": 10, "minRevenue": 1000, "contentRequirements": ["发布视频", "带话题标签"]}
+  taskRequirements: json("taskRequirements").$type<{
+    minOrders?: number;
+    minRevenue?: number;
+    contentRequirements?: string[];
+    platforms?: string[];
+  }>(),
+  
+  // 达人等级要求
+  minInfluencerLevel: mysqlEnum("minInfluencerLevel", ["bronze", "silver", "gold", "diamond"]).default("bronze"),
+  
+  // 统计数据
+  totalParticipants: int("totalParticipants").default(0),
+  totalOrders: int("totalOrders").default(0),
+  totalRevenue: decimal("totalRevenue", { precision: 10, scale: 2 }).default("0.00"),
+  totalCommission: decimal("totalCommission", { precision: 10, scale: 2 }).default("0.00"),
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type InfluencerCampaign = typeof influencerCampaigns.$inferSelect;
+export type InsertInfluencerCampaign = typeof influencerCampaigns.$inferInsert;
+
+/**
+ * 达人任务表
+ * 存储达人接受的任务
+ */
+export const influencerTasks = mysqlTable("influencer_tasks", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 关联
+  campaignId: int("campaignId").notNull(),
+  userId: int("userId").notNull(),
+  
+  // 任务状态
+  status: mysqlEnum("status", ["pending", "in_progress", "submitted", "approved", "rejected"]).default("pending").notNull(),
+  
+  // 任务进度
+  currentOrders: int("currentOrders").default(0),
+  currentRevenue: decimal("currentRevenue", { precision: 10, scale: 2 }).default("0.00"),
+  
+  // 提交内容
+  submittedContent: text("submittedContent"),
+  submittedAt: timestamp("submittedAt"),
+  
+  // 审核信息
+  reviewedBy: int("reviewedBy"),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewNotes: text("reviewNotes"),
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type InfluencerTask = typeof influencerTasks.$inferSelect;
+export type InsertInfluencerTask = typeof influencerTasks.$inferInsert;
+
+/**
+ * 达人收益表
+ * 记录达人的收益明细
+ */
+export const influencerEarnings = mysqlTable("influencer_earnings", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 关联
+  userId: int("userId").notNull(),
+  campaignId: int("campaignId"),
+  orderId: int("orderId"),
+  
+  // 收益类型
+  earningType: mysqlEnum("earningType", ["commission", "bonus", "referral"]).notNull(),
+  
+  // 收益金额
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  
+  // 订单信息
+  orderAmount: decimal("orderAmount", { precision: 10, scale: 2 }),
+  commissionRate: decimal("commissionRate", { precision: 5, scale: 2 }),
+  
+  // 状态
+  status: mysqlEnum("status", ["pending", "confirmed", "paid"]).default("pending").notNull(),
+  
+  // 结算信息
+  settledAt: timestamp("settledAt"),
+  withdrawalId: int("withdrawalId"),
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type InfluencerEarning = typeof influencerEarnings.$inferSelect;
+export type InsertInfluencerEarning = typeof influencerEarnings.$inferInsert;
+
+/**
+ * 提现申请表
+ * 存储达人的提现申请
+ */
+export const withdrawalRequests = mysqlTable("withdrawal_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 关联用户
+  userId: int("userId").notNull(),
+  
+  // 提现金额
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  
+  // 提现方式
+  withdrawalMethod: mysqlEnum("withdrawalMethod", ["bank_card", "alipay", "wechat", "paypal"]).notNull(),
+  
+  // 提现账户信息（JSON）
+  // 例如：{"bankName": "Sberbank", "accountNumber": "1234567890", "accountName": "Ivan Ivanov"}
+  accountInfo: json("accountInfo").$type<{
+    bankName?: string;
+    accountNumber: string;
+    accountName: string;
+    swiftCode?: string;
+  }>().notNull(),
+  
+  // 状态
+  status: mysqlEnum("status", ["pending", "processing", "completed", "rejected"]).default("pending").notNull(),
+  
+  // 审核信息
+  reviewedBy: int("reviewedBy"),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewNotes: text("reviewNotes"),
+  
+  // 打款信息
+  transactionId: varchar("transactionId", { length: 128 }),
+  paidAt: timestamp("paidAt"),
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WithdrawalRequest = typeof withdrawalRequests.$inferSelect;
+export type InsertWithdrawalRequest = typeof withdrawalRequests.$inferInsert;
+
+/**
+ * 链接点击记录表
+ * 追踪达人推广链接的点击
+ */
+export const linkClicks = mysqlTable("link_clicks", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 关联达人
+  influencerId: int("influencerId").notNull(),
+  campaignId: int("campaignId"),
+  
+  // 链接信息
+  linkCode: varchar("linkCode", { length: 32 }).notNull(),
+  
+  // 访问信息
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  referer: text("referer"),
+  
+  // 地理位置
+  country: varchar("country", { length: 64 }),
+  city: varchar("city", { length: 128 }),
+  
+  // 设备信息
+  deviceType: mysqlEnum("deviceType", ["desktop", "mobile", "tablet"]),
+  platform: varchar("platform", { length: 64 }),
+  
+  // 是否转化
+  isConverted: boolean("isConverted").default(false),
+  orderId: int("orderId"),
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type LinkClick = typeof linkClicks.$inferSelect;
+export type InsertLinkClick = typeof linkClicks.$inferInsert;
+
+/**
+ * 订单归因表
+ * 记录订单归属于哪个达人
+ */
+export const orderAttribution = mysqlTable("order_attribution", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // 关联
+  orderId: int("orderId").notNull().unique(),
+  influencerId: int("influencerId").notNull(),
+  campaignId: int("campaignId"),
+  
+  // 归因信息
+  linkCode: varchar("linkCode", { length: 32 }).notNull(),
+  clickId: int("clickId"),
+  
+  // 订单信息
+  orderAmount: decimal("orderAmount", { precision: 10, scale: 2 }).notNull(),
+  commissionAmount: decimal("commissionAmount", { precision: 10, scale: 2 }).notNull(),
+  
+  // 归因模型
+  attributionModel: mysqlEnum("attributionModel", ["first_click", "last_click", "linear"]).default("last_click"),
+  
+  // 时间戳
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OrderAttribution = typeof orderAttribution.$inferSelect;
+export type InsertOrderAttribution = typeof orderAttribution.$inferInsert;
+
+/**
+ * 扩展用户表添加达人相关字段
+ * 注意：这些字段应该添加到现有的 users 表中
+ * 这里仅作为文档说明
+ */
+// ALTER TABLE users ADD COLUMN:
+// - isInfluencer: boolean (是否是达人)
+// - influencerLevel: enum('bronze', 'silver', 'gold', 'diamond') (达人等级)
+// - influencerCode: varchar(32) (达人专属代码)
+// - totalEarnings: decimal(10, 2) (总收益)
+// - availableBalance: decimal(10, 2) (可提现余额)
+// - totalWithdrawn: decimal(10, 2) (已提现金额)
+// - followerCount: int (粉丝数)
+// - conversionRate: decimal(5, 2) (转化率 %)

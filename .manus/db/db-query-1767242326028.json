@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS influencer_tasks (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  campaignId INT NOT NULL,\n  userId INT NOT NULL,\n  status ENUM('pending', 'in_progress', 'submitted', 'approved', 'rejected') DEFAULT 'pending' NOT NULL,\n  currentOrders INT DEFAULT 0,\n  currentRevenue DECIMAL(10, 2) DEFAULT 0.00,\n  submittedContent TEXT,\n  submittedAt TIMESTAMP NULL,\n  reviewedBy INT,\n  reviewedAt TIMESTAMP NULL,\n  reviewNotes TEXT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute CREATE TABLE IF NOT EXISTS influencer_tasks (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  campaignId INT NOT NULL,\n  userId INT NOT NULL,\n  status ENUM('pending', 'in_progress', 'submitted', 'approved', 'rejected') DEFAULT 'pending' NOT NULL,\n  currentOrders INT DEFAULT 0,\n  currentRevenue DECIMAL(10, 2) DEFAULT 0.00,\n  submittedContent TEXT,\n  submittedAt TIMESTAMP NULL,\n  reviewedBy INT,\n  reviewedAt TIMESTAMP NULL,\n  reviewNotes TEXT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 217
+}

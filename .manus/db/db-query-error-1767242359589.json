@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE users \nADD COLUMN isInfluencer BOOLEAN DEFAULT FALSE,\nADD COLUMN influencerLevel ENUM('bronze', 'silver', 'gold', 'diamond') DEFAULT 'bronze',\nADD COLUMN influencerCode VARCHAR(32) UNIQUE,\nADD COLUMN totalEarnings DECIMAL(10, 2) DEFAULT 0.00,\nADD COLUMN availableBalance DECIMAL(10, 2) DEFAULT 0.00,\nADD COLUMN totalWithdrawn DECIMAL(10, 2) DEFAULT 0.00,\nADD COLUMN followerCount INT DEFAULT 0,\nADD COLUMN conversionRate DECIMAL(5, 2) DEFAULT 0.00",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute ALTER TABLE users \nADD COLUMN isInfluencer BOOLEAN DEFAULT FALSE,\nADD COLUMN influencerLevel ENUM('bronze', 'silver', 'gold', 'diamond') DEFAULT 'bronze',\nADD COLUMN influencerCode VARCHAR(32) UNIQUE,\nADD COLUMN totalEarnings DECIMAL(10, 2) DEFAULT 0.00,\nADD COLUMN availableBalance DECIMAL(10, 2) DEFAULT 0.00,\nADD COLUMN totalWithdrawn DECIMAL(10, 2) DEFAULT 0.00,\nADD COLUMN followerCount INT DEFAULT 0,\nADD COLUMN conversionRate DECIMAL(5, 2) DEFAULT 0.00",
+  "returncode": 1,
+  "logs": [
+    "ERROR 8200 (HY000) at line 1: unsupported add column 'influencercode' constraint UNIQUE KEY when altering '2knDvHpxEnUZULbV32izK7.users'"
+  ]
+}
