@@ -110,6 +110,105 @@ export const memberRouter = router({
       return { success: true };
     }),
 
+  // ==================== 会员注册（简化版，不需要手机验证）====================
+
+  /**
+   * 会员注册（简化版）
+   * 注册成功后自动发放新人礼包：100 积分 + 2 张满 300 减 50 优惠券
+   */
+  register: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      birthday: z.string(), // YYYY-MM-DD
+      city: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { name, birthday, city } = input;
+      const userId = ctx.user.id;
+
+      // 生成唯一会员 ID
+      const memberId = await generateUniqueMemberId();
+
+      // 更新用户信息
+      const database = await getDb();
+      if (!database) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Database not available',
+        });
+      }
+
+      const { users, couponTemplates } = await import('../../drizzle/schema');
+
+      // 更新用户信息
+      await database
+        .update(users)
+        .set({
+          memberId,
+          name,
+          birthday: new Date(birthday),
+          city,
+          profileCompleted: true,
+          availablePoints: 100, // 赠送 100 积分
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+
+      // 发放 2 张满 300 减 50 优惠券
+      const couponExpiresAt = new Date();
+      couponExpiresAt.setDate(couponExpiresAt.getDate() + 30); // 30 天有效期
+
+      await database.insert(couponTemplates).values([
+        {
+          code: `NEW${Date.now()}01`,
+          nameZh: '新人专享优惠券',
+          nameRu: 'Купон для новых пользователей',
+          nameEn: 'New User Coupon',
+          descriptionZh: '满 300 减 50',
+          descriptionRu: 'Скидка 50 при покупке от 300',
+          descriptionEn: '50 off on orders over 300',
+          type: 'fixed' as const,
+          value: '50',
+          minOrderAmount: '300',
+          stackable: false,
+          totalQuantity: 1,
+          usedQuantity: 0,
+          perUserLimit: 1,
+          startAt: new Date(),
+          endAt: couponExpiresAt,
+          isActive: true,
+        },
+        {
+          code: `NEW${Date.now()}02`,
+          nameZh: '新人专享优惠券',
+          nameRu: 'Купон для новых пользователей',
+          nameEn: 'New User Coupon',
+          descriptionZh: '满 300 减 50',
+          descriptionRu: 'Скидка 50 при покупке от 300',
+          descriptionEn: '50 off on orders over 300',
+          type: 'fixed' as const,
+          value: '50',
+          minOrderAmount: '300',
+          stackable: false,
+          totalQuantity: 1,
+          usedQuantity: 0,
+          perUserLimit: 1,
+          startAt: new Date(),
+          endAt: couponExpiresAt,
+          isActive: true,
+        },
+      ]);
+
+      return {
+        success: true,
+        memberId,
+        rewards: {
+          points: 100,
+          coupons: 2,
+        },
+      };
+    }),
+
   // ==================== 会员信息完善 ====================
 
   /**

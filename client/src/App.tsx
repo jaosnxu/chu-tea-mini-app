@@ -9,10 +9,10 @@ import { CartProvider } from "./contexts/CartContext";
 import { useTelegramTheme } from "./hooks/useTelegramTheme";
 import PageSkeleton from "./components/PageSkeleton";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
-import { CompleteProfileDialog } from "./components/CompleteProfileDialog";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { usePreloadPages } from "./hooks/usePreloadPages";
+import { useLocation } from "wouter";
 import ResourcePreloader from "./components/ResourcePreloader";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 
@@ -43,6 +43,8 @@ const InfluencerTaskSubmit = lazy(() => import("./pages/InfluencerTaskSubmit"));
 const InfluencerEarnings = lazy(() => import("./pages/InfluencerEarnings"));
 const InfluencerWithdraw = lazy(() => import('@/pages/InfluencerWithdraw'));
 const OfflineDrafts = lazy(() => import('@/pages/OfflineDrafts'));
+const MembershipWelcome = lazy(() => import('@/pages/MembershipWelcome'));
+const MembershipRegister = lazy(() => import('@/pages/MembershipRegister'));
 const InfluencerProfile = lazy(() => import("./pages/InfluencerProfile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
@@ -121,6 +123,8 @@ function Router() {
       <Route path="/influencer/earnings" component={InfluencerEarnings} />
         <Route path="/influencer/withdraw" component={InfluencerWithdraw} />
         <Route path="/offline-drafts" component={OfflineDrafts} />
+        <Route path="/membership/welcome" component={MembershipWelcome} />
+        <Route path="/membership/register" component={MembershipRegister} />
       <Route path="/influencer/profile" component={InfluencerProfile} />
       <Route path="/mall/checkout" component={MallCheckout} />
       
@@ -179,20 +183,15 @@ function App() {
   // 监听 Telegram 主题变化
   useTelegramTheme();
   
-  const { user, refresh } = useAuth();
-  const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
 
-  // 检查用户是否需要完善信息
+  // 检查用户是否需要完善信息，跳转到欢迎页面
   useEffect(() => {
     if (user && !user.profileCompleted) {
-      setShowCompleteProfile(true);
+      navigate('/membership/welcome');
     }
-  }, [user]);
-
-  const handleProfileComplete = () => {
-    setShowCompleteProfile(false);
-    refresh(); // 刷新用户信息
-  };
+  }, [user, navigate]);
   
   return (
     <ErrorBoundary>
@@ -212,12 +211,6 @@ function App() {
       
       {/* PWA 安装提示 */}
       <PWAInstallPrompt />
-      
-      {/* 会员信息完善对话框 */}
-      <CompleteProfileDialog 
-        open={showCompleteProfile} 
-        onComplete={handleProfileComplete}
-      />
     </ErrorBoundary>
   );
 }
