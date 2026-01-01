@@ -19,6 +19,7 @@ import { ru } from 'date-fns/locale';
 interface CompleteProfileDialogProps {
   open: boolean;
   onComplete: () => void;
+  allowSkip?: boolean; // 允许跳过（首次可跳过，下单时强制）
 }
 
 const RUSSIAN_CITIES = [
@@ -39,7 +40,7 @@ const RUSSIAN_CITIES = [
   'Волгоград',
 ];
 
-export function CompleteProfileDialog({ open, onComplete }: CompleteProfileDialogProps) {
+export function CompleteProfileDialog({ open, onComplete, allowSkip = true }: CompleteProfileDialogProps) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [birthday, setBirthday] = useState<Date>();
@@ -171,13 +172,24 @@ export function CompleteProfileDialog({ open, onComplete }: CompleteProfileDialo
               </select>
             </div>
 
-            <Button
-              className="w-full"
-              onClick={() => setStep(2)}
-              disabled={!name || !birthday || !city}
-            >
-              Далее
-            </Button>
+            <div className="space-y-2">
+              <Button
+                className="w-full"
+                onClick={() => setStep(2)}
+                disabled={!name || !birthday || !city}
+              >
+                Далее
+              </Button>
+              {allowSkip && (
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  onClick={onComplete}
+                >
+                  Пропустить (можно заполнить позже)
+                </Button>
+              )}
+            </div>
           </div>
         )}
 

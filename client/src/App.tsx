@@ -34,7 +34,7 @@ const MemberCenter = lazy(() => import("./pages/MemberCenter"));
 const Coupons = lazy(() => import("./pages/Coupons"));
 const Points = lazy(() => import("./pages/Points"));
 const Addresses = lazy(() => import("./pages/Addresses"));
-const InfluencerCenter = lazy(() => import("./pages/InfluencerCenter"));
+// const InfluencerCenter = lazy(() => import("./pages/InfluencerCenter"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const DisplayScreen = lazy(() => import("./pages/DisplayScreen"));
@@ -109,7 +109,7 @@ function Router() {
       <Route path="/coupons" component={Coupons} />
       <Route path="/points" component={Points} />
       <Route path="/addresses" component={Addresses} />
-      <Route path="/influencer" component={InfluencerCenter} />
+      {/* <Route path="/influencer" component={InfluencerCenter} /> */}
       <Route path="/settings" component={Settings} />
       <Route path="/notification-settings" component={NotificationSettings} />
       
