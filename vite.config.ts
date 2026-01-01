@@ -52,8 +52,12 @@ export default defineConfig({
     },
     // 启用 CSS 代码分割
     cssCodeSplit: true,
+    // CSS 压缩优化
+    cssMinify: 'lightningcss',
     // 设置 chunk 大小警告阈值
     chunkSizeWarningLimit: 1000,
+    // 优化构建性能
+    minify: 'esbuild', // 使用 esbuild 压缩，速度更快
   },
   server: {
     host: true,

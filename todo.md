@@ -1287,3 +1287,29 @@
 - [x] 优化 Service Worker 缓存策略，增加更多静态资源类型
 - [x] 创建 ResourcePreloader 组件用于预加载关键资源
 - [x] 已有 Service Worker 实现离线缓存
+
+
+## 性能监控和进一步优化 - 进行中
+
+### Web Vitals 性能监控
+- [x] 安装 web-vitals 库
+- [x] 集成 LCP（Largest Contentful Paint）监控
+- [x] 集成 FID（First Input Delay）监控
+- [x] 集成 CLS（Cumulative Layout Shift）监控
+- [x] 集成 FCP（First Contentful Paint）和 TTFB（Time to First Byte）
+- [x] 创建性能数据上报机制（sendBeacon API）
+- [ ] 在后台展示性能数据（可选）
+
+### 图片懒加载优化
+- [x] 创建 LazyImage 组件，支持 loading="lazy" 属性
+- [x] 实现 Intersection Observer 懒加载
+- [x] 添加图片占位符（LQIP）和模糊效果
+- [x] 创建图片优化工具函数（WebP 支持检测、预加载等）
+- [ ] 在商品列表页面使用 LazyImage 组件（可选）
+
+### CSS 优化
+- [x] 配置 Vite CSS 代码分割
+- [x] 使用 lightningcss 进行 CSS 压缩
+- [x] 使用 terser 压缩 JavaScript
+- [x] 生产环境移除 console 和 debugger
+- [x] Tailwind CSS 4 自动按需生成样式

@@ -9,11 +9,14 @@ import { getLoginUrl } from "./const";
 import "./index.css";
 import "./lib/i18n"; // 初始化 i18n
 import { initTelegramSDK, applyTelegramTheme } from "./lib/telegram"; // 初始化 Telegram SDK
+import { initWebVitals } from "./lib/webVitals"; // 初始化 Web Vitals 监控
 
 // 初始化 Telegram Web App
 initTelegramSDK();
 // 应用 Telegram 主题颜色
 applyTelegramTheme();
+// 初始化 Web Vitals 性能监控
+initWebVitals();
 
 // 注册 Service Worker
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
