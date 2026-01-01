@@ -3671,10 +3671,23 @@ export async function getProductReviews(productId: number, options?: {
   const database = await getDb();
   if (!database) throw new Error('Database not available');
 
-  // 通过订单项关联获取商品评价
+  // 首先获取包含该商品的订单 ID 列表
+  const orderIdsResult = await database
+    .selectDistinct({ orderId: orderItems.orderId })
+    .from(orderItems)
+    .where(eq(orderItems.productId, productId));
+  
+  const orderIds = orderIdsResult.map(row => row.orderId);
+  
+  if (orderIds.length === 0) {
+    return [];
+  }
+
+  // 构建查询条件
   const conditions = [
     eq(orderReviews.isVisible, true),
     eq(orderReviews.status, 'approved'),
+    inArray(orderReviews.orderId, orderIds),
   ];
 
   if (options?.minRating) {
@@ -3717,12 +3730,7 @@ export async function getProductReviews(productId: number, options?: {
     })
     .from(orderReviews)
     .leftJoin(users, eq(orderReviews.userId, users.id))
-    .leftJoin(orders, eq(orderReviews.orderId, orders.id))
-    .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
-    .where(and(
-      eq(orderItems.productId, productId),
-      ...conditions
-    ))
+    .where(and(...conditions))
     .orderBy(orderByClause)
     .limit(options?.limit || 20)
     .offset(options?.offset || 0);
@@ -4151,16 +4159,30 @@ export async function getProductReviewStats(productId: number) {
   const database = await getDb();
   if (!database) throw new Error('Database not available');
 
+  // 首先获取包含该商品的订单 ID 列表
+  const orderIdsResult = await database
+    .selectDistinct({ orderId: orderItems.orderId })
+    .from(orderItems)
+    .where(eq(orderItems.productId, productId));
+  
+  const orderIds = orderIdsResult.map(row => row.orderId);
+  
+  if (orderIds.length === 0) {
+    return {
+      totalReviews: 0,
+      averageRating: 0,
+      ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    };
+  }
+
   // 获取所有评价
   const allReviews = await database
     .select({
       overallRating: orderReviews.overallRating,
     })
     .from(orderReviews)
-    .leftJoin(orders, eq(orderReviews.orderId, orders.id))
-    .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
     .where(and(
-      eq(orderItems.productId, productId),
+      inArray(orderReviews.orderId, orderIds),
       eq(orderReviews.isVisible, true),
       eq(orderReviews.status, 'approved')
     ));

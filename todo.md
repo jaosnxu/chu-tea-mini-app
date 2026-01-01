@@ -976,3 +976,11 @@
 - [x] 在商品详情页添加评价入口
 - [x] 显示评价摘要（评分+评价数）
 - [x] 添加“查看全部评价”按钮（默认展开）
+
+
+## 修复商品评价查询错误
+
+- [x] 检查 orderItems 表是否存在
+- [x] 修复 getProductReviews 函数的 JOIN 逻辑（使用子查询+inArray）
+- [x] 修复 getProductReviewStats 函数的 JOIN 逻辑
+- [x] 测试商品详情页评价显示
