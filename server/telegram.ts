@@ -4,7 +4,7 @@
  */
 
 import { getDb } from './db';
-import { adminTelegramBindings, notifications } from '../drizzle/schema';
+import { adminTelegramBindings, notifications, orders, stores, users } from '../drizzle/schema';
 import { eq, and } from 'drizzle-orm';
 
 // Telegram Bot API 基础 URL
@@ -524,6 +524,74 @@ export async function sendOrderStatusNotification(
     );
   } catch (error) {
     console.error('[Telegram] Send order status notification error:', error);
+    return false;
+  }
+}
+
+/**
+ * 发送订单评价提醒
+ */
+export async function sendOrderReviewReminder(
+  userId: number,
+  orderId: number,
+  storeId: number
+): Promise<boolean> {
+  try {
+    const database = await getDb();
+    if (!database) return false;
+
+    // 获取用户信息
+    const user = await database
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user || user.length === 0 || !user[0].telegramId) {
+      return false;
+    }
+
+    const telegramId = user[0].telegramId;
+
+    // 获取订单信息
+    const order = await database
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+
+    if (!order || order.length === 0) {
+      return false;
+    }
+
+    // 获取门店信息
+    const store = await database
+      .select()
+      .from(stores)
+      .where(eq(stores.id, storeId))
+      .limit(1);
+
+    const storeName = store && store.length > 0 ? store[0].nameRu : '商家';
+
+    // 构建提醒消息
+    const message = `
+🌟 <b>评价提醒</b>
+
+您在 ${storeName} 的订单已完成，快来评价吧！
+
+📦 订单号：#${orderId}
+💰 订单金额：₽${order[0].totalAmount}
+
+评价后可获得积分奖励，上传图片还有额外奖励哦！
+
+👉 [立即评价](${process.env.VITE_OAUTH_PORTAL_URL}/order/${orderId})
+    `.trim();
+
+    // 发送消息
+    const success = await sendTelegramMessage(telegramId, message);
+    return success;
+  } catch (error) {
+    console.error('[Telegram] Error sending review reminder:', error);
     return false;
   }
 }

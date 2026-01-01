@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, inArray, gte, lte, or, isNull, like, ne } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, notInArray, gte, lte, or, isNull, like, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { nanoid } from "nanoid";
 import { 
@@ -4214,4 +4214,43 @@ export async function getProductReviewStats(productId: number) {
     averageRating,
     ratingDistribution,
   };
+}
+
+/**
+ * 获取需要评价提醒的订单
+ * 已完成但未评价的订单
+ */
+export async function getOrdersNeedingReview(completedBefore: Date) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  // 查找已完成但没有评价的订单
+  const ordersWithReviews = await database
+    .select({ orderId: orderReviews.orderId })
+    .from(orderReviews);
+  
+  const reviewedOrderIds = ordersWithReviews.map(r => r.orderId);
+
+  const conditions = [
+    eq(orders.status, 'completed'),
+    lte(orders.updatedAt, completedBefore),
+  ];
+
+  if (reviewedOrderIds.length > 0) {
+    conditions.push(notInArray(orders.id, reviewedOrderIds));
+  }
+
+  const ordersNeedingReview = await database
+    .select({
+      id: orders.id,
+      userId: orders.userId,
+      storeId: orders.storeId,
+      totalAmount: orders.totalAmount,
+      completedAt: orders.updatedAt,
+    })
+    .from(orders)
+    .where(and(...conditions))
+    .limit(100);
+
+  return ordersNeedingReview;
 }
