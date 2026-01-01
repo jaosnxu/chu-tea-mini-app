@@ -76,7 +76,7 @@ const AdminProductManagement = lazy(() => import("./pages/admin/ProductManagemen
 const AdminMemberTagsManagement = lazy(() => import("./pages/admin/MemberTagsManagement"));
 const AdminInfluencerCampaigns = lazy(() => import("./pages/admin/InfluencerCampaigns"));
 const AdminInfluencerWithdrawals = lazy(() => import("./pages/admin/InfluencerWithdrawals"));
-const AdminInfluencerAnalytics = lazy(() => import("./pages/admin/InfluencerAnalytics"));
+const AdminInfluencerAnalytics = lazy(() => import("./pages/admin/InfluencerAnalyticsEnhanced"));
 
 function Router() {
   return (

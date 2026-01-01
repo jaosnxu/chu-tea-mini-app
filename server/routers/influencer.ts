@@ -2,6 +2,8 @@ import { z } from "zod";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import * as influencerDb from "../db/influencer";
+import * as influencerAnalytics from "../db/influencerAnalytics";
+import { getInfluencerUpgradeProgress, LEVEL_UPGRADE_RULES } from "../utils/influencerLevelUpgrade";
 
 export const influencerRouter = router({
   // ==================== 达人注册和管理 ====================
@@ -40,6 +42,20 @@ export const influencerRouter = router({
       });
     }
     return info;
+  }),
+
+  /**
+   * 获取我的升级进度
+   */
+  getMyUpgradeProgress: protectedProcedure.query(async ({ ctx }) => {
+    return await getInfluencerUpgradeProgress(ctx.user.id);
+  }),
+
+  /**
+   * 获取等级规则
+   */
+  getLevelRules: publicProcedure.query(async () => {
+    return LEVEL_UPGRADE_RULES;
   }),
 
   /**
@@ -420,6 +436,32 @@ export const influencerRouter = router({
    */
   getMyOrderAttributions: protectedProcedure.query(async ({ ctx }) => {
     return await influencerDb.getInfluencerOrderAttributions(ctx.user.id);
+  }),
+
+  /**
+   * 获取达人系统趋势数据
+   */
+  getTrends: publicProcedure
+    .input(
+      z
+        .object({
+          period: z.enum(["day", "week", "month"]).optional().default("day"),
+          days: z.number().optional().default(30),
+        })
+        .optional()
+    )
+    .query(async ({ input }) => {
+      return await influencerAnalytics.getInfluencerTrends({
+        period: input?.period || "day",
+        days: input?.days || 30,
+      });
+    }),
+
+  /**
+   * 获取达人系统总体统计
+   */
+  getOverallStats: publicProcedure.query(async () => {
+    return await influencerAnalytics.getInfluencerOverallStats();
   }),
 
   /**

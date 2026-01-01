@@ -2028,8 +2028,30 @@ export async function updateOrderStatus(data: { orderId: number; status: 'pendin
     try {
       const { confirmOrderEarning } = await import('./utils/influencerAttribution');
       await confirmOrderEarning(data.orderId);
+
+      // 检查达人是否应该升级
+      const { checkInfluencerLevelUpgrade, upgradeInfluencerLevel } = await import('./utils/influencerLevelUpgrade');
+      const { notifyOwner } = await import('./_core/notification');
+
+      const attributionResult = await db.execute(sql`
+        SELECT * FROM order_attribution WHERE order_id = ${data.orderId} LIMIT 1
+      `);
+      const attribution = ((attributionResult as any).rows || attributionResult)[0] as any;
+
+      if (attribution) {
+        const upgradeCheck = await checkInfluencerLevelUpgrade(attribution.influencerUserId);
+        if (upgradeCheck.shouldUpgrade && upgradeCheck.newLevel) {
+          await upgradeInfluencerLevel(attribution.influencerUserId, upgradeCheck.newLevel);
+          
+          // 发送升级通知
+          await notifyOwner({
+            title: "达人等级升级",
+            content: `达人 #${attribution.influencerUserId} 已升级到 ${upgradeCheck.newLevel} 等级！累计销售额：₽${upgradeCheck.stats.totalRevenue.toFixed(2)}，累计订单数：${upgradeCheck.stats.totalOrders}`,
+          });
+        }
+      }
     } catch (error) {
-      console.error('[Order] Failed to confirm influencer earning:', error);
+      console.error('[Order] Failed to confirm influencer earning or check level upgrade:', error);
     }
   }
   
