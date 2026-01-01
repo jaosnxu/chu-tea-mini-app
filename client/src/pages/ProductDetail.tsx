@@ -9,9 +9,10 @@ import { trpc } from '@/lib/trpc';
 import { useCart } from '@/contexts/CartContext';
 import { useTelegramContext } from '@/contexts/TelegramContext';
 import { getLocalizedText } from '@/lib/i18n';
-import { ChevronLeft, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, Minus, Plus, ShoppingCart, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTelegramBackButton } from '@/hooks/useTelegramBackButton';
+import { ProductReviews } from '@/components/ProductReviews';
 
 export default function ProductDetail() {
   const { t } = useTranslation();
@@ -248,6 +249,11 @@ export default function ProductDetail() {
           </Card>
         );
       })}
+
+      {/* 评价展示 */}
+      <div className="p-4">
+        <ProductReviews productId={product.id} productName={name} />
+      </div>
 
       {/* 底部购买栏 */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 safe-area-pb">

@@ -3665,6 +3665,8 @@ export async function getProductReviews(productId: number, options?: {
   limit?: number;
   offset?: number;
   minRating?: number;
+  withImages?: boolean;
+  sortBy?: 'latest' | 'helpful' | 'highest';
 }) {
   const database = await getDb();
   if (!database) throw new Error('Database not available');
@@ -3679,11 +3681,39 @@ export async function getProductReviews(productId: number, options?: {
     conditions.push(gte(orderReviews.overallRating, options.minRating));
   }
 
+  if (options?.withImages) {
+    conditions.push(sql`JSON_LENGTH(${orderReviews.images}) > 0`);
+  }
+
+  // 排序逻辑
+  let orderByClause;
+  if (options?.sortBy === 'highest') {
+    orderByClause = desc(orderReviews.overallRating);
+  } else {
+    // helpful 和 latest 都使用 createdAt，因为 likeCount 需要子查询
+    orderByClause = desc(orderReviews.createdAt);
+  }
+
   const reviews = await database
     .select({
-      review: orderReviews,
+      id: orderReviews.id,
+      orderId: orderReviews.orderId,
+      userId: orderReviews.userId,
+      storeId: orderReviews.storeId,
+      overallRating: orderReviews.overallRating,
+      tasteRating: orderReviews.tasteRating,
+      serviceRating: orderReviews.serviceRating,
+      speedRating: orderReviews.speedRating,
+      packagingRating: orderReviews.packagingRating,
+      content: orderReviews.content,
+      images: orderReviews.images,
+      tags: orderReviews.tags,
+      isAnonymous: orderReviews.isAnonymous,
+      merchantReply: orderReviews.reply,
+      merchantReplyAt: orderReviews.repliedAt,
+      likeCount: sql<number>`(SELECT COUNT(*) FROM ${reviewLikes} WHERE ${reviewLikes.reviewId} = ${orderReviews.id})`.as('likeCount'),
+      createdAt: orderReviews.createdAt,
       user: users,
-      order: orders,
     })
     .from(orderReviews)
     .leftJoin(users, eq(orderReviews.userId, users.id))
@@ -3693,7 +3723,7 @@ export async function getProductReviews(productId: number, options?: {
       eq(orderItems.productId, productId),
       ...conditions
     ))
-    .orderBy(desc(orderReviews.createdAt))
+    .orderBy(orderByClause)
     .limit(options?.limit || 20)
     .offset(options?.offset || 0);
 
@@ -4111,5 +4141,55 @@ export async function getMemberLevelProgress(userId: number) {
     ordersProgress: Math.min((totalOrders / nextLevel.minOrders) * 100, 100),
     spentRemaining: Math.max(nextLevel.minSpent - totalSpent, 0),
     ordersRemaining: Math.max(nextLevel.minOrders - totalOrders, 0),
+  };
+}
+
+/**
+ * 获取商品评价统计
+ */
+export async function getProductReviewStats(productId: number) {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  // 获取所有评价
+  const allReviews = await database
+    .select({
+      overallRating: orderReviews.overallRating,
+    })
+    .from(orderReviews)
+    .leftJoin(orders, eq(orderReviews.orderId, orders.id))
+    .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+    .where(and(
+      eq(orderItems.productId, productId),
+      eq(orderReviews.isVisible, true),
+      eq(orderReviews.status, 'approved')
+    ));
+
+  const totalReviews = allReviews.length;
+  
+  if (totalReviews === 0) {
+    return {
+      totalReviews: 0,
+      averageRating: 0,
+      ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    };
+  }
+
+  // 计算评分分布
+  const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  let totalRating = 0;
+
+  for (const review of allReviews) {
+    const rating = review.overallRating;
+    ratingDistribution[rating as keyof typeof ratingDistribution]++;
+    totalRating += rating;
+  }
+
+  const averageRating = totalRating / totalReviews;
+
+  return {
+    totalReviews,
+    averageRating,
+    ratingDistribution,
   };
 }

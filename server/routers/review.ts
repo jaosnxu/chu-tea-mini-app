@@ -166,4 +166,50 @@ export const reviewRouter = router({
     .query(async ({ input }) => {
       return await db.getReviewStatistics(input.storeId, input.productId);
     }),
+
+  /**
+   * 获取商品评价统计
+   */
+  getProductStats: publicProcedure
+    .input(z.object({ productId: z.number() }))
+    .query(async ({ input }) => {
+      return await db.getProductReviewStats(input.productId);
+    }),
+
+  /**
+   * 获取商品评价列表（分页）
+   */
+  getProductReviews: publicProcedure
+    .input(
+      z.object({
+        productId: z.number(),
+        minRating: z.number().min(1).max(5).optional(),
+        withImages: z.boolean().optional(),
+        sortBy: z.enum(['latest', 'helpful', 'highest']).optional(),
+        limit: z.number().min(1).max(50).default(10),
+        cursor: z.number().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const { productId, minRating, withImages, sortBy = 'latest', limit, cursor } = input;
+      
+      const reviews = await db.getProductReviews(productId, {
+        minRating,
+        withImages,
+        sortBy,
+        limit: limit + 1,
+        offset: cursor || 0,
+      });
+
+      let nextCursor: number | undefined = undefined;
+      if (reviews.length > limit) {
+        reviews.pop();
+        nextCursor = (cursor || 0) + limit;
+      }
+
+      return {
+        reviews,
+        nextCursor,
+      };
+    }),
 });
