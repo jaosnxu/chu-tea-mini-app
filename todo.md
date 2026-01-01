@@ -1405,3 +1405,16 @@
 - [x] 展示等级专属权益（积分倍率、折扣、免配送费、生日券）
 - [x] 添加等级对比表（横向对比所有等级权益）
 - [x] 测试所有功能并保存检查点
+
+## GitHub 仓库和生产环境部署
+
+- [x] 创建 GitHub 仓库（jaosnxu/chu-tea-mini-app）
+- [x] 推送完整项目代码到 GitHub
+- [x] 创建 .gitignore 排除敏感信息（已存在）
+- [x] 创建 README.md 部署文档（DEPLOYMENT.md）
+- [x] 创建 .env.example 环境变量模板（由 Manus 管理）
+- [x] 创建部署脚本（deploy.sh）
+- [x] 创建 Docker 部署配置（Dockerfile、docker-compose.yml）
+- [x] 创建 Nginx 配置文件
+- [x] 编写生产环境部署文档（DEPLOYMENT.md）
+- [x] 编写服务器环境配置指南（QUICKSTART.md）
