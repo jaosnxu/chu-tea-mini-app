@@ -4254,3 +4254,265 @@ export async function getOrdersNeedingReview(completedBefore: Date) {
 
   return ordersNeedingReview;
 }
+
+
+// ==================== 手机验证码 ====================
+
+/**
+ * 创建验证码记录
+ */
+export async function createVerificationCode(data: {
+  phone: string;
+  code: string;
+  purpose: 'register' | 'login' | 'change_phone' | 'bind_phone';
+  expiresAt: Date;
+}) {
+  const database = await getDb();
+  if (!database) return null;
+
+  const { phoneVerificationCodes } = await import('../drizzle/schema');
+  
+  const result = await database.insert(phoneVerificationCodes).values(data);
+  return result;
+}
+
+/**
+ * 验证验证码
+ */
+export async function verifyVerificationCode(
+  phone: string,
+  code: string,
+  purpose: 'register' | 'login' | 'change_phone' | 'bind_phone'
+): Promise<boolean> {
+  const database = await getDb();
+  if (!database) return false;
+
+  const { phoneVerificationCodes } = await import('../drizzle/schema');
+  
+  // 查找未使用且未过期的验证码
+  const codes = await database
+    .select()
+    .from(phoneVerificationCodes)
+    .where(
+      and(
+        eq(phoneVerificationCodes.phone, phone),
+        eq(phoneVerificationCodes.code, code),
+        eq(phoneVerificationCodes.purpose, purpose),
+        eq(phoneVerificationCodes.verified, false)
+      )
+    )
+    .orderBy(desc(phoneVerificationCodes.createdAt))
+    .limit(1);
+
+  if (codes.length === 0) {
+    return false;
+  }
+
+  const verificationCode = codes[0];
+  
+  // 检查是否过期
+  if (new Date() > verificationCode.expiresAt) {
+    return false;
+  }
+
+  // 标记为已使用
+  await database
+    .update(phoneVerificationCodes)
+    .set({ verified: true })
+    .where(eq(phoneVerificationCodes.id, verificationCode.id));
+
+  return true;
+}
+
+/**
+ * 检查验证码发送频率限制
+ */
+export async function checkVerificationCodeRateLimit(phone: string): Promise<boolean> {
+  const database = await getDb();
+  if (!database) return false;
+
+  const { phoneVerificationCodes } = await import('../drizzle/schema');
+  
+  // 检查最近 1 分钟内是否已发送
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+  
+  const recentCodes = await database
+    .select()
+    .from(phoneVerificationCodes)
+    .where(
+      and(
+        eq(phoneVerificationCodes.phone, phone),
+        gte(phoneVerificationCodes.createdAt, oneMinuteAgo)
+      )
+    )
+    .limit(1);
+
+  // 如果最近 1 分钟内已发送，返回 false
+  return recentCodes.length === 0;
+}
+
+// ==================== 会员标签系统 ====================
+
+/**
+ * 创建标签
+ */
+export async function createMemberTag(data: {
+  name: string;
+  color?: string;
+  type: 'user' | 'store' | 'system';
+  storeId?: number;
+  description?: string;
+}) {
+  const database = await getDb();
+  if (!database) return null;
+
+  const { memberTags } = await import('../drizzle/schema');
+  
+  const result = await database.insert(memberTags).values(data);
+  return result;
+}
+
+/**
+ * 获取所有标签
+ */
+export async function getAllMemberTags(type?: 'user' | 'store' | 'system') {
+  const database = await getDb();
+  if (!database) return [];
+
+  const { memberTags } = await import('../drizzle/schema');
+  
+  if (type) {
+    return await database
+      .select()
+      .from(memberTags)
+      .where(
+        and(
+          eq(memberTags.type, type),
+          eq(memberTags.isActive, true)
+        )
+      );
+  }
+  
+  return await database
+    .select()
+    .from(memberTags)
+    .where(eq(memberTags.isActive, true));
+}
+
+/**
+ * 给用户添加标签
+ */
+export async function assignTagToUser(userId: number, tagId: number, assignedBy?: number) {
+  const database = await getDb();
+  if (!database) return null;
+
+  const { userMemberTags } = await import('../drizzle/schema');
+  
+  // 检查是否已存在
+  const existing = await database
+    .select()
+    .from(userMemberTags)
+    .where(
+      and(
+        eq(userMemberTags.userId, userId),
+        eq(userMemberTags.tagId, tagId)
+      )
+    )
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0];
+  }
+
+  const result = await database.insert(userMemberTags).values({
+    userId,
+    tagId,
+    assignedBy,
+  });
+  
+  return result;
+}
+
+/**
+ * 获取用户的所有标签
+ */
+export async function getUserTags(userId: number) {
+  const database = await getDb();
+  if (!database) return [];
+
+  const { userMemberTags, memberTags } = await import('../drizzle/schema');
+  
+  return await database
+    .select({
+      id: memberTags.id,
+      name: memberTags.name,
+      color: memberTags.color,
+      type: memberTags.type,
+      description: memberTags.description,
+      assignedAt: userMemberTags.assignedAt,
+    })
+    .from(userMemberTags)
+    .innerJoin(memberTags, eq(userMemberTags.tagId, memberTags.id))
+    .where(
+      and(
+        eq(userMemberTags.userId, userId),
+        eq(memberTags.isActive, true)
+      )
+    );
+}
+
+/**
+ * 移除用户标签
+ */
+export async function removeTagFromUser(userId: number, tagId: number) {
+  const database = await getDb();
+  if (!database) return null;
+
+  const { userMemberTags } = await import('../drizzle/schema');
+  
+  await database
+    .delete(userMemberTags)
+    .where(
+      and(
+        eq(userMemberTags.userId, userId),
+        eq(userMemberTags.tagId, tagId)
+      )
+    );
+  
+  return true;
+}
+
+/**
+ * 生成唯一会员 ID
+ */
+export async function generateUniqueMemberId(): Promise<string> {
+  const database = await getDb();
+  if (!database) throw new Error('Database not available');
+
+  const { users } = await import('../drizzle/schema');
+  
+  // 生成格式：CHU + 8位随机数字
+  let memberId: string;
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  do {
+    const randomNum = Math.floor(10000000 + Math.random() * 90000000);
+    memberId = `CHU${randomNum}`;
+    
+    // 检查是否已存在
+    const existing = await database
+      .select()
+      .from(users)
+      .where(eq(users.memberId, memberId))
+      .limit(1);
+    
+    if (existing.length === 0) {
+      return memberId;
+    }
+    
+    attempts++;
+  } while (attempts < maxAttempts);
+
+  throw new Error('Failed to generate unique member ID');
+}

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS memberTags (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  name VARCHAR(64) NOT NULL,\n  color VARCHAR(16) NOT NULL DEFAULT '#3b82f6',\n  type ENUM('user', 'store', 'system') NOT NULL DEFAULT 'user',\n  storeId INT,\n  description TEXT,\n  isActive BOOLEAN NOT NULL DEFAULT TRUE,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3voxJosMyDG3zV4.e0c9574ef2f7 --database 2knDvHpxEnUZULbV32izK7 --execute CREATE TABLE IF NOT EXISTS memberTags (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  name VARCHAR(64) NOT NULL,\n  color VARCHAR(16) NOT NULL DEFAULT '#3b82f6',\n  type ENUM('user', 'store', 'system') NOT NULL DEFAULT 'user',\n  storeId INT,\n  description TEXT,\n  isActive BOOLEAN NOT NULL DEFAULT TRUE,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 215
+}

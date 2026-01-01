@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, json } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, json, date } from "drizzle-orm/mysql-core";
 
 // ==================== 用户系统 ====================
 
@@ -7,12 +7,20 @@ export const users = mysqlTable("users", {
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   telegramId: varchar("telegramId", { length: 64 }).unique(),
   telegramUsername: varchar("telegramUsername", { length: 128 }),
+  // 会员基本信息
+  memberId: varchar("memberId", { length: 32 }).unique(), // 唯一会员 ID
   name: text("name"),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 32 }),
+  phoneVerified: boolean("phoneVerified").default(false).notNull(), // 手机号是否验证
+  birthday: date("birthday"), // 生日
+  city: varchar("city", { length: 128 }), // 城市
   avatar: text("avatar"),
   language: varchar("language", { length: 10 }).default("ru"),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  // 信息完善状态
+  profileCompleted: boolean("profileCompleted").default(false).notNull(), // 信息是否完善
+  // 会员等级和积分
   role: mysqlEnum("role", ["user", "admin", "influencer"]).default("user").notNull(),
   memberLevel: mysqlEnum("memberLevel", ["normal", "silver", "gold", "diamond"]).default("normal").notNull(),
   totalPoints: int("totalPoints").default(0).notNull(),
@@ -1363,3 +1371,49 @@ export const reviewLikes = mysqlTable("reviewLikes", {
 
 export type ReviewLike = typeof reviewLikes.$inferSelect;
 export type InsertReviewLike = typeof reviewLikes.$inferInsert;
+
+
+// ==================== 手机验证码 ====================
+
+export const phoneVerificationCodes = mysqlTable("phoneVerificationCodes", {
+  id: int("id").autoincrement().primaryKey(),
+  phone: varchar("phone", { length: 32 }).notNull(),
+  code: varchar("code", { length: 6 }).notNull(),
+  purpose: mysqlEnum("purpose", ["register", "login", "change_phone", "bind_phone"]).notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  verified: boolean("verified").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PhoneVerificationCode = typeof phoneVerificationCodes.$inferSelect;
+export type InsertPhoneVerificationCode = typeof phoneVerificationCodes.$inferInsert;
+
+// ==================== 会员标签系统 ====================
+
+// 标签定义表
+export const memberTags = mysqlTable("memberTags", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 64 }).notNull(),
+  color: varchar("color", { length: 16 }).default("#3b82f6").notNull(), // 标签颜色
+  type: mysqlEnum("type", ["user", "store", "system"]).default("user").notNull(), // 标签类型：用户自定义、门店打标、系统标签
+  storeId: int("storeId"), // 如果是门店标签，记录门店 ID
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MemberTag = typeof memberTags.$inferSelect;
+export type InsertMemberTag = typeof memberTags.$inferInsert;
+
+// 用户标签关联表
+export const userMemberTags = mysqlTable("userMemberTags", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  tagId: int("tagId").notNull(),
+  assignedBy: int("assignedBy"), // 谁分配的标签（用户自己或管理员 ID）
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+});
+
+export type UserMemberTag = typeof userMemberTags.$inferSelect;
+export type InsertUserMemberTag = typeof userMemberTags.$inferInsert;

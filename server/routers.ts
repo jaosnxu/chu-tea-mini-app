@@ -4,7 +4,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { iikoRouter } from "./routers/iiko.js";
 import { paymentRouter } from "./routers/payment.js";
 import { analyticsRouter } from "./routers/analytics.js";
-import { reviewRouter } from "./routers/review.js";
+import { reviewRouter } from './routers/review';
+import { memberRouter } from './routers/member';
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
@@ -15,6 +16,7 @@ export const appRouter = router({
   payment: paymentRouter,
   analytics: analyticsRouter,
   review: reviewRouter,
+  member: memberRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -487,32 +489,7 @@ export const appRouter = router({
       }),
   }),
 
-  // 会员路由
-  member: router({
-    info: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getMemberInfo(ctx.user.id);
-    }),
-    
-    // 获取会员等级进度
-    levelProgress: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getMemberLevelProgress(ctx.user.id);
-    }),
-    
-    // 获取会员等级权益
-    benefits: protectedProcedure
-      .input(z.object({
-        level: z.enum(['normal', 'silver', 'gold', 'diamond']).optional(),
-      }).optional())
-      .query(async ({ ctx, input }) => {
-        const level = input?.level || ctx.user.memberLevel;
-        return await db.getMemberLevelBenefits(level);
-      }),
-    
-    // 手动检查并升级等级
-    checkUpgrade: protectedProcedure.mutation(async ({ ctx }) => {
-      return await db.checkAndUpgradeMemberLevel(ctx.user.id);
-    }),
-  }),
+  // 会员路由（已移至 memberRouter）
 
   // 达人推广路由
   influencer: router({
