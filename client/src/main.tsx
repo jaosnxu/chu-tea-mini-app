@@ -32,16 +32,20 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // 默认缓存时间：5 分钟
-      staleTime: 5 * 60 * 1000,
-      // 缓存保留时间：10 分钟
-      gcTime: 10 * 60 * 1000,
+      // 激进缓存策略：30 分钟内数据视为新鲜
+      staleTime: 30 * 60 * 1000,
+      // 缓存保留时间：1 小时
+      gcTime: 60 * 60 * 1000,
       // 窗口获得焦点时不重新获取
       refetchOnWindowFocus: false,
       // 重连时不重新获取
       refetchOnReconnect: false,
+      // 挂载时不重新获取（使用缓存）
+      refetchOnMount: false,
       // 重试配置
       retry: 1,
+      // 启用网络模式：优先使用缓存
+      networkMode: 'offlineFirst' as const,
     },
     mutations: {
       // mutation 错误不重试

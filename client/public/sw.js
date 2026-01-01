@@ -21,13 +21,20 @@ const CACHE_FIRST_URLS = [
   '/icons/',
   '/images/',
   '/products/',
+  '/assets/',
   '.webp',
   '.png',
   '.jpg',
   '.jpeg',
   '.svg',
+  '.gif',
+  '.ico',
   '.woff',
   '.woff2',
+  '.ttf',
+  '.eot',
+  '.js',
+  '.css',
 ];
 
 // 安装事件：预缓存静态资源

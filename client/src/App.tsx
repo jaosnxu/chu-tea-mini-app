@@ -12,6 +12,8 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { CompleteProfileDialog } from "./components/CompleteProfileDialog";
 import { useAuth } from "./_core/hooks/useAuth";
 import { useState, useEffect } from "react";
+import { usePreloadPages } from "./hooks/usePreloadPages";
+import ResourcePreloader from "./components/ResourcePreloader";
 
 // 首屏页面（不懒加载）
 import Home from "./pages/Home";
@@ -80,6 +82,9 @@ const AdminInfluencerWithdrawals = lazy(() => import("./pages/admin/InfluencerWi
 const AdminInfluencerAnalytics = lazy(() => import("./pages/admin/InfluencerAnalyticsEnhanced"));
 
 function Router() {
+  // 预加载常用页面
+  usePreloadPages();
+
   return (
     <Suspense fallback={<PageSkeleton />}>
       <Switch>
@@ -188,10 +193,11 @@ function App() {
   
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider>
         <TelegramProvider>
           <StoreProvider>
             <CartProvider>
+              <ResourcePreloader />
               <TooltipProvider>
                 <Router />
               </TooltipProvider>

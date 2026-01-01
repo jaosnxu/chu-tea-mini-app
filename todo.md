@@ -1269,3 +1269,21 @@
 - [x] 生成并展示专属推广链接二维码
 - [x] 添加个人统计数据卡片
 - [x] 添加快速导航按钮
+
+
+## 全局性能优化 - 完成
+
+### tRPC 缓存优化
+- [x] 配置全局查询缓存时间（staleTime: 30分钟, gcTime: 1小时）
+- [x] 启用 offlineFirst 网络模式，优先使用缓存
+- [x] 禁用 refetchOnMount，挂载时使用缓存
+
+### 加载体验优化
+- [x] 创建 usePreloadPages Hook，空闲时预加载常用页面
+- [x] 已有 PageSkeleton 全局骨架屏组件
+- [x] 首屏页面（Home, Landing）不懒加载
+
+### 资源缓存优化
+- [x] 优化 Service Worker 缓存策略，增加更多静态资源类型
+- [x] 创建 ResourcePreloader 组件用于预加载关键资源
+- [x] 已有 Service Worker 实现离线缓存
