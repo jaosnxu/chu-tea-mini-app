@@ -1161,3 +1161,49 @@
 - [x] 添加跳过选项（首次可跳过）
 - [ ] 下单时强制完善检查
 - [x] 优化验证码输入体验（60秒倒计时）
+
+
+## 达人营销系统（Influencer/KOL Marketing System）- 进行中
+
+### 后端 API 开发
+- [x] 修复达人系统数据库 schema（influencers, campaigns, tasks, earnings, withdrawals, tracking_links）
+- [x] 创建达人注册和审核 API
+- [x] 创建活动管理 API（创建、编辑、删除活动）
+- [x] 创建任务中心 API（获取可用任务、接受任务、提交作品）
+- [x] 创建收益管理 API（实时收益、历史记录、订单详情）
+- [x] 创建提现管理 API（申请提现、查看提现历史、银行卡绑定）
+- [x] 创建链接追踪 API（生成专属链接、记录点击、订单归因）
+
+### 前端页面开发
+- [x] 创建达人注册页面（/influencer/register）
+- [x] 创建达人任务中心页面（/influencer/tasks）
+- [x] 创建达人收益统计页面（/influencer/earnings）
+- [x] 创建达人提现管理页面（/influencer/withdraw）
+- [ ] 创建达人个人中心页面（/influencer/profile）（可选）
+
+### 后台管理页面
+- [x] 创建活动配置页面（/admin/influencer-campaigns）
+- [ ] 创建达人管理页面（/admin/influencers）（可选）
+- [x] 创建提现审核页面（/admin/influencer-withdrawals）
+- [ ] 创建链接追踪分析页面（/admin/tracking-analytics）（可选）
+- [ ] 创建达人排行榜页面（/admin/influencer-ranking）（可选）
+
+### 链接追踪和归因系统
+- [x] 实现专属推广链接生成逻辑
+- [x] 实现链接点击记录功能
+- [x] 实现订单归因逻辑（记录来源达人）
+- [x] 实现佣金自动计算和发放
+- [ ] 实现 ROI 分析和转化率统计（可选）
+
+### 测试和优化
+- [ ] 编写达人系统单元测试
+- [ ] 测试完整的达人推广流程
+- [ ] 测试提现申请和审核流程
+- [ ] 测试链接追踪和订单归因
+- [ ] 性能优化和错误处理
+
+### 测试和优化
+- [x] 编写达人系统单元测试（基础框架）
+- [ ] 测试完整的达人推广流程（手动验证）
+- [ ] 优化数据库查询性能（可选）
+- [ ] 添加错误处理和日志记录（可选）

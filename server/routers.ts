@@ -6,7 +6,7 @@ import { paymentRouter } from "./routers/payment.js";
 import { analyticsRouter } from "./routers/analytics.js";
 import { reviewRouter } from './routers/review';
 import { memberRouter } from "./routers/member";
-// import { influencerRouter } from "./routers/influencer";
+import { influencerRouter } from "./routers/influencer";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
@@ -18,7 +18,7 @@ export const appRouter = router({
   analytics: analyticsRouter,
   review: reviewRouter,
   member: memberRouter,
-  // influencer: influencerRouter,
+  influencer: influencerRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

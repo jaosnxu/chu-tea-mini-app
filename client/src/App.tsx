@@ -34,7 +34,10 @@ const MemberCenter = lazy(() => import("./pages/MemberCenter"));
 const Coupons = lazy(() => import("./pages/Coupons"));
 const Points = lazy(() => import("./pages/Points"));
 const Addresses = lazy(() => import("./pages/Addresses"));
-// const InfluencerCenter = lazy(() => import("./pages/InfluencerCenter"));
+const InfluencerRegister = lazy(() => import("./pages/InfluencerRegister"));
+const InfluencerTasks = lazy(() => import("./pages/InfluencerTasks"));
+const InfluencerEarnings = lazy(() => import("./pages/InfluencerEarnings"));
+const InfluencerWithdraw = lazy(() => import("./pages/InfluencerWithdraw"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotificationSettings = lazy(() => import("./pages/NotificationSettings"));
 const DisplayScreen = lazy(() => import("./pages/DisplayScreen"));
@@ -70,6 +73,8 @@ const AdminDeliverySettings = lazy(() => import("./pages/admin/DeliverySettings"
 const AdminPointsRules = lazy(() => import("./pages/admin/PointsRules"));
 const AdminProductManagement = lazy(() => import("./pages/admin/ProductManagement"));
 const AdminMemberTagsManagement = lazy(() => import("./pages/admin/MemberTagsManagement"));
+const AdminInfluencerCampaigns = lazy(() => import("./pages/admin/InfluencerCampaigns"));
+const AdminInfluencerWithdrawals = lazy(() => import("./pages/admin/InfluencerWithdrawals"));
 
 function Router() {
   return (
@@ -98,6 +103,12 @@ function Router() {
       <Route path="/mall" component={Mall} />
       <Route path="/mall/product/:id" component={MallProductDetail} />
       <Route path="/mall/cart" component={MallCart} />
+      
+      {/* 达人系统 */}
+      <Route path="/influencer/register" component={InfluencerRegister} />
+      <Route path="/influencer/tasks" component={InfluencerTasks} />
+      <Route path="/influencer/earnings" component={InfluencerEarnings} />
+      <Route path="/influencer/withdraw" component={InfluencerWithdraw} />
       <Route path="/mall/checkout" component={MallCheckout} />
       
       {/* 显示屏 */}
@@ -140,6 +151,8 @@ function Router() {
       <Route path="/admin/marketing-dashboard" component={() => <AdminLayout><AdminMarketingDashboard /></AdminLayout>} />
       <Route path="/admin/trigger-templates" component={() => <AdminLayout><AdminTriggerTemplates /></AdminLayout>} />
       <Route path="/admin/ab-test" component={() => <AdminLayout><AdminABTestComparison /></AdminLayout>} />
+      <Route path="/admin/influencer-campaigns" component={() => <AdminLayout><AdminInfluencerCampaigns /></AdminLayout>} />
+      <Route path="/admin/influencer-withdrawals" component={() => <AdminLayout><AdminInfluencerWithdrawals /></AdminLayout>} />
       
       {/* 404 */}
       <Route component={NotFound} />
