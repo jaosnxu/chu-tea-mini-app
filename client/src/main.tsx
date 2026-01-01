@@ -65,7 +65,11 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  const loginUrl = getLoginUrl();
+  // 只有在有效的 OAuth URL 时才重定向
+  if (loginUrl && loginUrl !== '/' && loginUrl.startsWith('http')) {
+    window.location.href = loginUrl;
+  }
 };
 
 queryClient.getQueryCache().subscribe(event => {
